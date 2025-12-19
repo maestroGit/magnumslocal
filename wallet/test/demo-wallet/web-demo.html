@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Wallet Demo (browser)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, Arial; padding: 24px; max-width: 780px; margin: auto }
+    textarea { width:100%; height:120px }
+    pre { background:#f4f4f4; padding:12px }
+  </style>
+  <script type="module" src="./web-demo.js"></script>
+</head>
+<body>
+  <h1>Wallet Demo (in-browser)</h1>
+  <p>Genera un par de claves (secp256k1) en el navegador, cifra la privateKey con passphrase y descarga un keystore JSON.</p>
+  <p><strong>Nota:</strong> sirve este archivo por HTTP(S) (p.ej. `npx serve .`) para que los imports ESM funcionen correctamente. Evita `file://`.</p>
+
+  <label>Passphrase (para derivar clave): <input id="pass" type="password" /></label>
+  <button id="create">Crear wallet y descargar keystore</button>
+
+  <h2>Importar keystore</h2>
+  <input id="file" type="file" accept="application/json" />
+  <label>Passphrase para descifrar: <input id="passIn" type="password" /></label>
+  <button id="import">Importar y mostrar publicKey</button>
+
+  <h2>Firmar payload</h2>
+  <textarea id="payload">hello world</textarea>
+  <button id="sign">Firmar (usa keystore importado)</button>
+  <pre id="out"></pre>
+</body>
+</html>

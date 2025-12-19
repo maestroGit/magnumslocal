@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>��� Test QR Blockchain Verification</title>
+    <link href="../../public/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="test-container">
+        <h1>��� Test de Verificación QR Blockchain</h1>
+        <p>Sistema de pruebas para verificación de autenticidad blockchain</p>
+        
+        <!-- Test 1: Verificación por Transaction ID -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2>��� Test 1: Verificar Transaction ID</h2>
+                <span class="status-badge">Activo</span>
+            </div>
+            <p>Introduce un Transaction ID para verificar su estado en la blockchain</p>
+            
+            <div class="input-group">
+                <label for="transactionInput">Transaction ID:</label>
+                <input type="text" id="transactionInput" 
+                       placeholder="ej: 45bb3850-a2a0-11f0-bd0f-8327165c6097" 
+                       value="45bb3850-a2a0-11f0-bd0f-8327165c6097">
+            </div>
+            
+            <div class="card-actions">
+                <button class="dashboard-btn primary" onclick="verificarTransactionID()">��� Verificar Transaction ID</button>
+            </div>
+        </div>
+        
+        <!-- Test 2: Lectura de QR desde imagen -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2>��� Test 2: Leer QR desde Imagen</h2>
+                <span class="status-badge development">En Desarrollo</span>
+            </div>
+            <p>Sube una imagen PNG/JPG con un código QR para verificar</p>
+            
+            <div class="input-group">
+                <label for="qrImageInput">Seleccionar imagen QR:</label>
+                <input type="file" id="qrImageInput" accept="image/*">
+            </div>
+            
+            <div class="card-actions">
+                <button class="dashboard-btn secondary" onclick="leerQRImagen()">��� Leer QR desde Imagen</button>
+            </div>
+            
+            <div class="placeholder-info">
+                <p>��� <strong>Función en desarrollo</strong></p>
+                <p>Esta funcionalidad detectará estados como "pendiente", "verificado", etc.</p>
+            </div>
+        </div>
+        
+        <!-- Test 3: Estado del sistema -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2>⚙️ Test 3: Estado del Sistema</h2>
+                <span class="status-badge">Operativo</span>
+            </div>
+            <p>Consulta el estado actual de la blockchain y mempool</p>
+            
+            <div class="card-actions">
+                <button class="dashboard-btn primary" onclick="consultarEstadoSistema()">��� Consultar Estado</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para resultados de verificación -->
+    <div id="resultModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeResultModal()">&times;</span>
+            <h2 id="modalTitle">Resultado de Verificación</h2>
+            <div id="modalBody" class="modal-body">
+                <div id="modalContent"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="dashboard-btn secondary" onclick="closeResultModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones para manejo de modales
+        function showResultModal(title, content, type = 'info') {
+            const modal = document.getElementById('resultModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalTitle.textContent = title;
+            modalContent.innerHTML = content;
+            modalContent.className = 'modal-result ' + type;
+            modal.style.display = 'block';
+        }
+        
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+        
+        // Verificar Transaction ID
+        async function verificarTransactionID() {
+            const transactionId = document.getElementById('transactionInput').value.trim();
+            
+            if (!transactionId) {
+                showResultModal('❌ Error', '<p>Introduce un Transaction ID válido.</p>', 'error');
+                return;
+            }
+            
+            showResultModal('��� Verificando...', '<p>Verificando transaction ID...</p>', 'loading');
+            
+            try {
+                const response = await fetch('/verify-qr-proof', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qrData: transactionId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.verified && result.status === 'verified_mined') {
+                    showResultModal('✅ Verificada', 
+                        '<p>Transacción confirmada en blockchain</p>' +
+                        '<p><strong>ID:</strong> ' + transactionId + '</p>' +
+                        '<p><strong>Bloque:</strong> #' + result.blockNumber + '</p>', 
+                        'success');
+                } else if (result.verified && result.status === 'pending_mining') {
+                    showResultModal('⏳ Pendiente', 
+                        '<p>Transacción válida - esperando confirmación</p>' +
+                        '<p><strong>ID:</strong> ' + transactionId + '</p>', 
+                        'warning');
+                } else {
+                    showResultModal('❌ No encontrada', 
+                        '<p>La transacción no existe en la blockchain</p>' +
+                        '<p><strong>ID:</strong> ' + transactionId + '</p>', 
+                        'error');
+                }
+                
+            } catch (error) {
+                showResultModal('❌ Error de conexión', 
+                    '<p>No se pudo conectar con el servidor</p>', 'error');
+            }
+        }
+        
+        // Leer QR desde imagen (placeholder)
+        function leerQRImagen() {
+            const fileInput = document.getElementById('qrImageInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showResultModal('❌ Error', '<p>Selecciona una imagen primero.</p>', 'error');
+                return;
+            }
+            
+            const fileName = fileInput.files[0].name;
+            showResultModal('��� Función en desarrollo', 
+                '<p><strong>Archivo:</strong> ' + fileName + '</p>' +
+                '<p>��� Esta funcionalidad detectará automáticamente códigos QR</p>', 
+                'development');
+        }
+        
+        // Estado del sistema
+        async function consultarEstadoSistema() {
+            showResultModal('��� Consultando...', '<p>Obteniendo estado del sistema...</p>', 'loading');
+            
+            try {
+                const [blocksResponse, mempoolResponse] = await Promise.all([
+                    fetch('/blocks'),
+                    fetch('/transactionsPool')
+                ]);
+                
+                const blocks = await blocksResponse.json();
+                const mempool = await mempoolResponse.json();
+                const lastBlock = blocks[blocks.length - 1];
+                
+                showResultModal('⚙️ Estado del Sistema', 
+                    '<div class="system-status">' +
+                    '<h3>��� Blockchain</h3>' +
+                    '<p><strong>Bloques:</strong> ' + blocks.length + '</p>' +
+                    '<p><strong>Último hash:</strong> ' + (lastBlock?.hash ? lastBlock.hash.substring(0, 20) + '...' : 'N/A') + '</p>' +
+                    '<h3>��� Mempool</h3>' +
+                    '<p><strong>Transacciones pendientes:</strong> ' + mempool.length + '</p>' +
+                    '<p>✅ <strong>SISTEMA OPERATIVO</strong></p>' +
+                    '</div>', 
+                    'success');
+                
+            } catch (error) {
+                showResultModal('❌ Error del sistema', 
+                    '<p>No se pudo consultar el estado</p>', 'error');
+            }
+        }
+        
+        // Cerrar modal al hacer click fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('resultModal');
+            if (event.target == modal) {
+                closeResultModal();
+            }
+        }
+        
+        console.log('��� Interface de testing QR cargada');
+    </script>
+</body>
+</html>

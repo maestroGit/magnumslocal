@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../CartoLMM"
+		},
+		{
+			"path": "../../blocksWine"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "blocksWine"
+	}
+}

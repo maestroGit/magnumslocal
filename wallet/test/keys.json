@@ -1,0 +1,17 @@
+{
+  "keystoreVersion": 1,
+  "id": "b48acf70-ad45-11f0-8340-678d7f518cf7",
+  "createdAt": "2025-10-19T23:45:34.183Z",
+  "createdBy": "magnumsmaster v1.0.0",
+  "kdf": "scrypt",
+  "kdfParams": {
+    "salt": "83c830b454ab6af46d73bc04731d95d7"
+  },
+  "cipher": "aes-256-gcm",
+  "cipherParams": {
+    "iv": "adbecc895c45da0393f0e9bf",
+    "tag": "badb133791359ce9951b0c69b089d980"
+  },
+  "publicKey": "04f8afa40618f5ecdbb06fedc5fb4fb61242656c1c3b8e2903b306209edbf8018edc7dd2af94d2f5bf91b7139211dc19663de94dbe683292f45eb6e1d7ee84c341",
+  "encryptedPrivateKey": "4e8b6c4604195466b3e74ed87ac5aa499cbf51aa6aae3e828a7356f18a80f06fe54b21459d2f8c358e05c56b9a29d9294c262b6f70967d8d73dc28cb83720d4e"
+}

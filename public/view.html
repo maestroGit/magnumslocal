@@ -1,0 +1,323 @@
+<script src="js/jsQR.js" defer></script>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- CSP actualizada para permitir localhost y Seenode subdominios -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:6002 ws://localhost:6001 https://*.apps.run-on-seenode.com http://*.apps.run-on-seenode.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>Blocks</title>
+  <!-- Enlace al archivo de estilos CSS externo -->
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <!-- Unify UI behavior with blocksWine: metric-value and compact header nav -->
+  <style>
+    .metric-value {
+      font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1;
+      background: linear-gradient(90deg, var(--button-bg, #ff7b00), #ff932a);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .site-header .nav .btn .metric-value {
+      font-size: 1rem;
+      line-height: 1;
+    }
+    @media (max-width: 700px) {
+      .site-header .container { padding: 6px 10px; }
+      .site-header .nav { gap: 6px; }
+      .site-header .nav .btn { height: 28px; padding: 3px 6px; border-radius: 7px; }
+      .site-header .nav .btn .metric-value { font-size: 0.95rem; }
+      /* Hide logo image and nav buttons on mobile: show only title */
+      .site-header .container { justify-content: center; }
+      .site-header .logo-icon { display: none !important; }
+      .site-header .nav { display: none !important; }
+    }
+  </style>
+  <!-- Favicon placeholder (will be replaced/resized by script) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20width%3D'192'%20height%3D'192'%20viewBox%3D'0%200%2048%2048'%20fill%3D'none'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Cpolygon%20points%3D'24%2C4%2044%2C14%2044%2C34%2024%2C44%204%2C34%204%2C14'%20fill%3D'%23FF9800'%20stroke%3D'%23FF9800'%20stroke-width%3D'2'/%3E%3Cpolygon%20points%3D'24%2C4%2044%2C14%2024%2C24%204%2C14'%20fill%3D'%23FF9800'%20opacity%3D'0.85'/%3E%3Cpolygon%20points%3D'24%2C24%2044%2C14%2044%2C34%2024%2C44'%20fill%3D'%23FFB74D'%20opacity%3D'0.7'/%3E%3Cpolygon%20points%3D'24%2C24%2024%2C44%204%2C34%204%2C14'%20fill%3D'%23A0522D'%20opacity%3D'0.7'/%3E%3Crect%20x%3D'21'%20y%3D'12'%20width%3D'6'%20height%3D'20'%20rx%3D'3'%20fill%3D'white'%20opacity%3D'0.25'/%3E%3Crect%20x%3D'23'%20y%3D'8'%20width%3D'2'%20height%3D'6'%20rx%3D'1'%20fill%3D'white'%20opacity%3D'0.25'/%3E%3C/svg%3E">
+  <!-- ESM bootstrap entrypoint -->
+  <script type="module" src="js/bootstrap.js" defer></script>
+    <script src="js/global.js" defer></script>
+  <!-- Compatibility shim removed: helpers now imported in ES modules and accessed via window.* when needed -->
+  <!-- Legacy fetchData.js eliminado tras migración completa a ES Modules -->
+  <!-- jsQR.js ahora se sirve localmente para cumplir con CSP -->
+  <script type="module" src="js/qrProof.js" defer></script>
+  <!-- Legacy mining helper disabled: handled by events/dom.js (frontendMineBtn) -->
+  <!-- Legacy frot-mine.js eliminado definitivamente (minado manejado por events/dom.js) -->
+ 
+</head>
+<body>
+  <!-- Cabecera de navegación a ancho completo (estilo BlocksWine) -->
+  <header class="site-header">
+    <div class="container">
+      <img src="images/iconoBWred.png" alt="BlocksWine icon" class="logo-icon rotatable white">
+      <h1 class="logo">BlocksWine</h1>
+      <button id="hamburger-menu-btn" class="btn" aria-label="Abrir menú" aria-haspopup="true" aria-expanded="false" type="button" style="display:none;">
+        <span style="font-size:0.5em;line-height:1;">☰</span>
+      </button>
+      </button>
+      <nav class="nav">
+        <a class="btn" href="#top"><span class="metric-value">🏠</span></a>
+        <a class="btn" href="https://web-d5l049wewz07.up-de-fra1-k8s-1.apps.run-on-seenode.com/" target="_blank" rel="noopener noreferrer"><span class="metric-value">🗺️</span></a>
+        <a class="btn" href="demo-wallet/web-demo.html" target="_blank" rel="noopener noreferrer"><span class="metric-value">🍷</span></a>
+        <button class="btn" id="go-bodega-wallet" type="button"><span class="metric-value">🍇</span></button>
+      </nav>
+      <script src="js/hamburger-menu.js"></script>
+    </div>
+  </header>
+
+  <!-- Wallet public key fuera del header para evitar desbordamiento en móvil -->
+  <div id="global-wallet-publickey" class="wallet-publickey-header">
+    <label class="wallet-publickey-label">Cellar 🔌 </label>
+    <span id="walletGlobalPubKeyValue" class="wallet-publickey-value">Cargando...</span>
+    </div>
+  <!-- Modal para incluir lote -->
+  <div id="loteModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modalTitle">Formulario de Lote</h2>
+      <div id="modalBody">
+        <!-- Aquí se llenará dinámicamente el contenido del formulario o historial -->
+      </div>
+        <div id="modalHistorial" class="hidden">
+        <!-- Aquí se llenará dinámicamente el historial de la wallet -->
+      </div>
+        <div id="modalFooter" class="hidden">
+        <!-- Footer dinámico para acciones específicas -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para mensajes de información/error -->
+  <div id="errorModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 class="modal-title">Información</h2>
+      <div id="modalMessage" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal para Wallet -->
+  <div id="walletModalContainer" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>💼 Gestión de Wallet</h2>
+      <div id="walletModalBody" class="modal-body">
+        <!-- Aquí se llenará dinámicamente el contenido de wallet -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido oculto para información de wallet -->
+  <div id="infoWallet" class="hidden"></div>
+
+  <!-- Fondo cubos vino -->
+  <!-- Fondo SVG repetitivo aplicado por CSS, bloque wine-background eliminado -->
+  <!-- Dashboard Principal -->
+  <div class="dashboard">
+    
+
+    <div class="dashboard-grid">
+
+      <!-- Sección de Blockchain -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>🧱 Blockchain</h2>
+          
+        </div>
+        <p>Cadena de bloques</p>
+        <div class="card-actions">
+          <button id="block" class="dashboard-btn primary">Blockchain</button>
+        </div>
+      </div>
+
+
+
+      <!-- Sección de MemPool -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>📦 MemPool</h2>
+          
+        </div>
+        <p>Transacciones</p>
+        <div class="card-actions">
+          <button id="transactionsPoolBtn" class="dashboard-btn primary">MemPool</button>
+        </div>
+      </div>
+
+      <!-- Sección: Minado desde frontend -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>⛏️ Minar</h2>
+          
+        </div>
+        <p>Ronda de PoW.</p>
+        <div class="card-actions">
+          <button id="frontendMineBtn" class="dashboard-btn primary">Mine</button>
+        </div>
+      </div>
+
+      <!-- Sección de Transacciones -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>💸 Transacción</h2>
+          
+        </div>
+        <p>Operar en la red</p>
+        <div class="card-actions">
+          <button id="openTransactionModal" class="dashboard-btn primary">Register</button>
+          <button id="openTransactionBajaModal" class="dashboard-btn secondary">Consumed</button>
+        </div>
+      </div>
+
+      <!-- Sección de WineLovers -->
+        <div class="dashboard-card">
+          <div class="card-header">
+           
+            <h2>🍷 WineLovers</h2>
+            
+          </div>
+          <p>Acceso WineLovers</p>
+          <div class="card-actions">
+            <button id="wineLoverBtn" class="dashboard-btn primary" data-open-url="demo-wallet/web-demo.html" data-open-target="_blank">Wallet</button>
+          
+          </div>
+        </div>
+
+
+      <!-- Sección de Wallet -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>🍇 Winery</h2>
+          
+        </div>
+        <p>Gestión Bodega</p>
+        <div class="card-actions two-row-actions">
+          <button id="balanceWallet" class="dashboard-btn secondary wine-hover-btn">Balance</button>
+          <button id="publicKeyWallet" class="dashboard-btn secondary wine-hover-btn">pub</button>
+          <button id="walletModal" class="dashboard-btn primary wine-hover-btn" data-bound="1">Wallet</button>
+        </div>
+      </div>
+
+
+
+      <!-- Sección de Trazabilidad -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>🔗 Traceability</h2>
+          
+        </div>
+        <p>Verificación QR</p>
+        <div class="card-actions">
+          <button id="checkQRButton" class="dashboard-btn primary wine-hover-btn">Check QR</button>
+        </div>
+      </div>
+    
+      <!-- Sección de Monitor -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h2>📊 Monitor</h2>
+          
+        </div>
+        <p>Estado del equipo</p>
+        <div class="card-actions">
+          <button id="systemMonitor" class="dashboard-btn primary">Monitor</button>
+        </div>
+      </div>
+        
+
+
+        <!-- Sección de BlocksWine -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2>🌐 Website</h2>
+            
+          </div>
+          <p>Página web</p>
+          <div class="card-actions">
+            <button id="blocksWineBtn" class="dashboard-btn primary" data-open-url="https://blockswine.com/" data-open-target="_blank">BlocksWine</button>
+          </div>
+        </div>
+                <!-- Wallet Global Bodega como card en el grid -->
+        <div class="dashboard-card" id="wallet-global-card">
+          <div class="card-header">
+            <h2>🔓 Wainery</h2>
+          </div>
+          <p>Acceso Bodegas</p>
+          <div class="card-actions two-row-actions">
+            <button id="wallet-global-generate" class="dashboard-btn secondary wine-hover-btn" type="button">Create</button>
+            <button id="wallet-global-decrypt" class="dashboard-btn secondary wine-hover-btn" type="button">Decrypt</button>
+            <button id="wallet-global-upload" class="dashboard-btn primary wine-hover-btn" type="button">Upload</button>
+          </div>
+        </div>
+    
+</div>  
+</section>
+<script type="module">
+  // Ensure wallet button opens modal in view.html
+  import { showWalletModal, initWalletModalFeature } from './js/features/walletModal.js';
+  try { initWalletModalFeature(); } catch {}
+  const btn = document.getElementById('walletModal');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      try { showWalletModal(); } catch (err) { console.error('[view] wallet modal error', err); }
+    });
+  }
+</script>
+
+    <!-- Footer: Herramienta de cifrado/carga de wallet global -->
+    <!-- Mover fuera de dashboard-grid, al final del body -->
+
+  <!-- ...existing code... -->
+
+     
+
+
+    <!-- Contenedores dinámicos (ocultos inicialmente) -->
+    <div id="transactionsContainer" class="hidden"></div>
+    <div id="blocksContainer" class="hidden"></div>
+  </div>
+
+  <!-- Modal para mostrar QR generado -->
+  <script type="module" src="js/features/walletGlobal.js"></script>
+  <script src="js/scrollFooter.js" defer></script>
+  <div id="qrModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="qrModalTitle">🍷 Código QR Generado</h2>
+      <div id="qrModalBody" class="modal-body">
+        <div class="qr-container">
+          <div class="qr-info">
+            <h3 id="qrProductName"></h3>
+            <p><strong>Lote ID:</strong> <span id="qrLoteId"></span></p>
+            <p><strong>Propietario:</strong> <span id="qrPropietario"></span></p>
+            <p><strong>Transacción:</strong> <span id="qrTransaccion"></span></p>
+            <p><strong>Verificado en:</strong> <span id="qrVerificadoEn"></span></p>
+            <p><strong>Bodega:</strong> <span id="qrBodega"></span></p>
+            <p><strong>Año:</strong> <span id="qrAño"></span></p>
+            <p><strong>Región:</strong> <span id="qrRegion"></span></p>
+            <p><strong>Precio:</strong> <span id="qrPrecio"></span></p>
+            
+            <!-- Información de verificación blockchain -->
+            <div id="qrVerificationInfo" class="verification-info hidden">
+              <!-- Se llena dinámicamente desde JavaScript -->
+            </div>
+          </div>
+          <div class="qr-code">
+            <img id="qrImage" src="" alt="Código QR" class="qr-image">
+          </div>
+        </div>
+        <div class="qr-actions">
+          <button id="downloadQR" class="dashboard-btn primary">💾 Descargar QR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </body>
+
+</html>

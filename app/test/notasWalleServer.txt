@@ -1,0 +1,96 @@
+Totalmente de acuerdo, Javier. Lo que estás viendo es una estructura acoplada al estado interno del servidor, donde se genera una wallet por defecto y se usa para firmar transacciones, pero el usuario no tiene control ni visibilidad sobre esa clave privada. Esto es funcional para pruebas, pero no escalable ni seguro para un sistema real.
+Vamos a organizarlo sin volverte loco, con trazabilidad y modularidad.
+
+🧠 Problema actual
+- Al iniciar el servidor, se crea una wallet (const wallet = new Wallet()).
+- Esa wallet tiene una privateKey que solo el backend conoce.
+- El sistema permite enviar transacciones desde esa wallet, pero el usuario no sabe que es suya ni puede controlarla.
+- Todo el sistema gira en torno a wallet.publicKey, como si fuera “la wallet del usuario”.
+
+✅ Solución modular y trazable
+1. Separar la wallet del sistema de la wallet del usuario
+// Elimina la wallet por defecto
+// const wallet = new Wallet();
+
+// Crea una wallet del sistema solo para minería o inicialización
+const systemWallet = new Wallet(); // o Wallet.blockchainwallet()
+
+
+2. Crear endpoint para generar wallet bajo demanda
+app.post("/create-wallet", (req, res) => {
+  const newWallet = new Wallet();
+  res.json({
+    publicKey: newWallet.publicKey,
+    privateKey: newWallet.privateKey, // opcional, solo si se guarda localmente
+  });
+});
+
+
+3. Permitir que el usuario introduzca su clave pública
+app.post("/address-balance", (req, res) => {
+  const { address } = req.body;
+  const tempWallet = new Wallet(address, 0); // sin privateKey
+  const result = tempWallet.calculateBalance(bc, address);
+  res.json(result);
+});
+
+
+4. Para enviar transacciones: el usuario debe firmar
+Si quieres mantener la firma en backend para pruebas, puedes permitir que el usuario envíe su privateKey temporalmente (no recomendado en producción). Lo ideal es que el usuario firme en frontend o hardware wallet.
+
+🧩 Estructura recomendada
+/walletManager.js        → creación, validación y firma
+/routes/wallet.js        → endpoints para crear, consultar y firmar
+/routes/transaction.js   → lógica de envío y mempool
+/app.js or index.js      → solo orquesta y conecta
+
+🧪 Flujo ideal
+- Usuario crea su wallet o introduce su publicKey.
+- Consulta balance con /address-balance.
+- Firma transacción (idealmente en frontend).
+- Envía transacción firmada al backend.
+- El backend la valida y la propaga.
+
+✅ Solución modular y trazable
+1. Separar la wallet del sistema de la wallet del usuario
+// Elimina la wallet por defecto
+// const wallet = new Wallet();
+
+// Crea una wallet del sistema solo para minería o inicialización
+const systemWallet = new Wallet(); // o Wallet.blockchainwallet()
+
+
+2. Crear endpoint para generar wallet bajo demanda
+app.post("/create-wallet", (req, res) => {
+  const newWallet = new Wallet();
+  res.json({
+    publicKey: newWallet.publicKey,
+    privateKey: newWallet.privateKey, // opcional, solo si se guarda localmente
+  });
+});
+
+
+3. Permitir que el usuario introduzca su clave pública
+app.post("/address-balance", (req, res) => {
+  const { address } = req.body;
+  const tempWallet = new Wallet(address, 0); // sin privateKey
+  const result = tempWallet.calculateBalance(bc, address);
+  res.json(result);
+});
+
+
+4. Para enviar transacciones: el usuario debe firmar
+Si quieres mantener la firma en backend para pruebas, puedes permitir que el usuario envíe su privateKey temporalmente (no recomendado en producción). Lo ideal es que el usuario firme en frontend o hardware wallet.
+
+🧩 Estructura recomendada
+/walletManager.js        → creación, validación y firma
+/routes/wallet.js        → endpoints para crear, consultar y firmar
+/routes/transaction.js   → lógica de envío y mempool
+/app.js or index.js      → solo orquesta y conecta
+
+🧪 Flujo ideal
+- Usuario crea su wallet o introduce su publicKey.
+- Consulta balance con /address-balance.
+- Firma transacción (idealmente en frontend).
+- Envía transacción firmada al backend.
+- El backend la valida y la propaga.

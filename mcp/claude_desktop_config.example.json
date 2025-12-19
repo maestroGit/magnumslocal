@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "large-magnum-master": {
+      "command": "node",
+      "args": ["server-simple.js"],
+      "cwd": "C:/Users/maest/Documents/magnumsmaster/mcp",
+      "env": {
+        "NODE_ENV": "production",
+        "MCP_LOG_LEVEL": "info"
+      }
+    }
+  },
+  "_comment": "Configuración MCP para Large Magnum Master",
+  "_instructions": [
+    "1. Copia este contenido a tu claude_desktop_config.json",
+    "2. Ajusta la ruta 'cwd' a tu instalación específica",
+    "3. Reinicia Claude Desktop",
+    "4. Busca el icono 🔧 para confirmar conexión MCP"
+  ],
+  "_paths": {
+    "windows": "%APPDATA%/Claude/claude_desktop_config.json",
+    "macos": "~/Library/Application Support/Claude/claude_desktop_config.json", 
+    "linux": "~/.config/claude/claude_desktop_config.json"
+  }
+}

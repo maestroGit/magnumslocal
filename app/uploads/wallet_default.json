@@ -1,0 +1,17 @@
+{
+  "keystoreVersion": 1,
+  "kdf": "pbkdf2",
+  "kdfParams": {
+    "salt": "M/tdr4kYW8GheGNp6d9rNA==",
+    "iterations": 100000,
+    "keylen": 32,
+    "digest": "sha256"
+  },
+  "cipher": "aes-256-gcm",
+  "cipherParams": {
+    "iv": "S3PU4zR+ycdKj1Nq"
+  },
+  "tag": "pLC8I++23T8DauDSXUlOOQ==",
+  "publicKey": "04788167aa54d7998c72a27c2aa4d912851c17e4e58111a7a309b1a92174db1b9cc28f29f4454e7eb762b0c8a3245b843c9f990598a534be11463ea72a5c80e889",
+  "encryptedPrivateKey": "jlgyLLp0pJ623LRK9G4QOzX5fp9ohD7vaySCwjgtm9U="
+}

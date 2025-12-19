@@ -1,0 +1,40 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo gradiente -->
+  <defs>
+    <linearGradient id="wineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#722F37;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A0522D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B4513;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2F4F4F;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#1C1C1C;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fondo circular -->
+  <circle cx="64" cy="64" r="60" fill="url(#wineGradient)" stroke="#8B4513" stroke-width="2"/>
+  
+  <!-- Copa de vino estilizada -->
+  <path d="M 45 35 Q 45 25 55 25 L 73 25 Q 83 25 83 35 L 83 45 Q 83 65 64 65 Q 45 65 45 45 Z" 
+        fill="url(#glassGradient)" stroke="#FFD700" stroke-width="1.5"/>
+  
+  <!-- Stem de la copa -->
+  <rect x="62" y="65" width="4" height="20" fill="#2F4F4F"/>
+  
+  <!-- Base de la copa -->
+  <ellipse cx="64" cy="88" rx="12" ry="3" fill="#2F4F4F"/>
+  
+  <!-- Blockchain links -->
+  <circle cx="35" cy="45" r="6" fill="#FFD700" opacity="0.8"/>
+  <circle cx="93" cy="45" r="6" fill="#FFD700" opacity="0.8"/>
+  <circle cx="64" cy="25" r="6" fill="#FFD700" opacity="0.8"/>
+  
+  <!-- Conexiones -->
+  <line x1="41" y1="45" x2="57" y2="35" stroke="#FFD700" stroke-width="2" opacity="0.6"/>
+  <line x1="87" y1="45" x2="71" y2="35" stroke="#FFD700" stroke-width="2" opacity="0.6"/>
+  
+  <!-- Texto LMM -->
+  <text x="64" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" 
+        font-weight="bold" fill="#FFD700">LMM</text>
+</svg>

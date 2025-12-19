@@ -1,0 +1,12 @@
+{
+  "watch": [
+    "./"
+  ],
+  "ignore": [
+    "app/uploads/**",
+    "logs/**",
+    "node_modules/**",
+    "wallet/wallet_default.json"
+  ],
+  "ext": "js,json"
+}

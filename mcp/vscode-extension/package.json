@@ -1,0 +1,82 @@
+{
+  "name": "large-magnum-master-tools",
+  "displayName": "Large Magnum Master Blockchain Tools",
+  "description": "Herramientas para interactuar con el blockchain Large Magnum Master",
+  "version": "1.0.0",
+  "publisher": "magnummaster",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["blockchain", "magnum", "master", "wine", "crypto", "tools"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maestroGit/magnumsmaster"
+  },
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "magnumMaster.blockchainStatus",
+        "title": "🍷 Ver Estado del Blockchain",
+        "category": "Magnum Master",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "magnumMaster.blockchainInfo",
+        "title": "📋 Información del Sistema",
+        "category": "Magnum Master",
+        "icon": "$(info)"
+      },
+      {
+        "command": "magnumMaster.mineBlock",
+        "title": "⛏️ Minar Nuevo Bloque",
+        "category": "Magnum Master",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "magnumMaster.viewBlockchain",
+        "title": "🔍 Ver Blockchain Completo",
+        "category": "Magnum Master",
+        "icon": "$(list-tree)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "magnumMaster.blockchainStatus",
+          "when": "true"
+        },
+        {
+          "command": "magnumMaster.blockchainInfo",
+          "when": "true"
+        },
+        {
+          "command": "magnumMaster.mineBlock",
+          "when": "true"
+        },
+        {
+          "command": "magnumMaster.viewBlockchain",
+          "when": "true"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "magnumMasterExplorer",
+          "name": "🍷 Magnum Master Blockchain",
+          "when": "true"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "echo 'Compilación completa'",
+    "watch": "echo 'Modo watch activo'"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

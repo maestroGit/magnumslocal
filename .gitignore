@@ -1,0 +1,32 @@
+node_modules/
+.env
+botella.json
+transactionsOld.js
+app/test/setP2P.txt
+app/test/startNodes.ps1
+app/test/startNodes.bat
+app/test/notasVarias.txt
+src/test/assciativeArray.json
+app/uploads/lotes/
+presentacion.md
+src/tablaHigth.png
+src/tabla-CARG15.png
+src/tabla-CARG47.png
+
+scripts/
+
+# 📚 Documentación histórica (backup local)
+README-HISTORICO-COMPLETO.md
+README-NODOS-DETALLADO.md
+
+# 🔒 Archivos de seguridad que SÍ deben incluirse en git
+# .npmrc (incluido - configuración de seguridad)
+# package-lock.json (incluido - versiones exactas)
+
+# 🚫 Archivos temporales de npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 🔐 Logs de auditoría
+.npm-audit.json

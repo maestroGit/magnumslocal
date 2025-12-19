@@ -1,0 +1,193 @@
+set peers=ws://localhost:5001, 
+set P2P_PORT=5002, 
+set HTTP_PORT=3001,ws:w
+npm run dev
+set peers=ws://localhost:5002, set P2P_PORT=5003, set HTTP_PORT=3002
+npm run dev
+set peers=ws://localhost:5003, set P2P_PORT=5004, set HTTP_PORT=3003
+
+
+set en PowerShell no establece variables de entorno de la misma manera que en el símbolo del sistema (cmd). En PowerShell, debes usar $env: para establecer y acceder a las variables de entorno.
+
+Establecer y verificar una variable de entorno en PowerShell:
+Establecer la variable de entorno:
+$peers=ws://localhost:5001
+$env:HTTP_PORT=4000
+echo $env:HTTP_PORT
+
+
+MESSAGE_TYPES.chain: Reemplaza la cadena de bloques actual con la nueva cadena recibida.
+MESSAGE_TYPES.transaction: Maneja las transacciones recibidas (lógica no implementada en el ejemplo).
+MESSAGE_TYPES.clear_transactions: Maneja la limpieza de transacciones (lógica no implementada en el ejemplo).
+********************************************************
+********************************************************
+1. Estos comandos configuran un nodo y lo inician:
+set peers=ws://localhost:5001
+set P2P_PORT=5002
+set HTTP_PORT=3001
+npm run dev
+
+set peers=ws://localhost:5001: Establece la dirección del peer (otro nodo) al cual este nodo intentará conectarse. En este caso, ws://localhost:5001 indica que se intentará conectar a un nodo que escucha en el puerto 5001 en la misma máquina (localhost).
+set P2P_PORT=5002: Configura el puerto en el que este nodo escuchará conexiones P2P. Aquí, el nodo escuchará en el puerto 5002.
+set HTTP_PORT=3001: Configura el puerto en el que este nodo ofrecerá servicios HTTP. Aquí, el servicio HTTP estará disponible en el puerto 3001.
+npm run dev: Ejecuta el comando para iniciar el nodo en modo de desarrollo. 
+
+2. Iniciar el Segundo Nodo
+Comandos:
+sh
+set peers=ws://localhost:5002
+set P2P_PORT=5003
+set HTTP_PORT=3002
+npm run dev
+
+Aquí estamos configurando y arrancando un segundo nodo con diferentes puertos:
+set peers=ws://localhost:5002: Este nodo intentará conectarse a un nodo escuchando en ws://localhost:5002 (el puerto P2P del primer nodo).
+set P2P_PORT=5003: Configura el puerto P2P de este segundo nodo a 5003.
+set HTTP_PORT=3002: Configura el puerto HTTP de este segundo nodo a 3002.
+npm run dev: Inicia el segundo nodo en modo de desarrollo.
+
+3. Iniciar el Tercer Nodo
+Comandos:
+sh
+set peers=ws://localhost:5003
+set P2P_PORT=5004
+set HTTP_PORT=3003
+npm run dev
+Finalmente, configuramos y arrancamos un tercer nodo:
+set peers=ws://localhost:5003: Este nodo intentará conectarse a un nodo escuchando en ws://localhost:5003 (el puerto P2P del segundo nodo).
+set P2P_PORT=5004: Configura el puerto P2P de este tercer nodo a 5004.
+set HTTP_PORT=3003: Configura el puerto HTTP de este tercer nodo a 3003.
+npm run dev: Inicia el tercer nodo en modo de desarrollo.
+Resumen del Proceso
+Primer Nodo: Configurado para conectarse a sí mismo (peer en localhost:5001), escuchar en P2P_PORT=5002 y ofrecer servicios HTTP en HTTP_PORT=3001.
+Segundo Nodo: Se conecta al primer nodo (localhost:5002), escucha en P2P_PORT=5003 y ofrece servicios HTTP en HTTP_PORT=3002.
+Tercer Nodo: Se conecta al segundo nodo (localhost:5003), escucha en P2P_PORT=5004 y ofrece servicios HTTP en HTTP_PORT=3003.
+Cada nodo está configurado para conectarse al nodo anterior en la cadena, creando una red P2P local. Al ejecutar npm run dev, cada nodo se inicia con las configuraciones especificadas, lo que permite que se comuniquen entre ellos.
+
+Abre PowerShell como Administrador.
+Navega hasta el directorio donde guardaste el archivo startNodes.ps1.
+# Primer Nodo
+$env:peers="ws://localhost:5001"
+$env:P2P_PORT=5002
+$env:HTTP_PORT=3001
+Start-Process -NoNewWindow -FilePath "npm" -ArgumentList "run dev"
+
+# Esperar unos segundos para asegurarse de que el primer nodo se ha iniciado
+Start-Sleep -Seconds 5
+
+# Segundo Nodo
+$env:peers="ws://localhost:5002"
+$env:P2P_PORT=5003
+$env:HTTP_PORT=3002
+Start-Process -NoNewWindow -FilePath "npm" -ArgumentList "run dev"
+
+# Esperar unos segundos para asegurarse de que el segundo nodo se ha iniciado
+Start-Sleep -Seconds 5
+
+# Tercer Nodo
+$env:peers="ws://localhost:5003"
+$env:P2P_PORT=5004
+$env:HTTP_PORT=3003
+Start-Process -NoNewWindow -FilePath "npm" -ArgumentList "run dev"
+
+
+Ejecuta el script con el siguiente comando:
+powershell
+.\startNodes.ps1
+Este script configurará y lanzará cada nodo uno por uno, esperando unos segundos entre cada lanzamiento para asegurarse de que el nodo anterior se ha iniciado correctamente.
+comandos que se ejecutan en la línea de comandos del símbolo del sistema (CMD). Los scripts por lotes se utilizan para automatizar tareas repetitivas, ejecutar programas y realizar diversas operaciones en el sistema.
+Aquí tienes un ejemplo de un archivo .bat que configura y arranca tus nodos P2P de la blockchain de manera similar al script de PowerShell:
+@echo off
+rem Primer Nodo
+set peers=ws://localhost:5001
+set P2P_PORT=5002
+set HTTP_PORT=3001
+start cmd /k "npm run dev"
+
+rem Esperar unos segundos para asegurarse de que el primer nodo se ha iniciado
+timeout /t 5
+
+rem Segundo Nodo
+set peers=ws://localhost:5002
+set P2P_PORT=5003
+set HTTP_PORT=3002
+start cmd /k "npm run dev"
+
+rem Esperar unos segundos para asegurarse de que el segundo nodo se ha iniciado
+timeout /t 5
+
+rem Tercer Nodo
+set peers=ws://localhost:5003
+set P2P_PORT=5004
+set HTTP_PORT=3003
+start cmd /k "npm run dev"
+
+
+Para abrir con diferentes ventanas abiertas:
+@echo off
+rem Primer Nodo
+set peers=ws://localhost:5001
+set P2P_PORT=5002
+set HTTP_PORT=3001
+start "Nodo 1" cmd /k "npm run dev"
+
+rem Esperar unos segundos para asegurarse de que el primer nodo se ha iniciado
+timeout /t 5
+
+rem Segundo Nodo
+set peers=ws://localhost:5002
+set P2P_PORT=5003
+set HTTP_PORT=3002
+start "Nodo 2" cmd /k "npm run dev"
+
+rem Esperar unos segundos para asegurarse de que el segundo nodo se ha iniciado
+timeout /t 5
+
+rem Tercer Nodo
+set peers=ws://localhost:5003
+set P2P_PORT=5004
+set HTTP_PORT=3003
+start "Nodo 3" cmd /k "npm run dev"
+
+Pasos para ejecutar el script .bat:
+Guarda el script anterior en un archivo llamado startNodes.bat.
+Abre el Explorador de archivos y navega hasta el directorio donde guardaste el archivo startNodes.bat.
+Haz doble clic en el archivo startNodes.bat para ejecutarlo.
+
+Linux
+Convertir los scripts .bat a scripts de shell (.sh), que son nativos de Linux y ejecutables en la terminal. Aquí tienes un ejemplo de conversión:
+
+#!/bin/bash
+# Primer Nodo
+export peers=ws://localhost:5001
+export P2P_PORT=5002
+export HTTP_PORT=3001
+npm run dev &
+
+# Esperar unos segundos para asegurarse de que el primer nodo se ha iniciado
+sleep 5
+
+# Segundo Nodo
+export peers=ws://localhost:5002
+export P2P_PORT=5003
+export HTTP_PORT=3002
+npm run dev &
+
+# Esperar unos segundos para asegurarse de que el segundo nodo se ha iniciado
+sleep 5
+
+# Tercer Nodo
+export peers=ws://localhost:5003
+export P2P_PORT=5004
+export HTTP_PORT=3003
+npm run dev &
+
+# Posibles puertos abiertos que no se cierran
+Comando-> netstat para buscar PID en puerto abierto
+netstat -ano | findstr :3000
+
+Comando-> taskkill para matar el proceso:
+taskkill /PID 19212 /F
+
+/F fuerza el cierre del proceso.
+

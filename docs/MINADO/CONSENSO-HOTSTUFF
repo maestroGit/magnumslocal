@@ -1,0 +1,102 @@
+# 🧩 Enfoque para integrar HotStuff en sistemas de trazabilidad vinícola  
+**Approach to integrate HotStuff into wine traceability systems**
+
+https://medium.com/@Elifhilalumucu/understanding-hotstuff-and-byzantine-fault-tolerance-393ca878173f
+
+## 1. 🔍 Evaluación inicial  
+**Initial assessment**
+- Analizar si se requiere consenso BFT completo o solo validación distribuida.  
+- Identificar nodos críticos: bodegas, custodios, verificadores, reguladores.  
+- Determinar si se usará HotStuff puro o una variante (ej. Jolteon, DiemBFT).
+
+## 2. 🧠 Diseño modular del consenso  
+**Modular consensus design**
+- Crear un módulo `ConsensusEngine` con interfaz clara (`proposeBlock`, `vote`, `commit`).  
+- Separar lógica de validación de lógica de consenso.  
+- Integrar métricas de latencia y participación por nodo.
+
+## 3. 🏗️ Integración con trazabilidad  
+**Integration with traceability**
+- Cada bloque puede representar una acción trazable: cosecha, traslado, análisis, embotellado.  
+- Usar `QuorumCertificate` para validar eventos críticos (ej. cambio de custodio).  
+- Documentar cada tipo de evento como `TraceableAction` con metadatos firmados.
+
+## 4. 📦 Estructura de carpetas sugerida  
+**Suggested folder structure**
+
+/src /consensus hotstuff.ts         # Lógica principal del consenso validator.ts        # Validación de bloques y firmas qc.ts               # Quorum Certificates /traceability actions.ts          # Eventos trazables wineBatch.ts        # Lógica de lotes vinícolas /docs README.md             # Documentación bilingüe flow_diagram.png      # Visualización del flujo /tests hotstuff.test.ts      # Pruebas unitaria
+
+
+## 5. 📖 Documentación bilingüe  
+**Bilingual documentation**
+- Explicar el rol de cada nodo y cómo participa en el consenso.  
+- Incluir simulaciones visuales de flujos de bloques y certificados.  
+- Traducir términos técnicos con glosario contextual.
+
+---
+
+## 🧪 Ejemplo de módulo `ConsensusEngine`  
+**Example of `ConsensusEngine` module**
+
+```typescript
+// consensusEngine.ts
+
+type Block = {
+  id: string;
+  parentId: string;
+  data: TraceableAction;
+  proposer: string;
+  timestamp: number;
+};
+
+type Vote = {
+  blockId: string;
+  voter: string;
+  signature: string;
+};
+
+type QuorumCertificate = {
+  blockId: string;
+  votes: Vote[];
+};
+
+class ConsensusEngine {
+  private currentBlock: Block | null = null;
+  private pendingVotes: Map<string, Vote[]> = new Map();
+
+  proposeBlock(data: TraceableAction, proposer: string): Block {
+    const newBlock: Block = {
+      id: generateUniqueId(),
+      parentId: this.currentBlock?.id || "GENESIS",
+      data,
+      proposer,
+      timestamp: Date.now()
+    };
+    this.currentBlock = newBlock;
+    broadcastToValidators(newBlock);
+    return newBlock;
+  }
+
+  receiveVote(vote: Vote): void {
+    const votes = this.pendingVotes.get(vote.blockId) || [];
+    votes.push(vote);
+    this.pendingVotes.set(vote.blockId, votes);
+
+    if (votes.length >= getQuorumThreshold()) {
+      const qc: QuorumCertificate = {
+        blockId: vote.blockId,
+        votes
+      };
+      this.commitBlock(qc);
+    }
+  }
+
+  commitBlock(qc: QuorumCertificate): void {
+    const block = fetchBlockById(qc.blockId);
+    if (block) {
+      persistBlock(block);
+      logTraceableEvent(block.data);
+      this.currentBlock = block;
+    }
+  }
+}
