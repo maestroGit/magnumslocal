@@ -8,10 +8,10 @@ import { safeModal, showModal, showToast, showProgressModal, closeCurrentModal }
 // 🔐 Genera un QR con prueba blockchain (propiedad / verificación)
 export const generateQRWithProof = async (loteId, transactionId) => {
   try {
-    showProgressModal('Generando QR con prueba...', 'Blockchain', [
-      'Buscando transacción...',
-      'Verificando propiedad...',
-      'Generando QR seguro...',
+    showProgressModal('QR with proof...', 'Blockchain', [
+      'Searching transaction...',
+      'Verifying ownership...',
+      'Generating secure QR...',
     ]);
 
     const response = await fetchData('/qr-with-proof', {
@@ -25,8 +25,8 @@ export const generateQRWithProof = async (loteId, transactionId) => {
 
       if (response.error) {
         let extraMsg = '';
-        if (response.error && response.error.includes('Transacción no encontrada en blockchain ni en mempool')) {
-          extraMsg = `<br><br><span style='color:#b71c1c;'>[UTXO MEMPOOL] Doble gasto detectado: txId=init-fund-1, outputIndex=0. Transacción rechazada.</span>`;
+        if (response.error && response.error.includes('Transaction not found in blockchain or mempool')) {
+          extraMsg = `<br><br><span style='color:#b71c1c;'>[UTXO MEMPOOL] Double spend detected: txId=init-fund-1, outputIndex=0. Transaction rejected.</span>`;
         }
         showModal(`❌ Error: ${response.error}${extraMsg}`, 'Error');
         return;
@@ -43,12 +43,12 @@ export const generateQRWithProof = async (loteId, transactionId) => {
         }
       });
 
-      showToast('✅ QR con prueba blockchain generado', 'success');
+      showToast('✅ QR with blockchain proof generated', 'success');
     }, 1500);
   } catch (error) {
     closeCurrentModal();
-    console.error('Error generando QR con prueba:', error);
-    showModal(`❌ Error generando QR: ${error.message}`, 'Error');
+    console.error('Error generating QR with proof:', error);
+    showModal(`❌ Error generating QR: ${error.message}`, 'Error');
   }
 };
 
@@ -64,21 +64,21 @@ export const showQRModal = (qrBase64, loteData) => {
     const transaccion = loteData.verificationData?.transactionId || 'N/A';
     let advertencia = '';
     if (propietario === 'N/A' || transaccion === 'N/A') {
-      advertencia = `<div style='color:#b71c1c; margin-bottom:10px;'><strong>⚠️ QR generado sin datos de blockchain válidos.<br>Verifica que la transacción exista y esté confirmada.</strong></div>`;
+      advertencia = `<div style='color:#b71c1c; margin-bottom:10px;'><strong>⚠️ QR generated without valid blockchain data.<br>Verify that the transaction exists and is confirmed.</strong></div>`;
     }
     const modalContent = `
       <div style="text-align:center;">
-        <h2>QR con datos de la transacción</h2>
+        <h2>QR with transaction data</h2>
         ${advertencia}
         <img id="qrImageModal" src="${src}" alt="QR Blockchain" style="max-width:250px; margin:20px 0;">
         <div style="margin-top:15px; text-align:left;">
-          <strong>Lote ID:</strong> ${loteData.loteId || 'N/A'}<br>
-          <strong>Propietario:</strong> ${propietario}<br>
-          <strong>Transacción:</strong> ${transaccion}<br>
-          <strong>Verificado en:</strong> ${loteData.verificationData?.verifiedAt ? new Date(loteData.verificationData.verifiedAt).toLocaleString() : 'N/A'}<br>
+          <strong>Batch ID:</strong> ${loteData.loteId || 'N/A'}<br>
+          <strong>Owner:</strong> ${propietario}<br>
+          <strong>Transaction:</strong> ${transaccion}<br>
+          <strong>Verified at:</strong> ${loteData.verificationData?.verifiedAt ? new Date(loteData.verificationData.verifiedAt).toLocaleString() : 'N/A'}<br>
         </div>
         <div style="margin-top:20px;">
-          <a href="${src}" download="QR_${loteData.loteId || 'lote'}.png" style="background:#1976d2;color:#fff;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:1em;text-decoration:none;display:inline-block;">💾 Descargar QR</a>
+          <a href="${src}" download="QR_${loteData.loteId || 'lote'}.png" style="background:#1976d2;color:#fff;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:1em;text-decoration:none;display:inline-block;">💾 Download QR</a>
         </div>
       </div>
     `;
@@ -105,16 +105,16 @@ export const showTraceabilityModal = (transactionData) => {
   console.log('[TRACEABILITY][MODULE] showTraceabilityModal called', { transactionData });
   const traceabilityFormContent = `
     <div class="transaction-info" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-      <h3 style="margin: 0 0 15px 0;">✅ Transacción Completada</h3>
+      <h3 style="margin: 0 0 15px 0;">✅ Transaction Completed</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
         <p><strong>ID:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${(transactionData.id||'').substring(0,20)}...</code></p>
-        <p><strong>Importe:</strong><br>${transactionData.amount}€</p>
-        <p><strong>Destinatario:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${(transactionData.recipient||'').substring(0,15)}...</code></p>
-        <p><strong>Fecha:</strong><br>${(function(){ const ts = transactionData.timestamp || Date.now(); const d = new Date(ts); return isNaN(d.getTime())? new Date().toLocaleString() : d.toLocaleString(); })()}</p>
+        <p><strong>Amount:</strong><br>${transactionData.amount}€</p>
+        <p><strong>Recipient:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${(transactionData.recipient||'').substring(0,15)}...</code></p>
+        <p><strong>Date:</strong><br>${(function(){ const ts = transactionData.timestamp || Date.now(); const d = new Date(ts); return isNaN(d.getTime())? new Date().toLocaleString() : d.toLocaleString(); })()}</p>
       </div>
     </div>
     <p style="background: #46A24A; border: 1px solid #19af26ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9em;">
-      <strong>💡 Información:</strong> Los datos de la transacción se incluirán automáticamente en el QR blockchain proof.
+      <strong>💡 Information:</strong> Transaction data will be automatically included in the blockchain proof QR.
     </p>
     <form id="traceabilityForm">
       <input type="hidden" id="transactionId" value="${transactionData.id}">
@@ -124,9 +124,9 @@ export const showTraceabilityModal = (transactionData) => {
       <div id="altaCampos">
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div><label for="loteId">Lote ID:</label><input type="text" id="loteIdAlta" placeholder="Se genera automáticamente si está vacío"></div>
-          <div><label for="precio">Precio:</label><input type="text" id="precio" value="${transactionData.amount}€" readonly style="background: #f8f9fa; color: #6c757d;"></div>
+          <div><label for="precio">Price:</label><input type="text" id="precio" value="${transactionData.amount}€" readonly style="background: #f8f9fa; color: #6c757d;"></div>
         </div>
-        <label for="nombreProducto">Nombre Producto:</label>
+        <label for="nombreProducto">Product Name:</label>
         <input type="text" id="nombreProducto" placeholder="Ej: Rioja Gran Reserva" required>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div><label for="fechaProduccion">Fecha Producción:</label><input type="date" id="fechaProduccion" value="${new Date().toISOString().split('T')[0]}"></div>
@@ -142,15 +142,15 @@ export const showTraceabilityModal = (transactionData) => {
           <div><label for="alcohol">Alcohol:</label><input type="text" id="alcohol" placeholder="Ej: 14.5%"></div>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div><label for="región">Región:</label><input type="text" id="región" placeholder="Ej: La Rioja"></div>
-          <div><label for="denominacionOrigen">Denominación de Origen:</label><input type="text" id="denominacionOrigen" placeholder="Ej: D.O.Ca Rioja"></div>
+          <div><label for="región">Region:</label><input type="text" id="región" placeholder="Ej: La Rioja"></div>
+          <div><label for="denominacionOrigen">Denomination of Origin:</label><input type="text" id="denominacionOrigen" placeholder="Ej: D.O.Ca Rioja"></div>
         </div>
-        <label for="notaDeCata">🍷 Cata:</label>
+        <label for="notaDeCata">🍷 Tasting Notes:</label>
         <textarea id="notaDeCata" placeholder="Ej: Vino equilibrado con notas a frutos rojos y especias" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
-        <label for="maridaje">🍴 Maridaje:</label>
+        <label for="maridaje">🍴 Pairing:</label>
         <textarea id="maridaje" placeholder="Ej: Carnes rojas, quesos curados, embutidos" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
-        <label for="comentarios">📝 Notas</label>
-        <textarea id="comentarios" placeholder="Comentarios adicionales (opcional)" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
+        <label for="comentarios">📝 Notes</label>
+        <textarea id="comentarios" placeholder="Additional comments (optional)" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
         <div style="margin-top: 20px; text-align: center;">
           <button type="submit" style="background: linear-gradient(135deg, #F7931A, #A0522D); color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; transition: all 0.3s;">
             🔲 Create QR</button>
@@ -208,13 +208,13 @@ export const showTraceabilityModal = (transactionData) => {
           body: JSON.stringify({ txId: transactionId, metadata })
         });
         if (loteResp.error || !loteResp.success) {
-          showModal('Error creando registro de lote: ' + (loteResp.error || 'Error desconocido'), 'Error');
+          showModal('Error creating batch record: ' + (loteResp.error || 'Unknown error'), 'Error');
           return;
         }
         await generateQRWithProof(loteId, transactionId);
       } catch (err) {
-        console.error('[TRACEABILITY][MODULE] Error registrando lote o generando QR', err);
-        showModal('Error al generar el QR: ' + err.message, 'Error interno');
+        console.error('[TRACEABILITY][MODULE] Error registering batch or generating QR', err);
+        showModal('Error generating QR: ' + err.message, 'Internal Error');
       }
     });
   }, 0);

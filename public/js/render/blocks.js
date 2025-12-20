@@ -16,13 +16,13 @@ export function showBlockTransactions(blockIndex) {
     const txs = Array.isArray(block.data) ? block.data : [];
     const content = `
       <div class="modal-info">
-        <p><strong>📦 Transacciones del Bloque #${blockIndex}</strong></p>
+        <p><strong>📦 Transactions Blocks #${blockIndex}</strong></p>
         <p><strong>Hash:</strong> ${block.hash}</p>
         <p><strong>Timestamp:</strong> ${new Date(block.timestamp).toLocaleString()}</p>
-        <p><strong>Total transacciones:</strong> ${txs.length}</p>
+        <p><strong>Total transactions:</strong> ${txs.length}</p>
       </div>
       <div class="modal-body">
-        ${txs.length === 0 ? '<p>No hay transacciones en este bloque.</p>' : '<ul>' + txs.map((tx, i) => {
+        ${txs.length === 0 ? '<p>No hay transactions en este block.</p>' : '<ul>' + txs.map((tx, i) => {
             const txId = (tx && tx.id) ? tx.id : (typeof tx === 'string' ? tx : JSON.stringify(tx).substring(0,40));
             return `<li class=\"tx-item\">
               <div class=\"tx-header\">
@@ -36,10 +36,10 @@ export function showBlockTransactions(blockIndex) {
       </div>
     `;
   // Uso unificado de safeModal
-    safeModal(`Transacciones - Bloque #${blockIndex}`, content);
+    safeModal(`Transactions - Block #${blockIndex}`, content);
   } catch (err) {
     console.error('showBlockTransactions error', err);
-    alert('Error mostrando transacciones: ' + err.message);
+    alert('Error transacctions: ' + err.message);
   }
 }
 
@@ -82,10 +82,10 @@ export function renderBlocks(blocks, options = {}) {
       <ul>
         ${blocks.map((block, index) => `
           <li>
-            <strong>Bloque #${index}</strong><br>
+            <strong>Block #${index}</strong><br>
             Hash: ${String(block.hash).substring(0,20)}...<br>
             Timestamp: ${new Date(block.timestamp).toLocaleString()}<br>
-            Transacciones: ${Array.isArray(block.data) ? block.data.length : 0}
+            Transactions: ${Array.isArray(block.data) ? block.data.length : 0}
             <div class=\"tx-actions\">
               <button class=\"dashboard-btn secondary show-block-txs-btn\" type=\"button\" data-block-index=\"${index}\">Block</button>
             </div>

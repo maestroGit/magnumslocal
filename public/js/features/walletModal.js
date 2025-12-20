@@ -73,7 +73,7 @@ export function showWalletModal() {
     return;
   }
   const walletContent = `
-    <h3>Consultar Balance de Clave Pública:</h3>
+    <h3>Balance Clave Pública:</h3>
     <div style="margin:15px 0;">
       <label for="addressInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Clave Pública:</label>
       <input type="text" id="addressInputModal" placeholder="Introduce la clave pública..." style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
@@ -83,6 +83,12 @@ export function showWalletModal() {
     </div>
     <h3>Cargar Wallet desde Archivo:</h3>
     <div style="margin:15px 0;">
+      <label for="fileInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Seleccionar archivo de wallet:</label>
+      <input type="file" id="fileInputModal" accept=".json" style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
+      <button id="submitHardwareWalletModal" style="width:100%;">Cargar Wallet</button>
+    </div>
+    <div id="infoWalletModal" style="display:none"></div>
+    <!-- infoWalletModal eliminado para evitar duplicidad de modales -->
   `;
   modalBody.innerHTML = walletContent;
   // Ensure modal is visible even if it has .hidden
@@ -146,7 +152,7 @@ export function setupWalletModalEvents() {
       } catch (err) {
         console.error('[walletModal] balance fetch error', err);
         showModal('Ocurrió un error inesperado al consultar el balance.', 'Error de Conexión');
-        showToast('Error de conexión', 'error');
+        showToast('Error conexion', 'error');
       }
     });
     submitBalanceBtn.dataset.bound = '1';
