@@ -94,15 +94,14 @@ export function initDomEvents() {
         const minedModal = `
           <div id="sideModalPanel" class="modal" style="display:flex; align-items: flex-start; justify-content: center; z-index:30000;">
             <div class="modal-content" style="max-width:600px; min-width:320px; margin:48px auto 0 auto;">
-              <span class="close" onclick="window.closeSideModalPanel && window.closeSideModalPanel()">&times;</span>
-              <h2>Minado completado</h2>
+              <h2>⛏️✔️</h2>
               <div class="balance-result-modal" style="text-align:center;">
                 <p><strong>Bloque:</strong> ${lastBlock?.hash ? String(lastBlock.hash).slice(0,20)+'\u001a' : 'N/A'}</p>
                 <p><strong>Timestamp:</strong> ${lastBlock?.timestamp ? new Date(lastBlock.timestamp).toLocaleString() : 'N/A'}</p>
                 <p><strong>Transacciones incluidas:</strong> ${txCount}</p>
               </div>
               <div class="modal-body" style="text-align:center;">
-                ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">Ver nuevo bloque</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
+                ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">Block</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
               </div>
             </div>
           </div>`;

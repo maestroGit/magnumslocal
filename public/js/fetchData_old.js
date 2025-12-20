@@ -1,5 +1,5 @@
 "use strict";
-const apiBaseUrl = "http://localhost:3000";
+const apiBaseUrl = "http://localhost:6001";
 // =========================
 // MODALES Y UTILIDADES UI
 // =========================

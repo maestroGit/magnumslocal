@@ -191,60 +191,6 @@ export function showInlineModal(payload, title = 'Detalle') {
 }
 
 // Side modal: fixed panel that slides at right or bottom, above everything
-export function showSideModal(htmlContent, title = 'Detalle', side = 'right') {
-  try {
-    const existing = document.getElementById('sideModalPanel');
-    if (existing) existing.remove();
-    const panel = document.createElement('div');
-    panel.id = 'sideModalPanel';
-    panel.style.position = 'fixed';
-    panel.style.zIndex = '30000';
-    panel.style.background = '#220F17';
-    panel.style.color = '#fff';
-    panel.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)';
-    panel.style.borderRadius = '10px';
-    panel.style.border = '1px solid rgba(0,0,0,0.08)';
-    panel.style.padding = '16px';
-    panel.style.maxWidth = '600px';
-    panel.style.width = 'min(42vw, 600px)';
-    panel.style.maxHeight = '80vh';
-    panel.style.overflow = 'auto';
-    if (side === 'right') {
-      panel.style.top = '24px';
-      panel.style.right = '24px';
-    } else {
-      panel.style.left = '24px';
-      panel.style.bottom = '24px';
-    }
-    // Add close button (aspa) always at top right
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'dashboard-btn close-modal-btn';
-    closeBtn.setAttribute('aria-label', 'Cerrar');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.style.float = 'right';
-    closeBtn.style.background = 'none';
-    closeBtn.style.border = 'none';
-    closeBtn.style.color = '#fff';
-    closeBtn.style.fontSize = '22px';
-    closeBtn.style.lineHeight = '1';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.margin = '-8px -8px 0 0';
-    closeBtn.onclick = window.closeSideModalPanel;
-    panel.appendChild(closeBtn);
-    const h = document.createElement('h3');
-    h.textContent = title;
-    h.style.marginTop = '0';
-    panel.appendChild(h);
-    const content = document.createElement('div');
-    // Remove any close button from injected HTML to avoid duplicate aspas
-    content.innerHTML = htmlContent.replace(/<button[^>]*close-modal-btn[^>]*>[\s\S]*?<\/button>/gi, '');
-    panel.appendChild(content);
-    document.body.appendChild(panel);
-  } catch (e) {
-    console.warn('showSideModal fallback', e);
-    showModal(htmlContent, title);
-  }
-}
 // Unified safe modal helper (title, htmlContent)
 // Uses showModalForm when available, otherwise falls back to showModal swapping parameter order.
 export function safeModal(title, htmlContent) {

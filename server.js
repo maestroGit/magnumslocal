@@ -1,4 +1,8 @@
+// ¡IMPORTANTE! Cargar dotenv ANTES de cualquier otro import
 import dotenv from "dotenv";
+dotenv.config();
+console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
+console.log("[DEBUG] NODE_ENV:", process.env.NODE_ENV);
 import express from "express";
 import http from "http";
 import { fileURLToPath } from "url";
@@ -9,9 +13,6 @@ import rateLimit from "express-rate-limit";
 import cors from "cors";
 import fs from "fs";
 import multer from "multer";
-
-// Cargar variables de entorno antes de cualquier uso de process.env
-dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
@@ -245,6 +246,7 @@ import crypto from "crypto";
 import { encryptWallet, decryptWallet } from "./app/walletCrypto.js";
 import { UTXOManager } from "./src/utxomanager.js";
 const utxoManager = new UTXOManager();
+global.utxoManager = utxoManager;
 const bc = new Blockchain();
 bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
 // Sincronizar el UTXOManager con la cadena al arrancar

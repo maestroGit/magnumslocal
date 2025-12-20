@@ -26,13 +26,6 @@ const MESSAGE_TYPES = {
   handshake: "HANDSHAKE_HTTP_URL",
 };
 
-// Obtiene los peers iniciales desde variable de entorno PEERS, separados por coma
-console.log("[DEBUG] process.env.PEERS:", process.env.PEERS);
-const peersEnv = process.env.PEERS && process.env.PEERS.trim()
-  ? process.env.PEERS.split(",").filter((peer) => peer.trim())
-  : [];
-console.log("[DEBUG] peersEnv:", peersEnv);
-
 const P2P_PORT = process.env.P2P_PORT || 5001;
 
 // Clase que representa el servidor P2P
@@ -42,6 +35,12 @@ class P2PServer {
     this.transactionsPool = transactionsPool;
     this.sockets = [];   // Sockets conectados (WebSocket)
     this.peers = [];     // Lista de peers enriquecida: [{ socket, nodeId, httpUrl, lastSeen }]
+    // Leer peers desde process.env.PEERS en el momento de instanciar la clase
+    console.log("[DEBUG][P2PServer] process.env.PEERS:", process.env.PEERS);
+    this.peersEnv = process.env.PEERS && process.env.PEERS.trim()
+      ? process.env.PEERS.split(",").filter((peer) => peer.trim())
+      : [];
+    console.log("[DEBUG][P2PServer] peersEnv:", this.peersEnv);
   }
 
   // Inicia el servidor WebSocket y se conecta a los peers definidos
@@ -69,12 +68,12 @@ class P2PServer {
 
   // Conecta este nodo a cada peer definido en la configuración
   connectToPeers = () => {
-    if (peersEnv.length === 0) {
+    if (this.peersEnv.length === 0) {
       console.log("🔗 Sin peers configurados - Nodo Genesis.");
       return;
     }
 
-    peersEnv.forEach((peerUrl) => {
+    this.peersEnv.forEach((peerUrl) => {
       const cleanPeer = peerUrl.trim();
       if (!cleanPeer) {
         console.warn(`⚠️ Peer vacío ignorado: "${peerUrl}"`);
@@ -191,6 +190,12 @@ class P2PServer {
           // Guarda y registra la cadena de bloques completa recibida
           console.log("⛓️  Recibida nueva cadena");
           this.blockchain.replaceChain(data.chain);
+          // --- Sincronizar utxoManager con la nueva cadena ---
+          if (typeof global.utxoManager !== 'undefined' && global.utxoManager) {
+            global.utxoManager.utxoSet = {};
+            this.blockchain.chain.forEach((block) => global.utxoManager.updateWithBlock(block));
+            console.log("[SYNC] utxoManager sincronizado tras replaceChain");
+          }
           console.log(
             "⛓️  Cadena local actual:",
             JSON.stringify(this.blockchain.chain, null, 2)

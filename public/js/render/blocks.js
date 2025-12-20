@@ -28,7 +28,7 @@ export function showBlockTransactions(blockIndex) {
               <div class=\"tx-header\">
                 <strong class=\"tx-label\">Tx:</strong>
                 <code class=\"tx-id\">${txId}</code>
-                <button class=\"dashboard-btn secondary tx-copy-btn\" type=\"button\" data-copy-txid=\"${txId}\">Copiar TXID</button>
+                <button class=\"dashboard-btn secondary tx-copy-btn\" type=\"button\" data-copy-txid=\"${txId}\">Copy TXID</button>
               </div>
               <pre class=\"json-display\">${typeof tx === 'string' ? tx : JSON.stringify(tx, null, 2)}</pre>
             </li>`
@@ -72,14 +72,13 @@ export function renderBlocks(blocks, options = {}) {
 
   const blocksModalContent = `
     <div class="modal-info">
-      <p><strong>✅ Bloques cargados exitosamente</strong></p>
-      <p><strong>Total de bloques:</strong> ${blocks.length}</p>
-      <p><strong>Último bloque:</strong> ${
+      <p><strong>✅ Blocks Loaded Successfully</strong></p>
+      <p><strong>Total blocks:</strong> ${blocks.length}</p>
+      <p><strong>Último block:</strong> ${
         blocks.length > 0 ? new Date(blocks[blocks.length - 1].timestamp).toLocaleString() : 'N/A'
       }</p>
     </div>
     <div class="modal-body">
-      <h3>Resumen de la Blockchain:</h3>
       <ul>
         ${blocks.map((block, index) => `
           <li>
@@ -88,12 +87,12 @@ export function renderBlocks(blocks, options = {}) {
             Timestamp: ${new Date(block.timestamp).toLocaleString()}<br>
             Transacciones: ${Array.isArray(block.data) ? block.data.length : 0}
             <div class=\"tx-actions\">
-              <button class=\"dashboard-btn secondary show-block-txs-btn\" type=\"button\" data-block-index=\"${index}\">Ver Bloque</button>
+              <button class=\"dashboard-btn secondary show-block-txs-btn\" type=\"button\" data-block-index=\"${index}\">Block</button>
             </div>
           </li>`).join('')}
       </ul>
     </div>`;
   if (options.showModal !== false) {
-    safeModal('Blockchain - Bloques Cargados', blocksModalContent);
+    safeModal('Blockchain', blocksModalContent);
   }
 }

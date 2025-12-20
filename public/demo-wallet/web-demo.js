@@ -322,10 +322,10 @@ function openConfirmModal(title, html, opts = {}) {
 // use the backend on port 3000 explicitly to avoid 404s on relative paths.
 async function fetchUTXOs(address) {
   try {
-    // If current page is not on port 3000, assume backend is at :3000
-    const isDifferentPort = location.port && location.port !== "3000";
+    // If current page is not on port 6001, assume backend is at :6001
+    const isDifferentPort = location.port && location.port !== "6001";
     const base = isDifferentPort
-      ? `${location.protocol}//${location.hostname}:3000`
+      ? `${location.protocol}//${location.hostname}:6001`
       : "";
     const url = `${base}/utxo-balance/${encodeURIComponent(address)}`;
     const res = await fetch(url);
@@ -1430,9 +1430,9 @@ document.addEventListener("DOMContentLoaded", () => {
         `
       );
       try {
-        const isDifferentPort = location.port && location.port !== "3000";
+        const isDifferentPort = location.port && location.port !== "6001";
         const base = isDifferentPort
-          ? `${location.protocol}//${location.hostname}:3000`
+          ? `${location.protocol}//${location.hostname}:6001`
           : "";
         const resp = await fetch(`${base}/transaction`, {
           method: "POST",
