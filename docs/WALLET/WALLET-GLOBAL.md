@@ -142,5 +142,5 @@ Revisar los UTXOs que ya están bloqueados por transacciones pendientes en el me
 Elegir otros UTXOs disponibles (por ejemplo, el de 60 o el de 1 si el monto lo permite).
 Así evitarás rechazos innecesarios y permitirás que el usuario pueda gastar sus fondos disponibles correctamente.
 
-¿Quieres que te ayude a modificar la lógica de selección de UTXOs para que ignore los UTXOs bloqueados en el mempool?
+
 

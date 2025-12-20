@@ -597,7 +597,7 @@ const walletPath = path.join(__dirname, "./app/uploads/wallet_default.json");
 let keyPairData = null;
 
 // Passphrase por defecto para arranque automático (ajusta según tu flujo)
-const DEFAULT_WALLET_PASSPHRASE = "javi";
+const DEFAULT_WALLET_PASSPHRASE = process.env.DEFAULT_WALLET_PASSPHRASE || "javi";
 
 // Cargar wallet global en memoria si existe el archivo
 if (fs.existsSync(walletPath)) {

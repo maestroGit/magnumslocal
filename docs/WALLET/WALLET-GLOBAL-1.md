@@ -17,6 +17,10 @@ La wallet global es la clave pública y privada principal que utiliza el servido
     "privateKey": "..."
   }
   ```
+# INICIO 
+ logic for the initial allocation of 500 units to the global wallet is implemented in the genesis block creation in magnumslocal. In the file src/block.js, the getGenesisBlock() method creates a transaction in the genesis block with an output of 500 units assigned to the public key found in wallet_default.json (or a default public key if the file is missing).
+
+This transaction is included in the genesisData array, and when the blockchain is initialized (src/blockchain.js), the UTXO set is updated to reflect this allocation, making the 500 units available to the global wallet.
 
 ## Uso en transacciones burn (baja de token)
 - La wallet global se utiliza para firmar las transacciones de baja (burn) cuando se retira un token de la circulación.
