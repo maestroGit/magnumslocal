@@ -72,6 +72,7 @@
         border-bottom: none;
     }
 }
+
 .modal-content ul {
     max-width: 100%;
     overflow-x: auto;
@@ -129,7 +130,7 @@
 #sideModalPanel {
     position: fixed !important;
     overflow: visible !important;
-    top: 56px !important; /* Baja el panel para dejar espacio al aspa y evitar que tape el contenido */
+    top: 70px !important; /* Baja el panel para dejar espacio al aspa y evitar que tape el contenido */
 }
 /* Mejorar legibilidad de la clave pública global en escritorio */
 @media (min-width: 601px) {
@@ -1165,15 +1166,6 @@ button:hover {
 }
 
 /* Estilos para formularios dentro de modales */
-        color: #333;
-        overflow-x: hidden; /* evitar scroll lateral en vistas amplias */
-    background-color: transparent;
-    box-shadow: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-}
-
 .modal-content input,
 .modal-content select,
 .modal-content textarea {
@@ -1709,6 +1701,9 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     font-size: 11px;
     overflow-x: auto;
     max-height: 300px;
+    white-space: pre-wrap;      /* Permite saltos de línea automáticos */
+    word-break: break-all;      /* Rompe palabras largas */
+    overflow-wrap: anywhere;    /* Rompe donde sea necesario */
 }
 
 /* 🍷 Header temático para vinos */

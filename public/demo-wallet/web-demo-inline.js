@@ -110,7 +110,7 @@
           if (balEl) {
             var serverBal = ev && ev.detail && ev.detail.serverBalance;
             var available = ev && ev.detail && ev.detail.available;
-            balEl.textContent = (serverBal ?? available ?? balEl.textContent);
+            balEl.textContent = (available ?? serverBal ?? balEl.textContent);
           }
           // Render UTXOs list si está en evento
           var utxoList = clone.querySelector('#utxoSelectList');
@@ -137,6 +137,26 @@
                 label.innerHTML = '<span class="utxo-amount">'+u.amount+'</span> <span class="utxo-meta">'+u.txId+' #'+u.outputIndex+'</span>';
                 div.appendChild(cb);
                 div.appendChild(label);
+
+                // Botón BURN
+                var burnBtn = document.createElement('button');
+                burnBtn.textContent = 'BURN';
+                burnBtn.className = 'burn-btn';
+                burnBtn.style = 'margin-left:8px;padding:2px 10px;border-radius:4px;background:#c00;color:#fff;border:none;cursor:pointer;';
+                burnBtn.onclick = function(e) {
+                  e.preventDefault();
+                  try {
+                    if (window.burnUtxo) {
+                      window.burnUtxo(u);
+                    } else {
+                      alert('BURN no disponible: falta window.burnUtxo(). Recarga la página.');
+                    }
+                  } catch (err) {
+                    console.error('[WALLET][BURN][ERROR]', err);
+                    alert('Error en BURN: ' + ((err && err.message) || err));
+                  }
+                };
+                div.appendChild(burnBtn);
                 utxoList.appendChild(div);
               });
             }

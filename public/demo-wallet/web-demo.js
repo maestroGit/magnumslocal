@@ -588,12 +588,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Helper: recalcula el balance disponible y habilita/bloquea Send según DOM actual
   function recalcAvailableFromDOM(){
     try {
-      const list = document.querySelectorAll('#utxoSelectList .utxo-checkbox');
+      const modalEl = document.getElementById('loteModal');
+      const modalOpen = !!(modalEl && !modalEl.classList.contains('hidden') && modalEl.style.display !== 'none');
+      const scope = (modalOpen && modalEl) ? modalEl : document;
+      const listRoot = scope.querySelector('#utxoSelectList') || document.getElementById('utxoSelectList');
+      const list = listRoot ? listRoot.querySelectorAll('.utxo-checkbox') : [];
       let available = 0;
       list.forEach(cb => { if (!cb.disabled) available += parseFloat(cb.dataset.amount || '0') || 0; });
-      const balEl = document.getElementById('balance');
+      const balEl = scope.querySelector('#balance') || document.getElementById('balance');
       if (balEl) balEl.textContent = String(available);
-      const sendBtn = document.getElementById('sendTx');
+      const sendBtn = scope.querySelector('#sendTx') || document.getElementById('sendTx');
       if (sendBtn) {
         const disabled = available <= 0;
         sendBtn.disabled = disabled;
@@ -726,36 +730,149 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById('unifiedPassForm');
     const input = document.getElementById('unifiedPassInput');
     if (input) setTimeout(()=> input.focus(), 50);
-    const close = () => { 
+    const close = ({ cancelled } = { cancelled: true }) => { 
       modal.classList.add('hidden'); 
       modal.style.display='none'; 
-      // Clean up import button state if user cancels
-      const importBtn = document.getElementById('import');
-      if (importBtn && importBtn.classList.contains('wallet-loaded')) {
-        importBtn.classList.remove('wallet-loaded');
-        importBtn.style.display = '';
-        importBtn.disabled = false;
-        console.log('[passphrase] cleaned up import button state on cancel');
+      // Clean up import button state ONLY if the user cancels the prompt
+      if (cancelled) {
+        const importBtn = document.getElementById('import');
+        if (importBtn && importBtn.classList.contains('wallet-loaded')) {
+          importBtn.classList.remove('wallet-loaded');
+          importBtn.style.display = '';
+          importBtn.disabled = false;
+          console.log('[passphrase] cleaned up import button state on cancel');
+        }
       }
       try { document.dispatchEvent(new CustomEvent('appmodal:close')); } catch {}
     };
     // Conectar la X de cierre del modal y accesibilidad básica
     const closeBtn = modal.querySelector('.close');
     if (closeBtn) {
-      closeBtn.onclick = close;
+      closeBtn.onclick = () => close({ cancelled: true });
       closeBtn.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); close(); }
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); close({ cancelled: true }); }
       });
     }
     // Cerrar al hacer click en overlay
-    function overlayHandler(ev){ if (ev.target === modal) { close(); } }
+    function overlayHandler(ev){ if (ev.target === modal) { close({ cancelled: true }); } }
     modal.addEventListener('click', overlayHandler, { once: true });
     // Cerrar con Escape
-    document.addEventListener('keydown', function escHandler(ev){ if (ev.key === 'Escape'){ ev.preventDefault(); close(); } }, { once: true });
-    if (form) form.onsubmit = (e)=>{ e.preventDefault(); const pass = input && input.value; if (!pass) return; close(); try { onSubmit && onSubmit(pass); } catch(e){ console.error('onSubmit error', e); } };
+    document.addEventListener('keydown', function escHandler(ev){ if (ev.key === 'Escape'){ ev.preventDefault(); close({ cancelled: true }); } }, { once: true });
+    if (form) form.onsubmit = (e)=>{ e.preventDefault(); const pass = input && input.value; if (!pass) return; close({ cancelled: false }); try { onSubmit && onSubmit(pass); } catch(e){ console.error('onSubmit error', e); } };
   }
   // Expose prompt globally for reuse in inline modal flows
   try { window.openPassphrasePrompt = openPassphrasePrompt; } catch {}
+
+  // --- BURN (baja token) ---
+  // Convención de burn: enviar el UTXO a una dirección irrecuperable.
+  // En el flujo documental se usa la zero-address.
+  const DEFAULT_BURN_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+  async function postSignedTransactionToServer(signedTransaction, passphrase) {
+    const isDifferentPort = location.port && location.port !== "6001";
+    const base = isDifferentPort
+      ? `${location.protocol}//${location.hostname}:6001`
+      : "";
+    const resp = await fetch(`${base}/transaction`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signedTransaction, passphrase }),
+    });
+    const contentType = resp.headers.get("content-type") || "";
+    const body = contentType.includes("application/json")
+      ? await resp.json().catch(() => ({}))
+      : await resp.text().catch(() => "");
+    return { resp, body, isJson: contentType.includes("application/json") };
+  }
+
+  async function buildBurnSignedTransaction(utxo, burnAddress) {
+    const sender = imported && imported.pub;
+    if (!sender) throw new Error('No hay wallet importada.');
+    if (!utxo || !utxo.txId || (utxo.outputIndex === undefined || utxo.outputIndex === null)) {
+      throw new Error('UTXO inválido.');
+    }
+    const amount = Number(utxo.amount);
+    if (!amount || amount <= 0) throw new Error('UTXO sin amount válido.');
+    const inputs = [{
+      txId: utxo.txId,
+      outputIndex: Number(utxo.outputIndex),
+      address: sender,
+      amount,
+    }];
+    const outputs = [{ amount, address: burnAddress || DEFAULT_BURN_ADDRESS }];
+    const outputsHashBytes = await sha256Bytes(JSON.stringify(outputs));
+    const sig = await secp.sign(outputsHashBytes, imported.priv);
+    const signature = { r: sig.r, s: sig.s };
+    const signedInputs = inputs.map((i) => ({ ...i, signature }));
+    const hash1Bytes = await sha256Bytes(JSON.stringify({ inputs: signedInputs, outputs }));
+    const txIdBytes = await sha256Bytes(hash1Bytes);
+    const txId = bufToHex(txIdBytes);
+    return { id: txId, inputs: signedInputs, outputs };
+  }
+
+  async function burnUtxoFlow(utxo) {
+    if (!imported || !imported.pub || !imported.priv) {
+      openAppModal('Wallet requerida', '<div>Importa un keystore antes de quemar (BURN).</div>');
+      return;
+    }
+
+    const amount = Number(utxo && utxo.amount);
+    const utxoKey = utxo ? `${utxo.txId}:${utxo.outputIndex}` : '';
+    const burnAddress = DEFAULT_BURN_ADDRESS;
+
+    const proceed = await openConfirmModal(
+      'Confirmar BURN',
+      `
+        <div>
+          <div style="margin-bottom:8px;">Vas a quemar este UTXO (transferirlo a una dirección irrecuperable).</div>
+          <div class="muted" style="font-size:0.95em;">UTXO: <strong>${(utxoKey || '-')}</strong></div>
+          <div class="muted" style="font-size:0.95em;">Amount: <strong>${Number.isFinite(amount) ? amount : '-'}</strong></div>
+          <div class="muted" style="font-size:0.95em;">Burn address: <strong>${burnAddress}</strong></div>
+        </div>
+      `,
+      { confirmText: 'Quemar', cancelText: 'Cancelar' }
+    );
+    if (!proceed) return;
+
+    const promptFn = (window.openPassphrasePrompt || openPassphrasePrompt);
+    promptFn('Passphrase requerida', 'Passphrase para firmar BURN', async (passphrase) => {
+      try {
+        if (!passphrase) {
+          openAppModal('Passphrase requerida', '<div>La passphrase es requerida para enviar la transacción.</div>');
+          return;
+        }
+        const signedTransaction = await buildBurnSignedTransaction(utxo, burnAddress);
+        openAppModal(
+          'Transacción BURN firmada',
+          `<div class="tx-modal-section"><pre class="output" style="white-space:pre-wrap;">${JSON.stringify(signedTransaction, null, 2)}</pre></div>`
+        );
+
+        const { resp, body, isJson } = await postSignedTransactionToServer(signedTransaction, passphrase);
+        const ok = resp.ok || (isJson && body && body.success === true);
+        openAppModal(
+          ok ? 'BURN enviado' : 'BURN rechazado',
+          `
+            <div class="tx-modal-section">
+              <h4 style="margin:8px 0 6px;">Signed transaction</h4>
+              <pre class="output" style="white-space:pre-wrap;">${JSON.stringify(signedTransaction, null, 2)}</pre>
+              <h4 style="margin:12px 0 6px;">Server response</h4>
+              <pre class="output" style="white-space:pre-wrap;">${typeof body === 'string' ? (body || '<no body>').replace(/</g,'&lt;') : JSON.stringify(body, null, 2)}</pre>
+            </div>
+          `
+        );
+        if (ok) {
+          try { markUtxosPending([utxoKey]); } catch {}
+          try { showToast('BURN enviado. UTXO marcado como pendiente.'); } catch {}
+        }
+      } catch (err) {
+        console.error('[BURN] error', err);
+        openAppModal('Error en BURN', `<div style='color:#c00;font-weight:600;'>${(err && err.message) || err}</div>`);
+      }
+    });
+  }
+
+  // Expose globally for the inline modal (web-demo-inline.js)
+  try { window.burnUtxo = burnUtxoFlow; } catch {}
 
   const createEl = document.getElementById("create");
   if (createEl) {
@@ -922,7 +1039,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <input id="senderPub" class="input readonly" readonly value="${detail.publicKey || ''}" />
                           </div>
                         </label>
-                        <div class="muted">Balance: <span id="balance">${detail.serverBalance ?? detail.available ?? 0}</span></div>
+                        <div class="muted">Balance: <span id="balance">${detail.available ?? detail.serverBalance ?? 0}</span></div>
                         <div>UTXOs disponibles:</div>
                         <div id="utxoSelectList" class="utxo-select-list"></div>
                         <label class="field field-stack" for="recipient">Recipient</label>
@@ -1355,6 +1472,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (senderPubEl) senderPubEl.value = sender;
 
       // Obtener UTXOs seleccionados
+      // Selección única: evitar duplicados por txId:outputIndex
+      const seenUtxoKeys = new Set();
       const selectedUTXOs = Array.from(
         document.querySelectorAll(".utxo-checkbox:checked")
       ).map((cb) => ({
@@ -1362,7 +1481,12 @@ document.addEventListener("DOMContentLoaded", () => {
         outputIndex: parseInt(cb.dataset.outputindex),
         amount: parseFloat(cb.dataset.amount),
         address: cb.dataset.address,
-      }));
+      })).filter(u => {
+        const key = `${u.txId}:${u.outputIndex}`;
+        if (seenUtxoKeys.has(key)) return false;
+        seenUtxoKeys.add(key);
+        return true;
+      });
       if (selectedUTXOs.length === 0) {
         outEl.textContent = "Selecciona al menos un UTXO para enviar la transacción.";
         // Aviso no destructivo: toast + aviso inline y resaltado de la lista UTXO
@@ -1429,6 +1553,16 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `
       );
+      // No cerrar el modal automáticamente: solo marcar UTXOs como pendientes y refrescar balance
+      const onSendSuccess = () => {
+        // Marcar UTXOs como pendientes
+        const keys = (selectedUTXOs||[]).map(u => `${u.txId}:${u.outputIndex}`);
+        try { markUtxosPending(keys); } catch (e) { console.warn('[SendTx][markPending] error', e); }
+        try { showToast('Transacción enviada. UTXO marcado como pendiente.', 'success'); } catch {}
+        // Refrescar balance en el modal
+        try { recalcAvailableFromDOM(); } catch {}
+      };
+
       try {
         const isDifferentPort = location.port && location.port !== "6001";
         const base = isDifferentPort
@@ -1454,23 +1588,7 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
             `
           );
-          if (isSuccess) { try { window.showTransferSuccess && window.showTransferSuccess('Transacción enviada correctamente.', 2000); } catch {} }
-          if (((resp.ok) || (respJson && respJson.success === true)) && imported && imported.pub) {
-            const handler = () => {
-              // Limpia UI e inhabilita los UTXOs consumidos a nivel visual
-              try {
-                document.querySelectorAll('.utxo-checkbox').forEach(cb => cb.checked = false);
-                const amountEl = document.getElementById('amount');
-                if (amountEl){ amountEl.readOnly = false; amountEl.removeAttribute('aria-readonly'); amountEl.removeAttribute('max'); amountEl.min = '1'; amountEl.value=''; }
-                const passEl = document.getElementById('passphraseTx'); if (passEl) passEl.value = '';
-                const recipientEl = document.getElementById('recipient'); if (recipientEl) recipientEl.value='';
-              } catch (e) { console.warn('[SendTx][Cleanup] error', e); }
-              const keys = (selectedUTXOs||[]).map(u => `${u.txId}:${u.outputIndex}`);
-              markUtxosPending(keys);
-              try { window.showTransferSuccess && window.showTransferSuccess('Transacción enviada correctamente.', 2000); } catch {}
-            };
-            document.addEventListener('appmodal:close', handler, { once: true });
-          }
+          if (isSuccess) onSendSuccess();
         } else {
           const text = await resp.text();
           openAppModal(
@@ -1484,22 +1602,7 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
             `
           );
-          if (resp.ok) { try { window.showTransferSuccess && window.showTransferSuccess('Transacción enviada correctamente.', 2000); } catch {} }
-          if (resp.ok && imported && imported.pub) {
-            const handler = () => {
-              try {
-                document.querySelectorAll('.utxo-checkbox').forEach(cb => cb.checked = false);
-                const amountEl = document.getElementById('amount');
-                if (amountEl){ amountEl.readOnly = false; amountEl.removeAttribute('aria-readonly'); amountEl.removeAttribute('max'); amountEl.min = '1'; amountEl.value=''; }
-                const passEl = document.getElementById('passphraseTx'); if (passEl) passEl.value = '';
-                const recipientEl = document.getElementById('recipient'); if (recipientEl) recipientEl.value='';
-              } catch (e) { console.warn('[SendTx][Cleanup] error', e); }
-              const keys = (selectedUTXOs||[]).map(u => `${u.txId}:${u.outputIndex}`);
-              markUtxosPending(keys);
-              try { window.showTransferSuccess && window.showTransferSuccess('Transacción enviada correctamente.', 2000); } catch {}
-            };
-            document.addEventListener('appmodal:close', handler, { once: true });
-          }
+          if (resp.ok) onSendSuccess();
         }
       } catch (err) {
         console.error("Send tx error", err);
