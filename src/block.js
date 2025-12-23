@@ -84,21 +84,8 @@ static getGenesisBlock() {
   // 🧱 Hash del bloque génesis: puede ser fijo o recalculado si cambias el contenido
   const GENESIS_HASH = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
 
-  // 📦 Cargar la publicKey de wallet_default.json para asignar el saldo inicial a la wallet del usuario
-  const walletPath = path.join(process.cwd(), "app", "uploads", "wallet_default.json");
-  let recipientPublicKey;
-  if (fs.existsSync(walletPath)) {
-    try {
-      const keyPairData = JSON.parse(fs.readFileSync(walletPath, "utf8"));
-      recipientPublicKey = keyPairData.publicKey;
-    } catch (e) {
-      console.warn("[GENESIS] Error leyendo wallet_default.json, usando clave pública por defecto:", e.message);
-      recipientPublicKey = "04f83521134393000a1bb393d4b7d8606e940fbf88aa031892576522010090536aa910b80e71702e77b71855dcf1b1c65573b3cd7197a65c4dc5e9606d6dd2c1a4";
-    }
-  } else {
-    console.warn("[GENESIS] wallet_default.json no existe, usando clave pública por defecto para el bloque génesis.");
-    recipientPublicKey = "04f83521134393000a1bb393d4b7d8606e940fbf88aa031892576522010090536aa910b80e71702e77b71855dcf1b1c65573b3cd7197a65c4dc5e9606d6dd2c1a4";
-  }
+  // 📦 Clave pública FIJA para el bloque génesis (consenso entre nodos)
+  const recipientPublicKey = "04b2201e73f77a7fb6a1bbd401cb1ab128bb5128d69ee5f33c5e6657e4609c4ffb17d2abc868e3d3073f2c64d0e14d943e878b9c58d008fc37c441af8db5f45adb";
 
   // 📦 Datos del bloque génesis: aquí puedes incluir asignaciones iniciales de saldo
   const genesisData = [
