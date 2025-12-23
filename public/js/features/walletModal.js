@@ -26,8 +26,7 @@ export async function handleUTXOCheckClick() {
                   <div class='utxo-card-meta'>txId: ${u.txId} • outputIndex: ${u.outputIndex}</div>
                 </div>
                 <div class='utxo-card-actions'>
-                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}'>Copy TXID</button>
-                  <button class='dashboard-btn burn-btn' data-txid='${u.txId}' data-output-index='${u.outputIndex}'>BURN</button>
+                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}'>Copy</button>
                 </div>
               </div>`).join('')}
           </div>

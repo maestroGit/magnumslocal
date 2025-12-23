@@ -204,9 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Unified modal helper for demo-wallet (reuses existing #loteModal structure)
+let isPassphraseModalOpen = false;
 function openAppModal(title, html) {
+  // Remove any previous overlay handler to avoid duplicates
+  var modal = document.getElementById("loteModal");
+  if (modal && modal._overlayHandler) {
+    modal.removeEventListener('click', modal._overlayHandler);
+    modal._overlayHandler = null;
+  }
+  isPassphraseModalOpen = false;
   console.log('[modal] openAppModal', { title, htmlLen: (html || '').length });
-  const modal = document.getElementById("loteModal");
   const modalTitle = document.getElementById("modalTitle");
   const modalBody = document.getElementById("modalBody");
   const modalHistorial = document.getElementById("modalHistorial");
@@ -242,7 +249,10 @@ function openAppModal(title, html) {
     modal.style.display = 'none';
     modal.style.visibility = 'hidden';
     try { document.dispatchEvent(new CustomEvent('appmodal:close', { detail: { title } })); } catch {}
-    try { modal.removeEventListener('click', overlayHandler); } catch {}
+    if (modal && modal._overlayHandler) {
+      modal.removeEventListener('click', modal._overlayHandler);
+      modal._overlayHandler = null;
+    }
   }
   // Attach/refresh close handlers for both .close and #modalClose
   const closeBtn = modal.querySelector('.close');
@@ -261,14 +271,31 @@ function openAppModal(title, html) {
   }
   // Close on overlay click
   function overlayHandler(ev){
-    if (ev.target === modal){ closeModal(); }
+    if (ev.target === modal) {
+      if (!isPassphraseModalOpen) {
+        closeModal();
+      } else {
+        // Si es passphrase modal, nunca cerrar
+        ev.stopPropagation();
+        return;
+      }
+    }
   }
-  modal.addEventListener('click', overlayHandler);
+  if (modal) {
+    modal._overlayHandler = overlayHandler;
+    modal.addEventListener('click', overlayHandler);
+    // Evita cierre por overlay en cualquier clic dentro del modal (header, body, footer, etc.)
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+      modalContent.addEventListener('mousedown', (e) => e.stopPropagation());
+      modalContent.addEventListener('click', (e) => e.stopPropagation());
+    }
+  }
   // Basic escape key close
   document.addEventListener(
     "keydown",
     function escHandler(ev) {
-      if (ev.key === "Escape") { ev.preventDefault(); closeModal(); document.removeEventListener("keydown", escHandler); }
+      if (ev.key === "Escape" && !isPassphraseModalOpen) { ev.preventDefault(); closeModal(); document.removeEventListener("keydown", escHandler); }
     },
     { once: true }
   );
@@ -705,6 +732,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalHistorial = document.getElementById("modalHistorial");
     const modalFooter = document.getElementById("modalFooter");
     if (!modal || !modalTitle || !modalBody) { console.warn('[passphrase] modal structure missing'); alert('Modal no disponible'); return; }
+    isPassphraseModalOpen = true;
     modalTitle.textContent = title || 'Passphrase';
     // Asegura el área correcta visible y limpia acciones previas del footer
     if (modalHistorial) { modalHistorial.style.display = 'none'; modalHistorial.innerHTML = ''; }
@@ -732,6 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const input = document.getElementById('unifiedPassInput');
     if (input) setTimeout(()=> input.focus(), 50);
     const close = ({ cancelled } = { cancelled: true }) => { 
+      isPassphraseModalOpen = false;
       modal.classList.add('hidden'); 
       modal.style.display='none'; 
       // Clean up import button state ONLY if the user cancels the prompt
@@ -754,11 +783,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); close({ cancelled: true }); }
       });
     }
-    // Cerrar al hacer click en overlay
-    function overlayHandler(ev){ if (ev.target === modal) { close({ cancelled: true }); } }
-    modal.addEventListener('click', overlayHandler, { once: true });
-    // Cerrar con Escape
-    document.addEventListener('keydown', function escHandler(ev){ if (ev.key === 'Escape'){ ev.preventDefault(); close({ cancelled: true }); } }, { once: true });
+    // PREVENT overlay click and Escape from closing modal during passphrase entry
+    // Remove overlay click and Escape close for passphrase modal
+    // (Do NOT add overlayHandler or Escape handler here)
+    // Only allow close via explicit close button or successful form submit
     if (form) form.onsubmit = (e)=>{ e.preventDefault(); const pass = input && input.value; if (!pass) return; close({ cancelled: false }); try { onSubmit && onSubmit(pass); } catch(e){ console.error('onSubmit error', e); } };
   }
   // Expose prompt globally for reuse in inline modal flows

@@ -19,7 +19,7 @@ const INITIAL_BALANCE = 0;
 // Ahora solo necesitas que el bloque génesis asigne saldo a la wallet que quieras usar para pruebas.
 // INITIAL_BALANCE ya no es imprescindible para el flujo real.
 
-const MINING_REWARD = 50; // Recompensa minero
+const MINING_REWARD = 1; // Recompensa minero
 
 
 

@@ -29,15 +29,23 @@ class UTXOManager {
         : [];
 
     transactions.forEach((tx) => {
-      // Eliminar UTXOs gastados por los inputs de la transacción
+      // Eliminar UTXOs gastados por los inputs de la transacción SOLO en la dirección del input
       if (Array.isArray(tx.inputs)) {
         tx.inputs.forEach((input) => {
-          // Buscar la dirección en el utxoSet que tenga el UTXO gastado
-          Object.keys(this.utxoSet).forEach((addr) => {
-            this.utxoSet[addr] = this.utxoSet[addr].filter(
+          if (this.utxoSet[input.address]) {
+            console.log('[UTXO-DEBUG][ANTES] UTXOs de', input.address, JSON.stringify(this.utxoSet[input.address], null, 2));
+            const prevLength = this.utxoSet[input.address].length;
+            this.utxoSet[input.address] = this.utxoSet[input.address].filter(
               (utxo) => !(utxo.txId === input.txId && utxo.outputIndex === input.outputIndex)
             );
-          });
+            const removed = prevLength - this.utxoSet[input.address].length;
+            if (removed > 0) {
+              console.log(`[UTXO-DEBUG][ELIMINADO] UTXO gastado: txId=${input.txId}, outputIndex=${input.outputIndex}, address=${input.address}`);
+            } else {
+              console.warn(`[UTXO-DEBUG][NO-ELIMINADO] No se encontró UTXO para: txId=${input.txId}, outputIndex=${input.outputIndex}, address=${input.address}`);
+            }
+            console.log('[UTXO-DEBUG][DESPUES] UTXOs de', input.address, JSON.stringify(this.utxoSet[input.address], null, 2));
+          }
         });
       }
 
@@ -58,6 +66,7 @@ class UTXOManager {
               inputs: tx.inputs || [],
               outputIndex,
             });
+            console.log(`[UTXO-DEBUG][AÑADIDO] Nuevo UTXO: txId=${tx.id}, outputIndex=${outputIndex}, address=${output.address}, amount=${output.amount}`);
           }
         });
       }

@@ -404,6 +404,11 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('[modal] after delegated hide(), classList=', modal.className);
     } else if (target === modal) {
       // Click sobre el fondo (backdrop)
+      if (window.isPassphraseModalOpen) {
+        console.log('[modal] backdrop clicked, but passphrase modal is open, ignoring');
+        e.stopPropagation();
+        return;
+      }
       console.log('[modal] backdrop clicked');
       hide();
       console.log('[modal] after backdrop hide(), classList=', modal.className);

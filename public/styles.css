@@ -1,3 +1,30 @@
+/* Ajuste para que el formulario de transacción no desborde el modal */
+.modal-content form#transactionForm {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    word-break: break-word;
+}
+.modal-content .utxo-select-list {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+}
+.modal-content .coincontrol-utxo-row {
+    flex-wrap: wrap;
+    word-break: break-all;
+    min-width: 0;
+}
+/* Botón pequeño para copiar TXID en el modal de UTXOs */
+.utxo-card-actions .utxo-copy-btn {
+    font-size: 0.62em;
+    padding: 1px 6px;
+    min-width: unset;
+    height: 18px;
+    border-radius: 4px;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+}
 @media (max-width: 700px) {
     .card-header {
         justify-content: center !important;
