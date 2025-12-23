@@ -944,7 +944,18 @@ document.addEventListener("DOMContentLoaded", () => {
       // Prompt unified: ask for passphrase using common modal, then decrypt selected file
       const fileInput = document.getElementById('file');
       const f = fileInput && fileInput.files && fileInput.files[0];
-      if (!f) { console.warn('[import] no file selected'); openAppModal('Archivo requerido', `<div>Selecciona un keystore (.json) antes de importar.</div>`); return; }
+      if (!f) {
+        console.warn('[import] no file selected');
+        if (window.openModal) {
+          window.openModal({
+            title: 'Archivo requerido',
+            body: 'Selecciona un keystore (.json) antes de importar.'
+          });
+        } else {
+          alert('Selecciona un keystore (.json) antes de importar.');
+        }
+        return;
+      }
       openPassphrasePrompt('Importar BW-Wallet', 'Passphrase para descifrar', async (pass) => {
         console.log('[import] passphrase provided, reading file');
         const raw = await f.text();
