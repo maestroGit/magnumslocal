@@ -17,6 +17,8 @@
       <nav class="nav">
         <a class="btn" href="../view.html"><span class="metric-value">🏠</span></a>
         <a class="btn" href="https://web-d5l049wewz07.up-de-fra1-k8s-1.apps.run-on-seenode.com/" target="_blank" rel="noopener noreferrer"><span class="metric-value">🗺️</span></a>
+        <a class="btn" href="../../keystore.html"><span class="metric-value">🔐 Keystore</span></a>
+        <a class="btn" href="../../import-keystore.html"><span class="metric-value">🔑 Importar Keystore</span></a>
       </nav>
     </div>
   </header>
@@ -64,25 +66,14 @@
   <pre id="sendOut"></pre>
 </div>
 
-<!-- Modal para incluir lote / historial -->
-<div id="loteModal" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" id="modalClose" role="button" aria-label="Cerrar" tabindex="0">&times;</span>
-    <h2 id="modalTitle">Formulario de Lote</h2>
-    <div id="modalBody">
-      <!-- Aquí se llenará dinámicamente el contenido del formulario o historial -->
-    </div>
-    <div id="modalHistorial" style="display:none;">
-      <!-- Aquí se llenará dinámicamente el historial de la wallet -->
-    </div>
-    <div id="modalFooter" style="display:none;">
-      <!-- Footer dinámico para acciones específicas -->
-    </div>
-  </div>
-</div>
+<!-- Modal unificado moderno se inyecta dinámicamente por modalUnified.js (#mainModal) -->
 
-    <!-- Load main logic first, then inline helpers -->
+    <!-- Carga explícita de modalUnified.js para asegurar orden -->
+    <script src="../js/ui/modalUnified.js"></script>
+    <script>console.log('[script] modalUnified.js cargado');</script>
     <script type="module" src="./web-demo.js"></script>
+    <script>console.log('[script] web-demo.js cargado');</script>
     <script src="./web-demo-inline.js"></script>
+    <script>console.log('[script] web-demo-inline.js cargado');</script>
   </body>
 </html>
