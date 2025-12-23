@@ -1264,7 +1264,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const utxoSelectList = document.getElementById("utxoSelectList");
     const balEl = document.getElementById("balance");
     const sendBtn = document.getElementById("sendTx");
-    if (utxosOut) utxosOut.textContent = JSON.stringify(utxos, null, 2);
+    // Filtrar UTXOs disponibles (no pendientes) para mostrar en el UTXO Set principal
+    let availableUtxos = utxos;
+    if (typeof pendingSpent === 'object' && pendingSpent !== null && typeof pendingSpent.has === 'function') {
+      availableUtxos = utxos.filter(u => !pendingSpent.has(`${u.txId}:${u.outputIndex}`));
+    }
+    if (utxosOut) utxosOut.textContent = JSON.stringify(availableUtxos, null, 2);
     if (utxoSelectList) {
       utxoSelectList.innerHTML = "";
       if (Array.isArray(utxos) && utxos.length > 0) {

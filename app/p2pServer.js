@@ -190,6 +190,22 @@ class P2PServer {
           // Guarda y registra la cadena de bloques completa recibida
           console.log("⛓️  Recibida nueva cadena");
           this.blockchain.replaceChain(data.chain);
+
+          // --- Limpiar la mempool de transacciones ya incluidas en la nueva cadena (robusto, estilo Bitcoin Core) ---
+          if (this.transactionsPool && Array.isArray(this.transactionsPool.transactions)) {
+            // Obtener todos los IDs de transacciones incluidas en la nueva cadena
+            const includedTxIds = new Set();
+            data.chain.forEach(block => {
+              if (Array.isArray(block.data)) {
+                block.data.forEach(tx => includedTxIds.add(tx.id));
+              }
+            });
+            const before = this.transactionsPool.transactions.length;
+            this.transactionsPool.transactions = this.transactionsPool.transactions.filter(tx => !includedTxIds.has(tx.id));
+            const after = this.transactionsPool.transactions.length;
+            console.log(`[SYNC][REPLACE_CHAIN] Mempool limpiada tras replaceChain: antes=${before}, después=${after}`);
+          }
+
           // --- Sincronizar utxoManager con la nueva cadena ---
           if (typeof global.utxoManager !== 'undefined' && global.utxoManager) {
             global.utxoManager.utxoSet = {};
@@ -213,8 +229,13 @@ class P2PServer {
           break;
         }
         case MESSAGE_TYPES.clear_transactions: {
-          // Limpia el pool de transacciones locales al recibir orden
+          // Log antes de limpiar la mempool
+          console.log("[SYNC][P2P] CLEAR_TRANSACTIONS recibido. Mempool antes de limpiar:",
+            Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
           this.transactionsPool.clear();
+          // Log después de limpiar la mempool
+          console.log("[SYNC][P2P] Mempool después de limpiar:",
+            Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
           break;
         }
         default:
