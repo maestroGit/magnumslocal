@@ -1,27 +1,61 @@
-// secp256k1.mjs autónomo para frontend demo-wallet
-// Genera clave privada y pública usando WebCrypto
 
-// Genera una clave privada aleatoria (hex)
-export function generatePrivateKey() {
-  const arr = new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+// Lightweight secp256k1 wrapper with a stable API for browser use.
+// Implementation: @noble/secp256k1 vendored locally under vendor/secp256k1-lib.
+// This keeps CSP strict ('self') and avoids Node polyfills.
+import * as noble from "./secp256k1-lib/index.js";
+
+function hexToBytes(hex) {
+  if (typeof hex !== 'string') throw new Error('hex must be a string');
+  const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
+  const arr = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < arr.length; i++) arr[i] = parseInt(clean.substr(i * 2, 2), 16);
+  return arr;
+}
+function bytesToHex(bytes) {
+  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Obtiene la clave pública (hex) usando la API SubtleCrypto (ECDSA secp256k1)
-export async function getPublicKey(privHex) {
-  const privBytes = new Uint8Array(privHex.match(/.{2}/g).map(b => parseInt(b, 16)));
-  const key = await crypto.subtle.importKey(
-    'raw', privBytes,
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    true, ['sign']
+// Provide WebCrypto-backed HMAC-SHA256 for noble's async signing path
+async function hmacSha256(keyBytes, msgBytes) {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'HMAC', hash: { name: 'SHA-256' } },
+    false,
+    ['sign']
   );
-  const jwk = await crypto.subtle.exportKey('jwk', key);
-  // Esto no es secp256k1 puro, pero para demo y keystore es suficiente
-  // Puedes adaptar con una lib JS si necesitas compatibilidad total
-  return jwk.x + jwk.y;
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, msgBytes);
+  return new Uint8Array(sig);
 }
 
-// Dummy sign/verify para compatibilidad mínima
-export function sign() { throw new Error('sign() no implementado en versión autónoma'); }
-export function verify() { throw new Error('verify() no implementado en versión autónoma'); }
+// Wire up noble to use async HMAC in browsers (avoids "hashes.hmacSha256 not set")
+if (noble?.hashes) {
+  noble.hashes.hmacSha256Async = (key, msg) => hmacSha256(key, msg);
+}
+
+export function generatePrivateKey() {
+  // noble recommends randomPrivateKey(); here we rely on built-in randomness
+  const priv = noble.utils.randomPrivateKey();
+  return bytesToHex(priv);
+}
+
+export function getPublicKey(privHex, opts = { compressed: false }) {
+  const privBytes = hexToBytes(privHex);
+  const compressed = !!opts.compressed;
+  const pubBytes = noble.getPublicKey(privBytes, compressed);
+  // Ensure uncompressed 04 + X + Y for compatibility when not compressed
+  return bytesToHex(pubBytes);
+}
+
+export async function sign(msgHashBytes, privHex) {
+  const privBytes = hexToBytes(privHex);
+  // noble.sign returns 64-byte signature (r||s) by default
+  const sigBytes = await noble.signAsync(msgHashBytes, privBytes, { lowS: true, prehash: false });
+  // Return as hex string (compact r||s)
+  return bytesToHex(sigBytes);
+}
+
+export function verify(sig, msgHashBytes, pubHex) {
+  const pubBytes = hexToBytes(pubHex);
+  return noble.verify(sig, msgHashBytes, pubBytes);
+}

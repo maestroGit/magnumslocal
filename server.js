@@ -1196,7 +1196,7 @@ app.post("/transaction", async (req, res) => {
 
   // Logs generales de entrada
   console.log("--- [POST /transaction] INICIO ---");
-  console.log("[POST /transaction] req.body:", req.body);
+  console.log("[POST /transaction] req.body:", JSON.stringify(req.body, null, 2));
   const signedTransaction = req.body && req.body.signedTransaction;
   const passphrase = req.body && req.body.passphrase;
   const keystore = req.body && req.body.keystore;

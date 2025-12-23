@@ -58,6 +58,7 @@ async function handleImportKeystore(e) {
       // Guardar publicKey en sessionStorage para la transferencia
       if (keystore.publicKey) {
         sessionStorage.setItem('importedPubKey', keystore.publicKey);
+        sessionStorage.setItem('importedKeystore', JSON.stringify(keystore));
       }
       // Puedes conectar aquí la lógica de los botones
       document.getElementById('btnTransfer').onclick = () => {
