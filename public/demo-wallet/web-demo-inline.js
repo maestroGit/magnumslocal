@@ -70,9 +70,10 @@
             <div class="transferir" style="">
               <div class="card-header"><h3>Transferir</h3></div>
               <label class="field">Sender publicKey (auto-llenado al importar):
-                <div class="readonly-field">
+                <div class="readonly-field" style="display:flex;align-items:center;gap:8px;">
                   <input id="senderPub" class="input readonly" readonly aria-readonly="true" placeholder="Se autocompleta al importar" />
                   <button type="button" id="copySenderPub" class="copy-btn" title="Copiar publicKey">Copiar</button>
+                  <button type="button" id="historial" class="btn btn-secondary" style="margin-left:8px;">Historial</button>
                 </div>
               </label>
               <div class="muted">Balance: <span id="balance">0</span></div>
@@ -95,6 +96,27 @@
               <pre id="sendOut" class="output"></pre>
             </div>`;
           var clone = modalBody.querySelector('.transferir');
+                // Re-attach event handler for Historial button
+                var historialBtn = clone.querySelector('#historial');
+                if (historialBtn) {
+                  historialBtn.addEventListener('click', function(e) {
+                    console.log('[DEBUG][modal] Historial button clicked');
+                    e.preventDefault();
+                    if (window.handleHistorialClick) {
+                      console.log('[DEBUG][modal] window.handleHistorialClick exists, calling...');
+                      try {
+                        window.handleHistorialClick();
+                        console.log('[DEBUG][modal] window.handleHistorialClick called successfully');
+                      } catch (err) {
+                        console.error('[DEBUG][modal] Error calling window.handleHistorialClick:', err);
+                        alert('No se pudo abrir el historial. [window.handleHistorialClick error]');
+                      }
+                    } else {
+                      console.warn('[DEBUG][modal] window.handleHistorialClick does NOT exist');
+                      alert('No se pudo abrir el historial. [window.handleHistorialClick no está disponible]');
+                    }
+                  });
+                }
         // Mirror original behavior inside modal
         try {
           // Autocompletar senderPub desde el evento o el input original

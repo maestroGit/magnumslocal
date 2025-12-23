@@ -1,3 +1,4 @@
+console.log('[DEBUG][web-demo.js] Script loaded');
 // Use a browser-oriented secp256k1 wrapper (bridge to elliptic for now)
 import * as secp from "./vendor/secp256k1.mjs";
 import scrypt from "./vendor/scrypt-pbkdf2-shim.mjs";
@@ -1614,26 +1615,31 @@ document.addEventListener("DOMContentLoaded", () => {
   // Muestra el historial de la wallet en el modal reutilizando #loteModal
   const showHistorialModal = (historyData) => {
     console.log("[Historial] Datos recibidos del backend:", historyData); // Debug: muestra los datos completos
-    // Cambia el título del modal
     const modalTitle = document.getElementById("modalTitle");
+    const modalBody = document.getElementById("modalBody");
+    const modalHistorial = document.getElementById("modalHistorial");
+    console.log('[DEBUG][historial] modalTitle:', !!modalTitle, 'modalBody:', !!modalBody, 'modalHistorial:', !!modalHistorial);
+    if (modalHistorial) {
+      console.log('[DEBUG][historial] modalHistorial display before:', modalHistorial.style.display, 'innerHTML length:', modalHistorial.innerHTML.length);
+    }
+    // Cambia el título del modal
     if (modalTitle) modalTitle.textContent = "Historial de la Wallet";
 
     // Alterna visibilidad: oculta modalBody, muestra modalHistorial
-    const modalBody = document.getElementById("modalBody");
-    const modalHistorial = document.getElementById("modalHistorial");
     if (!modalBody || !modalHistorial) {
       console.error(
         "[Historial] No se encontró modalBody o modalHistorial en el DOM"
       );
-  openAppModal("Error de interfaz", `<div style='color:#c00;font-weight:600;'>No se encontró el contenedor del historial en el modal.</div>`);
+      openAppModal("Error de interfaz", `<div style='color:#c00;font-weight:600;'>No se encontró el contenedor del historial en el modal.</div>`);
       return;
     }
     modalBody.style.display = "none";
     modalHistorial.style.display = "block";
+    console.log('[DEBUG][historial] modalBody display:', modalBody.style.display, 'modalHistorial display:', modalHistorial.style.display);
 
     // Construye la vista vertical tipo tarjeta para cada transacción
-    const html = historyData.history
-      .map(
+    const html = (historyData && Array.isArray(historyData.history))
+      ? historyData.history.map(
         (item) => `
       <div class=\"historial-item\">
         <div><strong>TxID:</strong> ${item.txId}</div>
@@ -1650,14 +1656,16 @@ document.addEventListener("DOMContentLoaded", () => {
         <div><strong>Timestamp:</strong> ${item.timestamp || "-"} </div>
       </div>
     `
-      )
-      .join("");
+      ).join("") : '<div class="muted">Sin historial disponible.</div>';
+    console.log('[DEBUG][historial] html length:', html.length);
     // Inserta la vista en el historial del modal
     modalHistorial.innerHTML = html;
+    console.log('[DEBUG][historial] modalHistorial display after:', modalHistorial.style.display, 'innerHTML length:', modalHistorial.innerHTML.length);
 
     // Muestra el modal
     document.getElementById("loteModal").style.display = "block";
     console.log("[Historial] Modal mostrado"); // Debug: confirma que se intenta mostrar el modal
+    console.log('[DEBUG][historial] loteModal display:', document.getElementById("loteModal").style.display);
 
     // Cierra el modal al hacer click en la X
     const closeBtn = document.querySelector("#loteModal .close");
@@ -1677,7 +1685,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Asegúrate de que el botón #historial y el input #senderPub existen en tu HTML
   // Arrow function y try/catch para robustez
   const handleHistorialClick = async () => {
-    console.log("[Historial] Click en el botón historial"); // Debug: confirma el click
     const publicKeyInput = document.getElementById("senderPub");
     if (!publicKeyInput || !publicKeyInput.value) {
       openAppModal("Wallet requerida", `<div>No se ha importado ninguna wallet.</div>`);
@@ -1686,17 +1693,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const publicKey = publicKeyInput.value;
     console.log("[Historial] PublicKey usada:", publicKey); // Debug: muestra la publicKey
     try {
-      // Petición al backend para obtener el historial
-      const res = await fetch(`/address-history/${publicKey}`);
+      const url = `/address-history/${publicKey}`;
+      console.log('[DEBUG][historial] Fetching:', url);
+      const res = await fetch(url);
+      console.log('[DEBUG][historial] fetch response:', res.status, res.statusText);
       const data = await res.json();
-      // Muestra el historial en el modal
+      console.log('[DEBUG][historial] fetch data:', data);
       showHistorialModal(data);
     } catch (err) {
       // Muestra error si la petición falla
       console.error("[Historial] Error al consultar el historial:", err); // Debug: muestra el error
       openAppModal("Error al consultar historial", `<div style='color:#c00;font-weight:600;'>${(err && err.message) || err}</div>`);
     }
-  };
+};
+
+// Expose handler globally for inline modal logic (module-safe)
+if (typeof window !== 'undefined') {
+  window.handleHistorialClick = handleHistorialClick;
+  console.log('[DEBUG][web-demo.js] handleHistorialClick assigned to window:', typeof window.handleHistorialClick);
+}
 
   // Handler específico para botón Wallet (#walletModal): muestra resumen de wallet
   const handleWalletModalClick = async () => {

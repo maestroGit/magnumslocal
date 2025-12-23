@@ -1,4 +1,30 @@
 # DESPLIEGUE-NUEVO-NODO.md
+23/12/2025
+Iniciar con la misma wallet que le relay para iguale el block génesis.
+Te conectarás con la wallet_global del Relay al Relay (dos relay)
+Envía desde relay seenode a wallet que cargarás en el nodo peer para que al iniciar ya tenga saldo.
+Les envío 100 q es lo q el relay volverá a recibir por minado.
+
+Actualmente no hay un límite finito de bloques minados ni una cifra de saldo total que se distribuya por minado. El saldo inicial se configura en el bloque génesis y las recompensas de minado no parecen estar limitadas por un máximo global ni por un suministro total predefinido.
+
+Si necesitas implementar un suministro máximo de tokens o limitar el número de bloques minados, puedo ayudarte a modificar la lógica para añadir estas restricciones. ¿Quieres que te explique cómo hacerlo o que lo implemente directamente?
+
+SOLUCIÓN:
+para que todos los nodos compartan la misma cadena y puedan sincronizarse, debes “hardcodear” (fijar en el código) los datos del bloque génesis: su timestamp, datos, dirección de recompensa, y cualquier otro campo relevante. Así, todos los nodos, al arrancar por primera vez, generarán exactamente el mismo bloque génesis, independientemente de la wallet local.
+
+Esto es lo que hace Bitcoin: el bloque génesis es idéntico y está definido en el código fuente, no depende de ninguna wallet privada local.
+
+De este modo:
+
+El bloque génesis será igual en todos los nodos.
+Cada nodo podrá tener su propia wallet para minar y firmar.
+No será necesario compartir la wallet global entre nodos.
+¿Quieres que te ayude a modificar el código para fijar los datos del bloque génesis?
+
+
+
+
+
 
 ## Pasos estándar para desplegar un nuevo nodo en la red
 

@@ -12,9 +12,11 @@
     .site-header .nav {
         display: none !important;
         position: absolute;
-        top: 56px;
-        left: 0;
-        width: 100vw;
+        top: 54px;
+        right: 0;
+        width: 25vw;
+        min-width: 120px;
+        max-width: 200px;
         background: #220F17;
         flex-direction: column;
         align-items: stretch;
@@ -30,6 +32,8 @@
         display: flex !important;
         max-height: 320px;
         overflow: visible;
+        right: 0;
+        left: auto;
     }
     #hamburger-menu-btn {
         display: flex !important;
@@ -37,15 +41,24 @@
         top: 10px;
         right: 12px;
         z-index: 2100;
-        width: 44px;
-        height: 44px;
+        width: 36px;
+        height: 36px;
         align-items: center;
         justify-content: center;
-        background: #ff7b00;
+        background: #261117;
         color: #220F17;
         border-radius: 50%;
         border: none;
-        font-size: 1.7em;
+        font-size: 1.2em;
+            #hamburger-menu-btn span {
+                color: #fff !important;
+            }
+            #hamburger-menu-btn:visited span,
+            #hamburger-menu-btn:focus span,
+            #hamburger-menu-btn:active span,
+            #hamburger-menu-btn[aria-expanded] span {
+                color: #fff !important;
+            }
         box-shadow: 0 2px 12px #0003;
         opacity: 0.98;
         transition: background 0.2s, color 0.2s;

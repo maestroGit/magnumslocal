@@ -68,7 +68,6 @@ export const showQRModal = (qrBase64, loteData) => {
     }
     const modalContent = `
       <div style="text-align:center;">
-        <h2>QR with transaction data</h2>
         ${advertencia}
         <img id="qrImageModal" src="${src}" alt="QR Blockchain" style="max-width:250px; margin:20px 0;">
         <div style="margin-top:15px; text-align:left;">
@@ -130,7 +129,7 @@ export const showTraceabilityModal = (transactionData) => {
         <input type="text" id="nombreProducto" placeholder="Ej: Rioja Gran Reserva" required>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div><label for="fechaProduccion">Fecha Producción:</label><input type="date" id="fechaProduccion" value="${new Date().toISOString().split('T')[0]}"></div>
-          <div><label for="fechaConsumo">Aviso Consumo:</label><input type="date" id="fechaConsumo" value="${new Date().toISOString().split('T')[0]}"></div>
+          <div><label for="fechaConsumo">Aviso Consumo:</label><input type="date" id="fechaConsumo" value="${new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString().split('T')[0]}"></div>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div><label for="origen">Origen:</label><input type="text" id="origen" placeholder="Ej: España"></div>
