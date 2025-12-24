@@ -70,10 +70,9 @@
             <div class="transferir" style="">
               <div class="card-header"><h3>Transferir</h3></div>
               <label class="field">Sender publicKey (auto-llenado al importar):
-                <div class="readonly-field" style="display:flex;align-items:center;gap:8px;">
+                <div class="readonly-field">
                   <input id="senderPub" class="input readonly" readonly aria-readonly="true" placeholder="Se autocompleta al importar" />
                   <button type="button" id="copySenderPub" class="copy-btn" title="Copiar publicKey">Copiar</button>
-                  <button type="button" id="historial" class="btn btn-secondary" style="margin-left:8px;">Historial</button>
                 </div>
               </label>
               <div class="muted">Balance: <span id="balance">0</span></div>
@@ -96,27 +95,6 @@
               <pre id="sendOut" class="output"></pre>
             </div>`;
           var clone = modalBody.querySelector('.transferir');
-                // Re-attach event handler for Historial button
-                var historialBtn = clone.querySelector('#historial');
-                if (historialBtn) {
-                  historialBtn.addEventListener('click', function(e) {
-                    console.log('[DEBUG][modal] Historial button clicked');
-                    e.preventDefault();
-                    if (window.handleHistorialClick) {
-                      console.log('[DEBUG][modal] window.handleHistorialClick exists, calling...');
-                      try {
-                        window.handleHistorialClick();
-                        console.log('[DEBUG][modal] window.handleHistorialClick called successfully');
-                      } catch (err) {
-                        console.error('[DEBUG][modal] Error calling window.handleHistorialClick:', err);
-                        alert('No se pudo abrir el historial. [window.handleHistorialClick error]');
-                      }
-                    } else {
-                      console.warn('[DEBUG][modal] window.handleHistorialClick does NOT exist');
-                      alert('No se pudo abrir el historial. [window.handleHistorialClick no está disponible]');
-                    }
-                  });
-                }
         // Mirror original behavior inside modal
         try {
           // Autocompletar senderPub desde el evento o el input original
@@ -132,7 +110,7 @@
           if (balEl) {
             var serverBal = ev && ev.detail && ev.detail.serverBalance;
             var available = ev && ev.detail && ev.detail.available;
-            balEl.textContent = (available ?? serverBal ?? balEl.textContent);
+            balEl.textContent = (serverBal ?? available ?? balEl.textContent);
           }
           // Render UTXOs list si está en evento
           var utxoList = clone.querySelector('#utxoSelectList');
@@ -159,26 +137,6 @@
                 label.innerHTML = '<span class="utxo-amount">'+u.amount+'</span> <span class="utxo-meta">'+u.txId+' #'+u.outputIndex+'</span>';
                 div.appendChild(cb);
                 div.appendChild(label);
-
-                // Botón BURN
-                var burnBtn = document.createElement('button');
-                burnBtn.textContent = 'BURN';
-                burnBtn.className = 'burn-btn';
-                burnBtn.style = 'margin-left:8px;padding:2px 10px;border-radius:4px;background:#c00;color:#fff;border:none;cursor:pointer;';
-                burnBtn.onclick = function(e) {
-                  e.preventDefault();
-                  try {
-                    if (window.burnUtxo) {
-                      window.burnUtxo(u);
-                    } else {
-                      alert('BURN no disponible: falta window.burnUtxo(). Recarga la página.');
-                    }
-                  } catch (err) {
-                    console.error('[WALLET][BURN][ERROR]', err);
-                    alert('Error en BURN: ' + ((err && err.message) || err));
-                  }
-                };
-                div.appendChild(burnBtn);
                 utxoList.appendChild(div);
               });
             }
@@ -404,11 +362,6 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('[modal] after delegated hide(), classList=', modal.className);
     } else if (target === modal) {
       // Click sobre el fondo (backdrop)
-      if (window.isPassphraseModalOpen) {
-        console.log('[modal] backdrop clicked, but passphrase modal is open, ignoring');
-        e.stopPropagation();
-        return;
-      }
       console.log('[modal] backdrop clicked');
       hide();
       console.log('[modal] after backdrop hide(), classList=', modal.className);
