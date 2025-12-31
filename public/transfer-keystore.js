@@ -25,6 +25,7 @@ if (!pubKey) {
 async function loadUTXOs(address) {
   statusEl.textContent = 'Cargando UTXOs...';
   utxos = await fetchUTXOs(address);
+  console.log('[DEBUG][transfer-keystore.js] utxos recibidos:', utxos);
   renderUTXOList();
 }
 
@@ -67,6 +68,7 @@ function renderUTXOList() {
 
 function selectUTXO(idx) {
   selectedUTXO = utxos[idx];
+  console.log('[DEBUG][transfer-keystore.js] selectedUTXO al seleccionar:', selectedUTXO);
   amountInput.value = selectedUTXO.amount;
   amountInput.disabled = false;
   validateForm();
@@ -88,13 +90,13 @@ function validateForm() {
 }
 
 recipientInput.addEventListener('input', validateForm);
-amountInput.addEventListener('input', validateForm);
 
 
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
   const recipient = recipientInput.value.trim();
   const amount = amountInput.value.trim();
+
   if (!selectedUTXO) {
     statusEl.textContent = 'Selecciona un UTXO.';
     return;
@@ -108,12 +110,6 @@ form.addEventListener('submit', async function(e) {
     return;
   }
 
-  // Pedir passphrase al usuario
-  const passphrase = prompt('Introduce la passphrase de tu keystore para firmar la transacción:');
-  if (!passphrase) {
-    statusEl.textContent = 'Operación cancelada por el usuario.';
-    return;
-  }
 
   // Recuperar keystore desde sessionStorage (guardado tras importación)
   let keystore;
@@ -122,6 +118,24 @@ form.addEventListener('submit', async function(e) {
     if (!keystore) throw new Error('Keystore no encontrado en sessionStorage.');
   } catch (err) {
     statusEl.textContent = 'No se pudo recuperar el keystore importado.';
+    return;
+  }
+
+  // Bloqueo si la address del input no coincide con la del keystore
+  if (selectedUTXO.address !== keystore.publicKey) {
+    statusEl.textContent = '❌ El keystore importado NO corresponde a la address del input. No se puede firmar.';
+    console.error('[BLOQUEO][transfer-keystore.js] El keystore importado NO corresponde a la address del input.');
+    console.error('[BLOQUEO][transfer-keystore.js] selectedUTXO.address:', selectedUTXO.address);
+    console.error('[BLOQUEO][transfer-keystore.js] keystore.publicKey:', keystore.publicKey);
+    alert('El keystore importado NO corresponde a la address del input.\n\nselectedUTXO.address: ' + selectedUTXO.address + '\nkeystore.publicKey: ' + keystore.publicKey + '\n\nImporta el keystore correcto para poder firmar este UTXO.');
+    return;
+  }
+
+
+  // Pedir passphrase al usuario
+  const passphrase = prompt('Introduce la passphrase de tu keystore para firmar la transacción:');
+  if (!passphrase) {
+    statusEl.textContent = 'Operación cancelada por el usuario.';
     return;
   }
 
@@ -141,6 +155,7 @@ form.addEventListener('submit', async function(e) {
       const privHex = Array.from(new Uint8Array(decrypted)).map(b => b.toString(16).padStart(2, '0')).join('');
 
       // Normalizar privHex a 32 bytes hex
+
       let privHexNorm = privHex;
       if (privHexNorm.startsWith('0x')) privHexNorm = privHexNorm.slice(2);
       if (privHexNorm.length === 64) {
@@ -154,15 +169,73 @@ form.addEventListener('submit', async function(e) {
         throw new Error('Clave privada con longitud inesperada: ' + privHexNorm.length);
       }
 
+      // === LOGS DE CLAVE PRIVADA Y PÚBLICA DERIVADA ===
+      console.log('[DEBUG][transfer-keystore.js] privHexNorm (clave privada usada para firmar):', privHexNorm);
+      let derivedPubKey = null;
+      try {
+        // noble-secp256k1 espera Uint8Array o hex string para getPublicKey
+        derivedPubKey = secp.getPublicKey(privHexNorm);
+        // Si devuelve Uint8Array, convertir a hex
+        if (derivedPubKey instanceof Uint8Array) {
+          derivedPubKey = Array.from(derivedPubKey).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        if (keystore && keystore.publicKey) {
+          console.log('[COMPARA][transfer-keystore.js] Clave pública derivada:', derivedPubKey,
+            '\nClave pública del keystore:', keystore.publicKey,
+            '\n¿Coinciden?:', derivedPubKey === keystore.publicKey);
+          if (derivedPubKey === keystore.publicKey) {
+            console.log('[DEBUG][transfer-keystore.js] La clave pública derivada COINCIDE con la del keystore.');
+          } else {
+            console.warn('[DEBUG][transfer-keystore.js] La clave pública derivada NO coincide con la del keystore.');
+          }
+        }
+      } catch (e) {
+        console.error('[DEBUG][transfer-keystore.js] Error derivando clave pública de privHexNorm:', e);
+      }
+
+
+  // Compara con la del keystore
+  // Añadido
+console.log('Clave pública derivada:', derivedPubKey);
+console.log('Clave pública keystore:', keystore.publicKey);
+console.log('¿Coinciden?:', derivedPubKey === keystore.publicKey);
       // Construir y firmar la transacción
       statusEl.textContent = 'Firmando transacción...';
       const sender = keystore.publicKey;
+      // El address del input debe ser la address original del UTXO (quien puede gastar)
+      console.log('[DEBUG][transfer-keystore.js] selectedUTXO:', selectedUTXO);
+      let inputAddress = selectedUTXO.address;
+      // === LOG para verificar keystore vs input address ===
+      if (selectedUTXO.address && keystore && keystore.publicKey) {
+        if (selectedUTXO.address === keystore.publicKey) {
+          console.log('[CHECK][transfer-keystore.js] El keystore importado corresponde a la address del input. OK');
+        } else {
+          console.warn('[CHECK][transfer-keystore.js] El keystore importado NO corresponde a la address del input.');
+          console.warn('[CHECK][transfer-keystore.js] selectedUTXO.address:', selectedUTXO.address);
+          console.warn('[CHECK][transfer-keystore.js] keystore.publicKey:', keystore.publicKey);
+        }
+      }
+      const isOwnerMatch = (selectedUTXO.address === keystore.publicKey);
+      console.log('[DEBUG][transfer-keystore.js] selectedUTXO.address === keystore.publicKey ?', isOwnerMatch, '\nselectedUTXO.address:', selectedUTXO.address, '\nkeystore.publicKey:', keystore.publicKey);
+      if (!inputAddress || inputAddress === '' || typeof inputAddress === 'undefined') {
+        // Si no hay address en el UTXO, usar la del propietario actual (keystore.publicKey)
+        inputAddress = keystore.publicKey;
+        console.log('[DEBUG][transfer-keystore.js] input.address estaba vacío, se asigna:', inputAddress);
+        // Log extra para depuración
+        console.log('[DEBUG][transfer-keystore.js] selectedUTXO recibido:', selectedUTXO);
+        if (!('address' in selectedUTXO)) {
+          console.warn('[DEBUG][transfer-keystore.js] El UTXO seleccionado NO tiene la propiedad address.');
+        } else {
+          console.log('[DEBUG][transfer-keystore.js] El UTXO seleccionado SÍ tiene la propiedad address:', selectedUTXO.address);
+        }
+      }
       const inputs = [{
         txId: selectedUTXO.txId,
         outputIndex: Number(selectedUTXO.outputIndex),
-        address: sender,
+        address: inputAddress, // address garantizado
         amount: Number(selectedUTXO.amount)
       }];
+      console.log('[DEBUG][transfer-keystore.js] inputs:', inputs);
       const outputs = [{ amount: Number(amount), address: recipient }];
       // Si hay cambio, agregar output de cambio
       const change = Number(selectedUTXO.amount) - Number(amount);
@@ -171,20 +244,31 @@ form.addEventListener('submit', async function(e) {
       }
       // Hash de outputs
       // Serializar outputs de forma canónica (sin espacios extra, orden estable)
+      // Serialización y orden de campos para el hash de outputs
       const outputsCanonical = JSON.stringify(outputs);
-      // Calcular hash SHA256 y convertir a hex string (igual que backend)
+      console.log('[DEBUG][transfer-keystore.js] outputs (raw):', outputs);
+      console.log('[DEBUG][transfer-keystore.js] outputsCanonical (JSON.stringify):', outputsCanonical);
+      // Calcular hash SHA256 y mostrar formato
       const hashBuf = await sha256Bytes(outputsCanonical);
+      const hashHex = Array.from(hashBuf).map(b => b.toString(16).padStart(2, '0')).join('');
+      console.log('[DEBUG][transfer-keystore.js] hashBuf (Uint8Array):', hashBuf);
+      console.log('[DEBUG][transfer-keystore.js] hashHex (hex string):', hashHex);
       // noble-secp256k1 espera Uint8Array, pero el backend usa hex para el hash
       // Firmamos el hash como Uint8Array, pero la verificación será sobre el mismo hash
-      const sig = await secp.sign(hashBuf, privHexNorm);
-      // sig es un hex de 128 caracteres (64 bytes: r||s)
-      let r = sig.slice(0, 64);
-      let s = sig.slice(64, 128);
-      r = r.padStart(64, '0');
-      s = s.padStart(64, '0');
-      const signature = { r, s };
+      // noble-secp256k1 devuelve la firma en formato DER (hex string) si no se pide raw
+      // Obtener firma como objeto { r, s } (no DER)
+      const sigObj = await secp.sign(hashBuf, privHexNorm);
+      // sigObj debe tener .r y .s en hex
+      const signature = { r: sigObj.r, s: sigObj.s };
+      console.log('[DEBUG][transfer-keystore.js] signature (r,s):', signature);
       const signedInputs = inputs.map(i => ({ ...i, signature }));
-      const txObj = { inputs: signedInputs, outputs };
+      console.log('[DEBUG][transfer-keystore.js] signedInputs (r,s):', signedInputs);
+      // Calcular el id de la transacción igual que en web-demo.js
+      const hash1Bytes = await sha256Bytes(JSON.stringify({ inputs: signedInputs, outputs }));
+      const txIdBytes = await sha256Bytes(hash1Bytes);
+      const txId = Array.from(txIdBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      const txObj = { id: txId, inputs: signedInputs, outputs };
+      console.log('[DEBUG][transfer-keystore.js] txObj:', txObj);
 
       // Enviar al backend
       statusEl.textContent = 'Enviando transacción...';

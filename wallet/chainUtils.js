@@ -36,7 +36,30 @@ class ChainUtil {
   // Que el dataHash de transacciones y la firma coincidan con la clave pública. Esto asegura que la transacción no ha sido modificada y que ha sido firmada por la entidad que posee la clave privada correspondiente a la clave pública.
   // La signature es la firma de la transacción y tiene que ser verificada con la clave pública
   static verifySignature(publicKey, signature, dataHash) {
-    return ec.keyFromPublic(publicKey, "hex").verify(dataHash, signature);
+    console.log('[DEBUG][verifySignature] publicKey:', publicKey, 'type:', typeof publicKey);
+    console.log('[DEBUG][verifySignature] dataHash:', dataHash, 'type:', typeof dataHash);
+    console.log('[DEBUG][verifySignature] signature:', signature, 'type:', typeof signature);
+    if (signature && typeof signature === 'object') {
+      console.log('[DEBUG][verifySignature] signature.r:', signature.r, 'type:', typeof signature.r);
+      console.log('[DEBUG][verifySignature] signature.s:', signature.s, 'type:', typeof signature.s);
+    }
+    let pubKeyObj;
+    try {
+      pubKeyObj = ec.keyFromPublic(publicKey, "hex");
+      console.log('[DEBUG][verifySignature] pubKeyObj:', pubKeyObj);
+    } catch (e) {
+      console.error('[DEBUG][verifySignature] Error creando pubKeyObj:', e);
+      return false;
+    }
+    let verifyResult;
+    try {
+      verifyResult = pubKeyObj.verify(dataHash, signature);
+      console.log('[DEBUG][verifySignature] verify() result:', verifyResult);
+    } catch (e) {
+      console.error('[DEBUG][verifySignature] Error en pubKeyObj.verify:', e);
+      return false;
+    }
+    return verifyResult;
   }
 
 }

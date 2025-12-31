@@ -971,7 +971,9 @@ app.get("/utxo-balance/global", (req, res) => {
 app.get("/utxo-balance/:address", (req, res) => {
   const { address } = req.params;
   console.log("Consulta UTXO para:", address);
-  const utxos = utxoManager.getUTXOs(address);
+  let utxos = utxoManager.getUTXOs(address);
+  // Asegurar que cada UTXO tenga la propiedad address
+  utxos = utxos.map(utxo => ({ ...utxo, address }));
   const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
   res.json({ address, balance, utxos });
 });
@@ -1195,8 +1197,20 @@ app.post("/transaction", async (req, res) => {
   // 2. FLUJO USUARIO: El frontend firma y el backend solo valida y propaga (signedTransaction)
 
   // Logs generales de entrada
-  console.log("--- [POST /transaction] INICIO ---");
+  console.log("\n--- [POST /transaction] INICIO ---");
   console.log("[POST /transaction] req.body:", JSON.stringify(req.body, null, 2));
+  if (req.body && req.body.signedTransaction) {
+    console.log("[DEBUG][POST /transaction] signedTransaction.inputs:", JSON.stringify(req.body.signedTransaction.inputs, null, 2));
+    console.log("[DEBUG][POST /transaction] signedTransaction.outputs:", JSON.stringify(req.body.signedTransaction.outputs, null, 2));
+    if (req.body.signedTransaction.inputs && req.body.signedTransaction.inputs.length > 0) {
+      req.body.signedTransaction.inputs.forEach((inp, idx) => {
+        console.log(`[DEBUG][POST /transaction] input[${idx}]:`, JSON.stringify(inp, null, 2));
+        if (inp.signature) {
+          console.log(`[DEBUG][POST /transaction] input[${idx}].signature:`, inp.signature, typeof inp.signature);
+        }
+      });
+    }
+  }
   const signedTransaction = req.body && req.body.signedTransaction;
   const passphrase = req.body && req.body.passphrase;
   const keystore = req.body && req.body.keystore;
@@ -1344,7 +1358,10 @@ app.post("/transaction", async (req, res) => {
         });
       }
       // Verificar la firma
-      if (!Transaction.verifyTransaction(signedTransaction)) {
+      console.log("[DEBUG][POST /transaction] Llamando a Transaction.verifyTransaction...");
+      const isValid = Transaction.verifyTransaction(signedTransaction);
+      console.log("[DEBUG][POST /transaction] Resultado verifyTransaction:", isValid);
+      if (!isValid) {
         console.warn(
           "[FLUJO USUARIO] ❌ Transacción rechazada: firma inválida."
         );

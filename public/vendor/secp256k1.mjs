@@ -1,4 +1,3 @@
-
 // Lightweight secp256k1 wrapper with a stable API for browser use.
 // Implementation: @noble/secp256k1 vendored locally under vendor/secp256k1-lib.
 // This keeps CSP strict ('self') and avoids Node polyfills.
@@ -34,8 +33,8 @@ if (noble?.hashes) {
 }
 
 export function generatePrivateKey() {
-  // noble recommends randomPrivateKey(); here we rely on built-in randomness
-  const priv = noble.utils.randomPrivateKey();
+  // noble recommends randomSecretKey(); aquí usamos la función correcta
+  const priv = noble.utils.randomSecretKey();
   return bytesToHex(priv);
 }
 
@@ -51,11 +50,19 @@ export async function sign(msgHashBytes, privHex) {
   const privBytes = hexToBytes(privHex);
   // noble.sign returns 64-byte signature (r||s) by default
   const sigBytes = await noble.signAsync(msgHashBytes, privBytes, { lowS: true, prehash: false });
-  // Return as hex string (compact r||s)
-  return bytesToHex(sigBytes);
+  // Split into r and s (32 bytes each)
+  const r = bytesToHex(sigBytes.slice(0, 32));
+  const s = bytesToHex(sigBytes.slice(32, 64));
+  return { r, s };
 }
 
 export function verify(sig, msgHashBytes, pubHex) {
   const pubBytes = hexToBytes(pubHex);
-  return noble.verify(sig, msgHashBytes, pubBytes);
+  // Combine r and s back to 64-byte signature
+  const rBytes = hexToBytes(sig.r);
+  const sBytes = hexToBytes(sig.s);
+  const sigBytes = new Uint8Array(64);
+  sigBytes.set(rBytes, 0);
+  sigBytes.set(sBytes, 32);
+  return noble.verify(sigBytes, msgHashBytes, pubBytes, { prehash: false });
 }

@@ -48,6 +48,7 @@ function handleCancelPassphrase() {
 
 async function generateKeystore(pass) {
   console.log('[keystore] Generando claves secp256k1...');
+  // Unificada: usa secp.generatePrivateKey() para obtener la clave privada
   const privHex = secp.generatePrivateKey();
   const pubHex = secp.getPublicKey(privHex);
   console.log('[keystore] Clave privada:', privHex);
@@ -58,18 +59,23 @@ async function generateKeystore(pass) {
   console.log('[keystore] Salt:', salt, 'IV:', iv);
 
   console.log('[keystore] Derivando clave con scrypt...');
-  scrypt(pass, salt, 16384, 8, 1, 32, async (err, _, key) => {
+  // Convierte el passphrase a bytes (Uint8Array) para compatibilidad Node.js
+  const passBytes = typeof pass === 'string' ? new TextEncoder().encode(pass) : pass;
+  scrypt(passBytes, salt, 16384, 8, 1, 32, async (err, _, key) => {
     if (err) {
       console.error('[keystore] Error en KDF:', err);
       document.getElementById('keystoreStatus').textContent = 'Error en KDF.';
       return;
     }
     console.log('[keystore] Clave derivada (KDF):', key);
-    // Cifra la clave privada con AES-GCM
+    // Cifra la clave privada como bytes puros (no UTF-8)
     const encKey = key;
-    const privBytes = new TextEncoder().encode(privHex);
+    function hexToBytes(hex) {
+      return new Uint8Array(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+    }
+    const privBytes = hexToBytes(privHex);
     const ivBytes = new Uint8Array(iv.match(/.{2}/g).map(b => parseInt(b, 16)));
-    console.log('[keystore] Cifrando clave privada...');
+    console.log('[keystore] Cifrando clave privada (bytes puros)...');
     const cryptoKey = await crypto.subtle.importKey('raw', encKey, 'AES-GCM', false, ['encrypt']);
     const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: ivBytes }, cryptoKey, privBytes);
     const encryptedPrivateKey = Array.from(new Uint8Array(encrypted)).map(b => b.toString(16).padStart(2, '0')).join('');
