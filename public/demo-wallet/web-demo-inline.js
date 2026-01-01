@@ -229,6 +229,7 @@
         } catch(err) {
           console.warn('[modal] wiring modal transfer behavior failed:', err);
         }
+
         // Footer de modal no usado para Transferir; evitamos botones duplicados
         if (modalFooter) { modalFooter.innerHTML = ''; modalFooter.style.display = 'none'; }
         // Show the modal

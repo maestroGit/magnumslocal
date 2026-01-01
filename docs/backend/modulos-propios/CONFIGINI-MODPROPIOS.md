@@ -26,4 +26,5 @@ Este documento resume la función y propósito de los principales módulos propi
 
 ---
 
-> Para detalles técnicos, consultar el código fuente de cada módulo en la carpeta `app/`.
+      console.log("Current Validator Stake:", validator.stake);
+> Para detalles técnicos, consultar el código fuente de cada módulo en la carpeta `app/.js`.

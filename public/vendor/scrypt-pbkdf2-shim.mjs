@@ -2,7 +2,7 @@
 // Implements callback-style API: scrypt(password, salt, N, r, p, dkLen, callback)
 // Uses WebCrypto PBKDF2 as a reliable fallback for the demo environment.
 
-function scrypt(password, salt, N, r, p, dkLen, callback) {
+export default function scrypt(password, salt, N, r, p, dkLen, callback) {
   try {
     const passBuf = (password instanceof Uint8Array) ? password : new TextEncoder().encode(String(password));
     const saltBuf = (salt instanceof Uint8Array) ? salt : (typeof salt === 'string' ? hexToUint8(salt) : new Uint8Array(salt || []));
@@ -30,5 +30,3 @@ function scrypt(password, salt, N, r, p, dkLen, callback) {
     return bytes;
   }
 }
-
-export default scrypt;

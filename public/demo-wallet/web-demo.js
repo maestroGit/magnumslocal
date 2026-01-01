@@ -1,4 +1,3 @@
-console.log('[DEBUG][web-demo.js] Script loaded');
 // Use a browser-oriented secp256k1 wrapper (bridge to elliptic for now)
 import * as secp from "./vendor/secp256k1.mjs";
 import scrypt from "./vendor/scrypt-pbkdf2-shim.mjs";
@@ -321,7 +320,7 @@ function openConfirmModal(title, html, opts = {}) {
       <div class="confirm-modal-wrapper">
         <div class="confirm-body" style="margin-bottom:16px;">${html}</div>
         <div class="confirm-actions" style="display:flex;gap:12px;justify-content:flex-end;">
-          <button id="confirmCancelBtn" class="btn-secondary" style="padding:6px 14px;border-radius:6px;border:1px solid #999;background:#f5f5f5;cursor:pointer;">${cancelText}</button>
+          <button id="confirmCancelBtn" class="btn-secondary" style="padding:6px 14px;border-radius:6px;border:1px solid #999;background:#FF9701;cursor:pointer;">${cancelText}</button>
           <button id="confirmOkBtn" class="btn-primary" style="padding:6px 14px;border-radius:6px;border:1px solid #132231;background:#132231;color:#fff;cursor:pointer;">${confirmText}</button>
         </div>
       </div>
@@ -350,11 +349,15 @@ function openConfirmModal(title, html, opts = {}) {
 // use the backend on port 3000 explicitly to avoid 404s on relative paths.
 async function fetchUTXOs(address) {
   try {
-    // If current page is not on port 6001, assume backend is at :6001
-    const isDifferentPort = location.port && location.port !== "6001";
-    const base = isDifferentPort
-      ? `${location.protocol}//${location.hostname}:6001`
-      : "";
+    // Detect entorno local magnumslocal (puerto 6001)
+    let base = '';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      base = 'http://localhost:6001';
+    } else if (window.location.hostname.includes('app.blockswine.com')) {
+      base = 'https://app.blockswine.com';
+    } else if (window.location.hostname.includes('apps.run-on-seenode.com')) {
+      base = 'https://web-sdzlt1djuiql.up-de-fra1-k8s-1.apps.run-on-seenode.com';
+    }
     const url = `${base}/utxo-balance/${encodeURIComponent(address)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("Failed to fetch utxos: " + res.status);
@@ -759,12 +762,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById('unifiedPassForm');
     const input = document.getElementById('unifiedPassInput');
     if (input) setTimeout(()=> input.focus(), 50);
+<<<<<<< HEAD
     const close = ({ cancelled } = { cancelled: true }) => { 
       isPassphraseModalOpen = false;
+=======
+    const close = (canceled = true) => { 
+>>>>>>> wallet-modal
       modal.classList.add('hidden'); 
       modal.style.display='none'; 
-      // Clean up import button state ONLY if the user cancels the prompt
-      if (cancelled) {
+      // Clean up import button state ONLY when user cancels
+      if (canceled) {
         const importBtn = document.getElementById('import');
         if (importBtn && importBtn.classList.contains('wallet-loaded')) {
           importBtn.classList.remove('wallet-loaded');
@@ -778,29 +785,33 @@ document.addEventListener("DOMContentLoaded", () => {
     // Conectar la X de cierre del modal y accesibilidad básica
     const closeBtn = modal.querySelector('.close');
     if (closeBtn) {
-      closeBtn.onclick = () => close({ cancelled: true });
+      closeBtn.onclick = () => close(true);
       closeBtn.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); close({ cancelled: true }); }
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); close(true); }
       });
     }
     // PREVENT overlay click and Escape from closing modal during passphrase entry
     // Remove overlay click and Escape close for passphrase modal
     // (Do NOT add overlayHandler or Escape handler here)
     // Only allow close via explicit close button or successful form submit
+<<<<<<< HEAD
     if (form) form.onsubmit = (e)=>{ e.preventDefault(); const pass = input && input.value; if (!pass) return; close({ cancelled: false }); try { onSubmit && onSubmit(pass); } catch(e){ console.error('onSubmit error', e); } };
+=======
+    if (form) form.onsubmit = (e)=>{ e.preventDefault(); const pass = input && input.value; if (!pass) return; close(false); try { onSubmit && onSubmit(pass); } catch(e){ console.error('onSubmit error', e); } };
+>>>>>>> wallet-modal
   }
   // Expose prompt globally for reuse in inline modal flows
   try { window.openPassphrasePrompt = openPassphrasePrompt; } catch {}
 
   // --- BURN (baja token) ---
   // Convención de burn: enviar el UTXO a una dirección irrecuperable.
-  // En el flujo documental se usa la zero-address.
+  // Nota: en este proyecto las direcciones suelen ser publicKeys (04...), pero el flujo de docs usa la zero-address.
   const DEFAULT_BURN_ADDRESS = '0x0000000000000000000000000000000000000000';
 
   async function postSignedTransactionToServer(signedTransaction, passphrase) {
-    const isDifferentPort = location.port && location.port !== "6001";
+    const isDifferentPort = location.port && location.port !== "3000";
     const base = isDifferentPort
-      ? `${location.protocol}//${location.hostname}:6001`
+      ? `${location.protocol}//${location.hostname}:3000`
       : "";
     const resp = await fetch(`${base}/transaction`, {
       method: "POST",
@@ -863,6 +874,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     if (!proceed) return;
 
+    // Pedir passphrase (requerida por backend en /transaction)
     const promptFn = (window.openPassphrasePrompt || openPassphrasePrompt);
     promptFn('Passphrase requerida', 'Passphrase para firmar BURN', async (passphrase) => {
       try {
@@ -890,7 +902,7 @@ document.addEventListener("DOMContentLoaded", () => {
           `
         );
         if (ok) {
-          try { markUtxosPending([utxoKey]); } catch {}
+          markUtxosPending([utxoKey]);
           try { showToast('BURN enviado. UTXO marcado como pendiente.'); } catch {}
         }
       } catch (err) {
@@ -907,42 +919,36 @@ document.addEventListener("DOMContentLoaded", () => {
   if (createEl) {
     createEl.addEventListener("click", () => {
       openPassphrasePrompt('Crear BW-Wallet', 'Passphrase', async (pass) => {
-      function browserRandomPrivateKey() {
-        const arr = new Uint8Array(32);
-        crypto.getRandomValues(arr);
-        return arr;
-      }
-      const privBytes = browserRandomPrivateKey();
-      console.log('privBytes:', privBytes, 'type:', typeof privBytes, 'instanceof Uint8Array:', privBytes instanceof Uint8Array, 'length:', privBytes.length);
-      const priv = bufToHex(privBytes);
-      let pub;
-      try {
-        pub = secp.getPublicKey(priv, { compressed: false });
-      } catch (e) {
-        console.error('Error in getPublicKey:', e, 'privBytes:', privBytes);
-        throw e;
-      }
-      let key, salt;
-      try {
-        ({ key, salt } = await deriveKey(pass));
-      } catch (err) {
-        console.error("deriveKey failed during create:", err);
-        openAppModal("Error al derivar clave", `<div style=\"color:#c00;font-weight:600;\">${(err && err.message) || err}</div>`);
-        return;
-      }
-      const keyBytes = normalizeKeyInput(key);
-      const { iv, ciphertext } = await aesGcmEncrypt(keyBytes, priv);
+        // Unificada: usa secp.generatePrivateKey() para obtener la clave privada
+        const priv = secp.generatePrivateKey();
+        let pub;
+        try {
+          pub = secp.getPublicKey(priv, { compressed: false });
+        } catch (e) {
+          console.error('Error in getPublicKey:', e, 'priv:', priv);
+          throw e;
+        }
+        let key, salt;
+        try {
+          ({ key, salt } = await deriveKey(pass));
+        } catch (err) {
+          console.error("deriveKey failed during create:", err);
+          openAppModal("Error al derivar clave", `<div style=\"color:#c00;font-weight:600;\">${(err && err.message) || err}</div>`);
+          return;
+        }
+        const keyBytes = normalizeKeyInput(key);
+        const { iv, ciphertext } = await aesGcmEncrypt(keyBytes, priv);
 
-      const keystore = {
-        keystoreVersion: 1,
-        id: "web-demo-" + Date.now(),
-        createdAt: new Date().toISOString(),
-        createdBy: "web-demo",
-        kdf: "scrypt",
-        kdfParams: { salt },
-        cipher: "aes-256-gcm",
-        cipherParams: { iv },
-        publicKey: pub,
+        const keystore = {
+          keystoreVersion: 1,
+          id: "web-demo-" + Date.now(),
+          createdAt: new Date().toISOString(),
+          createdBy: "web-demo",
+          kdf: "scrypt",
+          kdfParams: { salt },
+          cipher: "aes-256-gcm",
+          cipherParams: { iv },
+          publicKey: pub,
         encryptedPrivateKey: ciphertext,
       };
 
@@ -1598,9 +1604,9 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       try {
-        const isDifferentPort = location.port && location.port !== "6001";
+        const isDifferentPort = location.port && location.port !== "3000";
         const base = isDifferentPort
-          ? `${location.protocol}//${location.hostname}:6001`
+          ? `${location.protocol}//${location.hostname}:3000`
           : "";
         const resp = await fetch(`${base}/transaction`, {
           method: "POST",
@@ -1738,84 +1744,11 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("[Historial] Error al consultar el historial:", err); // Debug: muestra el error
       openAppModal("Error al consultar historial", `<div style='color:#c00;font-weight:600;'>${(err && err.message) || err}</div>`);
     }
-};
-
-// Expose handler globally for inline modal logic (module-safe)
-if (typeof window !== 'undefined') {
-  window.handleHistorialClick = handleHistorialClick;
-  console.log('[DEBUG][web-demo.js] handleHistorialClick assigned to window:', typeof window.handleHistorialClick);
-}
-
-  // Handler específico para botón Wallet (#walletModal): muestra resumen de wallet
-  const handleWalletModalClick = async () => {
-    const senderPubEl = document.getElementById("senderPub");
-    const pub = senderPubEl && senderPubEl.value;
-    if (!pub) {
-      openAppModal("Wallet requerida", `<div>Importa un keystore para ver tu Wallet.</div>`);
-      return;
-    }
-    try {
-      const [balResp, utxoResp] = await Promise.all([
-        fetch(`/address-balance`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: pub }) }),
-        fetch(`/utxo-balance/${pub}`)
-      ]);
-      const balData = await balResp.json().catch(() => ({}));
-      const utxoData = await utxoResp.json().catch(() => ({}));
-      const balance = balData.balance ?? utxoData.balance ?? 0;
-      const utxos = Array.isArray(utxoData.utxos) ? utxoData.utxos : [];
-      const utxoRows = utxos.map(u => `<tr><td>${u.txId}</td><td>${u.outputIndex ?? ''}</td><td>${u.amount}</td></tr>`).join('');
-      const html = `
-        <div class="wallet-modal">
-          <div class="muted" style="margin-bottom:8px;">PublicKey:</div>
-          <div class="readonly-field" style="margin-bottom:12px;">
-            <input class="input readonly" readonly value="${pub}" />
-          </div>
-          <div style="margin:8px 0;">Balance: <strong>${balance}</strong></div>
-          <div style="margin:6px 0;">UTXOs:</div>
-          <table style="width:100%;border-collapse:collapse;">
-            <thead><tr><th>txId</th><th>index</th><th>amount</th></tr></thead>
-            <tbody>${utxoRows || '<tr><td colspan="3" class="muted">Sin UTXOs</td></tr>'}</tbody>
-          </table>
-        </div>
-      `;
-      openAppModal('Mi Wallet', html);
-    } catch (err) {
-      openAppModal('Error Wallet', `<div style='color:#c00;font-weight:600;'>${(err && err.message) || err}</div>`);
-    }
   };
-// <-- cierre de función handleWalletModalClick
 
-  // Delegación de eventos para botones de historial (#historial) y wallet modal (#walletModal)
-  const dashboardCard = document.querySelector(".dashboard-card");
-  if (dashboardCard) {
-
-    dashboardCard.addEventListener("click", function (e) {
-      if (!e.target) return;
-      if (e.target.id === "historial") {
-        console.log("[Historial] Click capturado por delegación en #historial");
-        handleHistorialClick(e);
-      } else if (e.target.id === "walletModal") {
-        console.log("[Wallet] Click en botón Wallet, abriendo resumen");
-        handleWalletModalClick();
-      }
-    });
-    console.log(
-      "[Historial] Delegación de eventos activa en .dashboard-card para #historial"
-    );
-  } else {
-    // Fallback: delegación global en document.body
-    document.body.addEventListener("click", function (e) {
-      if (!e.target) return;
-      if (e.target.id === "historial") {
-        console.log("[Historial] Click capturado por delegación global en #historial");
-        handleHistorialClick(e);
-      } else if (e.target.id === "walletModal") {
-        console.log("[Wallet] Click capturado por delegación global en #walletModal");
-        handleWalletModalClick();
-      }
-    });
-    console.warn(
-      "[Historial] Delegación global activa en document.body para #historial"
-    );
+  // Expose handler globally for inline modal logic (module-safe)
+  if (typeof window !== 'undefined') {
+    window.handleHistorialClick = handleHistorialClick;
+    console.log('[DEBUG][web-demo.js] handleHistorialClick assigned to window:', typeof window.handleHistorialClick);
   }
 });

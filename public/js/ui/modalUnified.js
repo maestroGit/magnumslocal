@@ -22,8 +22,11 @@
     return modal;
   }
 
-  window.openModal = function({ title = '', body = '', footer = '', options = {} }) {
+
+  window.openModal = function({ title = '', body = '', size = 'md', footer = '', options = {} }) {
     const modal = ensureModal();
+    console.log('[openModal] Modal abierto:', { title, size });
+
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
@@ -38,9 +41,12 @@
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
 
-    // Cierre por overlay
+
+    // Por defecto, overlayClose es false (no se cierra al hacer click fuera)
+    const overlayClose = options.overlayClose === true;
     modal.onclick = (e) => {
-      if (e.target === modal && options.overlayClose !== false) window.closeModal();
+      if (e.target === modal && overlayClose) window.closeModal();
+
     };
     // Cierre por aspa
     closeBtn.onclick = () => window.closeModal();

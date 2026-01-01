@@ -147,13 +147,16 @@ class Transaction {
   static verifyTransaction(transaction) {
     // Verifica la firma de cada input
     if (!transaction.inputs || transaction.inputs.length === 0) return false;
-    return transaction.inputs.every((input) =>
-      ChainUtil.verifySignature(
+    return transaction.inputs.every((input) => {
+      const hash = ChainUtil.hash(transaction.outputs);
+      console.log('[DEBUG][verifyTransaction] outputs:', transaction.outputs);
+      console.log('[DEBUG][verifyTransaction] hash:', hash);
+      return ChainUtil.verifySignature(
         input.address,
         input.signature,
-        ChainUtil.hash(transaction.outputs)
-      )
-    );
+        hash
+      );
+    });
   }
 
   static toString() {
