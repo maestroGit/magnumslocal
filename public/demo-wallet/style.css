@@ -169,7 +169,7 @@
     border: 1px solid #6a3a4a;
   }
   #loteModal input:focus, #loteModal select:focus, #loteModal textarea:focus {
-    border-color: ;
+    border-color:red ;
     outline: none;
   }
   #loteModal .dashboard-btn, #loteModal .btn {
@@ -397,8 +397,6 @@ main h1,
 main h2 {
   color: #FFC48C;
 }
-
-  // ...existing code...
 
 
 .dashboard-card {
