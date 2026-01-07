@@ -1,0 +1,231 @@
+.nav .btn,
+.nav .btn .metric-value {
+  color: #fff !important;
+  background: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+}
+.nav .btn .metric-value {
+  color: #fff !important;
+  background: none !important;
+}
+.logo, h1.logo {
+  font-weight: 700 !important;
+  letter-spacing: 0.6px !important;
+  font-size: 2.2rem !important;
+  line-height: 1 !important;
+  margin-top: 8px !important;
+  margin-bottom: 0 !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  height: 48px !important;
+  padding: 10px 0 0 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.logo-icon {
+  display: inline-block !important;
+  width: 148px !important;
+  height: 64px !important;
+  margin-right: 12px !important;
+  margin-top: 0 !important;
+  vertical-align: middle !important;
+  background-color: #220F17 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  border: none !important;
+  object-fit: contain !important;
+}
+/* Ocultar el botón hamburguesa en pantallas grandes */
+#hamburger-menu-btn {
+  display: none !important;
+}
+/* Estilos específicos para la cabecera y metric-value */
+.site-header {
+  width: 100vw;
+  background: #220F17;
+  box-shadow: 0 2px 12px rgba(247,147,26,0.12);
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+}
+.logo {
+  color: #f7931a !important;
+  font-size: 1.8em !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  margin: 0 16px !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.logo-icon {
+  width: 64px !important;
+  height: 64px !important;
+  margin-right: 16px !important;
+  vertical-align: middle !important;
+  transition: transform 0.3s !important;
+  filter: none !important;
+}
+.rotatable {
+  /* Puedes agregar animación de rotación si lo deseas */
+}
+.logo-icon.white {
+  filter: invert(1) brightness(1.4) contrast(1.05) !important;
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  width: 148px !important;
+  height: 64px !important;
+}
+.nav {
+  display: flex !important;
+  gap: 18px !important;
+  align-items: center !important;
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 32px 0 0 !important;
+  margin: 0 !important;
+}
+.btn {
+  color: #fff !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  transition: background 0.18s !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  font-size: 1em !important;
+  min-width: unset !important;
+  height: unset !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.btn.active, .btn:hover, .nav .btn.active, .nav .btn:hover {
+  background: #f7931a !important;
+  color: #220F17 !important;
+}
+.metric-value {
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem) !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  background: linear-gradient(90deg, var(--button-bg, #ff7b00), #ff932a) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+}
+.site-header .nav .btn .metric-value {
+  font-size: 1rem !important;
+  line-height: 1 !important;
+}
+@media (max-width: 700px) {
+  .site-header .container { padding: 6px 10px !important; }
+  .site-header .nav { gap: 6px !important; }
+  .site-header .nav .btn { height: 28px !important; padding: 3px 6px !important; border-radius: 7px !important; }
+  .site-header .nav .btn .metric-value { font-size: 0.95rem !important; }
+  /* Hide logo image and nav buttons on mobile: show only title */
+  .site-header .container { justify-content: center !important; }
+  .site-header .logo-icon { display: none !important; }
+  .site-header .nav { display: none !important; }
+}
+.site-header {
+  width: 100vw;
+  background: #220F17;
+  box-shadow: 0 2px 12px rgba(247,147,26,0.12);
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+}
+.logo {
+  color: #f7931a;
+  font-size: 1.8em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin: 0 16px;
+}
+.nav {
+  display: flex;
+  gap: 18px;
+}
+.btn {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: background 0.18s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+}
+.btn.active, .btn:hover {
+  background: #f7931a;
+  color: #220F17;
+}
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 16px;
+  vertical-align: middle;
+  transition: transform 0.3s;
+}
+.rotatable {
+  /* Puedes agregar animación de rotación si lo deseas */
+}
+.white {
+  filter: brightness(1.1) drop-shadow(0 0 2px #fff);
+}
+.metric-value {
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(90deg, var(--button-bg, #ff7b00), #ff932a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.site-header .nav .btn .metric-value {
+  font-size: 1rem;
+  line-height: 1;
+}
+@media (max-width: 700px) {
+  .site-header .container { padding: 6px 10px; }
+  .site-header .nav { gap: 6px; }
+  .site-header .nav .btn { height: 28px; padding: 3px 6px; border-radius: 7px; }
+  .site-header .nav .btn .metric-value { font-size: 0.95rem; }
+  /* Hide logo image and nav buttons on mobile: show only title */
+  .site-header .container { justify-content: center; }
+  .site-header .logo-icon { display: none !important; }
+  .site-header .nav { display: none !important; }
+}
