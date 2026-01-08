@@ -177,7 +177,7 @@
     .wallet-publickey-header {
         font-size: 1.55em !important;
         padding: 10px 22px !important;
-        margin-top: 18px !important;
+        margin-top: 110px !important; /* Más separación del header fijo */
         margin-bottom: 18px !important;
         display: block !important;
         text-align: center !important;
@@ -310,6 +310,7 @@ body {
     background-repeat: repeat;
     background-size: 192px 192px, 192px 192px;
     background-position: 0 0, 96px 96px;
+    padding-top: 10px; /* Menor separación del header fijo */
 }
 /* Alinear todos los botones de la nav perfectamente usando flexbox en el contenedor */
 .nav {
@@ -389,7 +390,7 @@ body {
 .wallet-footer-content input[type="file"],
 .wallet-footer-content input[type="password"] {
     padding: 6px 8px;
-    font-size: 1em;
+        margin-top: 16px !important; /* Solo un pequeño margen visual */
     border-radius: 6px;
     border: 1px solid #ccc;
     background: #fff;
@@ -2280,6 +2281,8 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
 
 /* === Overrides: uniform, compact dashboard buttons === */
 .dashboard-card .card-actions { align-items: stretch; }
+/* Ensure card action rows use flex layout */
+.card-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .dashboard-card .dashboard-btn {
     height: 36px;
     padding: 0 12px;
@@ -2293,6 +2296,10 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+/* Ensure dashboard buttons participate in flex rows instead of full-width blocks */
+.dashboard-btn { display: inline-flex; align-items: center; justify-content: center; }
+/* Exactly two buttons side-by-side when space allows */
+.two-btn-actions .dashboard-btn { flex: 1 1 120px; min-width: 120px; width: auto !important; }
 /* Equalize wallet buttons to dashboard button geometry */
 .wallet-btn {
     height: 36px;
@@ -2401,4 +2408,123 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     overflow-wrap: break-word;
     hyphens: auto;
   }
+}
+/* --- Unified dashboard card and button styles (match magnumsmaster) --- */
+:root {
+    --accent: #f7931a;
+    --accent-2: #ffb14a;
+}
+
+.dashboard-card {
+    background: #220F17;
+    border: 1px solid #38202a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 10px #00000022;
+}
+.dashboard-card .card-header h2 {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+}
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.two-row-actions .dashboard-btn {
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+.wallet-global-actions .dashboard-btn {
+    flex: 1 1 120px;
+    min-width: 120px;
+}
+
+/* Exactly two buttons side-by-side when space allows */
+.two-btn-actions .dashboard-btn {
+    flex: 1 1 calc((100% - 12px) / 2);
+    min-width: 140px;
+}
+
+.dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    line-height: 1.2;
+    font-size: 1rem;
+    font-family: inherit;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    min-height: 38px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-btn.primary {
+    background: var(--accent);
+    color: #1f0f15;
+}
+.dashboard-btn.primary:hover {
+    background: var(--accent-2);
+}
+.dashboard-btn.secondary {
+    background: #2b1a22;
+    color: #ffd7b3;
+    border-color: #53313f;
+}
+.dashboard-btn.secondary:hover {
+    background: #3a222c;
+}
+.wine-hover-btn:hover {
+    box-shadow: 0 2px 10px rgba(247,147,26,0.25);
+}
+
+/* === Dashboard Actions & Buttons (unified) === */
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: auto;
+    min-width: 100px;
+    height: 36px;
+    font-weight: 600;
+}
+
+.dashboard-btn.primary {
+    background-color: #ff7b00;
+    color: #fff;
+}
+
+.dashboard-btn.secondary {
+    background-color: #333;
+    color: #fff;
+}
+
+.wine-hover-btn:hover {
+    filter: brightness(1.05);
+}
+
+/* helper: two buttons side-by-side on wide screens, stack on small */
+.two-btn-actions .dashboard-btn {
+    flex: 1 1 120px;
+    min-width: 120px;
+    width: auto !important;
+}
+
+@media (max-width: 520px) {
+    .two-btn-actions .dashboard-btn {
+        flex-basis: 100%;
+        min-width: 0;
+    }
 }
