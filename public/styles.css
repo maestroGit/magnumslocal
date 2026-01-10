@@ -172,6 +172,13 @@
     overflow: visible !important;
     top: 70px !important; /* Baja el panel para dejar espacio al aspa y evitar que tape el contenido */
 }
+/* Asegurar orden de apilamiento correcto: los modales centrales arriba del panel lateral */
+.modal:not(#sideModalPanel) {
+    z-index: 35000 !important;
+}
+#sideModalPanel {
+    z-index: 15000 !important; /* por debajo del modal central */
+}
 /* Mejorar legibilidad de la clave pública global en escritorio */
 @media (min-width: 601px) {
     .wallet-publickey-header {
