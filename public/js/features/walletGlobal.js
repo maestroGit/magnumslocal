@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = 'Wallet Global';
             const body = `
               <div class="modal-info">
-                <p>Introduce la passphrase para ${actionLabel}:</p>
+                <p>Introduce passphrase for ${actionLabel}:</p>
                 <input type="password" id="passphraseModalInput" placeholder="Passphrase" autocomplete="new-password" />
               </div>
               <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;">
@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = 'Wallet Global';
             const body = `
               <div class="modal-info">
-                <p>Selecciona el archivo de wallet (JSON) y la passphrase para ${actionLabel}:</p>
+                <p>Select the wallet file (JSON) and passphrase for ${actionLabel}:</p>
                 <input type="file" id="walletFileModalInput" accept="application/json" />
                 <input type="password" id="passphraseModalInput" placeholder="Passphrase" autocomplete="new-password" />
               </div>
               <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;">
-                <button id="filePassConfirm" class="dashboard-btn primary">Confirmar</button>
+                <button id="filePassConfirm" class="dashboard-btn primary">Confirm</button>
               </div>`;
             showModalForm(title, body);
             const fileInput = document.getElementById('walletFileModalInput');
@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (okBtn) okBtn.onclick = () => {
               const f = fileInput && fileInput.files && fileInput.files[0];
               const p = passInput ? passInput.value : '';
-              if (!f) { showModal('Selecciona un archivo JSON de wallet.', 'Wallet Global'); return; }
-              if (!p) { showModal('Introduce una passphrase.', 'Wallet Global'); return; }
+              if (!f) { showModal('Select a wallet JSON file.', 'Wallet Global'); return; }
+              if (!p) { showModal('Enter a passphrase.', 'Wallet Global'); return; }
               const reader = new FileReader();
               reader.onload = (evt) => {
                 try {
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   try { closeCurrentModal(); } catch(_) {}
                   resolve({ walletJson: json, passphrase: p });
                 } catch (err) {
-                  showModal('Archivo inválido: ' + err.message, 'Wallet Global');
+                  showModal('Invalid file: ' + err.message, 'Wallet Global');
                 }
               };
               reader.readAsText(f);
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const pubKeySpan = document.getElementById('walletGlobalPubKeyValue');
           if (pubKeySpan) {
             const pk = await getCurrentPublicKey();
-            pubKeySpan.textContent = pk ? pk : 'No disponible';
+            pubKeySpan.textContent = pk ? pk : 'Not available';
           }
         }
         // Actualizar al cargar
@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('wallet-global-generate');
     if (generateBtn) {
       generateBtn.addEventListener('click', async () => {
-        const pass = await promptPassphrase('generar una nueva wallet');
-        if (pass === null) return; // cancelado
-        if (!pass) return showModal('Introduce una passphrase.', 'Wallet Global');
+        const pass = await promptPassphrase('generate a new wallet');
+        if (pass === null) return; // canceled
+        if (!pass) return showModal('Enter a passphrase.', 'Wallet Global');
         try {
           const res = await fetch('/wallet/generate', {
             method: 'POST',
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ passphrase: pass })
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Error generando wallet');
+          if (!res.ok) throw new Error(data.error || 'Error generating wallet');
           const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          showModal('Wallet nueva generada y descargada.', 'Wallet Global');
+          showModal('New wallet generated and downloaded.', 'Wallet Global');
         // Toast visual para confirmación
         function showWalletToast(msg) {
           let toast = document.getElementById('wallet-toast');
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (decryptBtn) {
     decryptBtn.addEventListener('click', async () => {
-      const res = await promptFileAndPassphrase('descifrar la wallet');
+      const res = await promptFileAndPassphrase('decrypt wallet');
       if (!res) return; // cancelado
       const { walletJson, passphrase: pass } = res;
       // Soportar formato clásico y formato keystore nuevo
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tag = walletJson.tag;
       }
       if (!encryptedPrivateKey || !salt || !iv || !tag) {
-        return showModal('El archivo no parece ser una wallet cifrada válida.', 'Wallet Global');
+        return showModal('The file does not appear to be a valid encrypted wallet.', 'Wallet Global');
       }
       try {
         const res = await fetch('/wallet/decrypt', {
@@ -169,8 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error(data.error || 'Error descifrando wallet');
         // Mostrar advertencia y botón para revelar la clave privada
         showModal(`
-          <span style='color:#b00;font-weight:bold;'>⚠️ Atención:</span> La clave privada es secreta. No la compartas.<br>
-          <button id='show-privkey-btn' style='margin:8px 0 0 0;padding:4px 12px;font-size:1em;'>Mostrar clave privada</button>
+          <span style='color:#b00;font-weight:bold;'>⚠️ Attention:</span> The private key is secret. Do not share it.<br>
+          <button id='show-privkey-btn' style='margin:8px 0 0 0;padding:4px 12px;font-size:1em;'>Show private key</button>
           <span id='privkey-value' style='display:none;word-break:break-all;background:#f8f8f8;color:#222;padding:6px 10px;border-radius:6px;margin-left:8px;'>${data.privateKey}</span>
         `, 'Wallet Global');
         setTimeout(() => {
@@ -193,13 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (uploadBtn) {
     uploadBtn.addEventListener('click', async () => {
-      const res = await promptFileAndPassphrase('cargar la wallet en el backend');
+      const res = await promptFileAndPassphrase('load wallet into backend');
       if (!res) return; // cancelado
       const { walletJson: loadedWalletJson, passphrase: pass } = res;
       // Solo aceptar formato keystore actual
       if (!(loadedWalletJson.keystoreVersion && loadedWalletJson.kdfParams && loadedWalletJson.cipherParams && loadedWalletJson.tag && loadedWalletJson.publicKey && loadedWalletJson.encryptedPrivateKey)) {
-        showModal('El archivo no es una wallet cifrada válida (solo se acepta el formato keystore generado por el backend actual).', 'Wallet Global');
-        try { console.error('[WALLET-DEBUG] Wallet inválida:', loadedWalletJson); } catch(e) {}
+        showModal('The file does not appear to be a valid encrypted wallet (only the keystore format generated by the current backend is accepted).', 'Wallet Global');
+        try { console.error('[WALLET-DEBUG] Invalid wallet:', loadedWalletJson); } catch(e) {}
         return;
       }
       const encryptedPrivateKey = loadedWalletJson.encryptedPrivateKey;
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify(bodyToSend)
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error cargando wallet global');
+        if (!res.ok) throw new Error(data.error || 'Error loading global wallet');
         // Retry fetching the public key until it changes or max retries reached
         let pubKey = null;
         let retries = 0;
@@ -241,20 +241,20 @@ document.addEventListener('DOMContentLoaded', () => {
               break;
             }
           } catch (e) {
-            pubKey = '(error al consultar backend)';
-            console.error('[FRONTEND] Error consultando /wallet/global:', e);
+            pubKey = '(error querying backend)';
+            console.error('[FRONTEND] Error querying /wallet/global:', e);
           }
           await new Promise(resolve => setTimeout(resolve, retryDelay));
           retries++;
         }
         // Actualizar el header con la nueva clave pública global
         await updateGlobalWalletPubKeyHeader();
-        showModal('Wallet global cargada en backend.<br>Clave pública activa:<br><span style="word-break:break-all">' + pubKey + '</span>', 'Wallet Global');
-        console.log('[GLOBAL-MODAL-DEBUG] Clave pública final mostrada en modal:', pubKey);
+        showModal('Global wallet loaded into backend.<br>Active public key:<br><span style="word-break:break-all">' + pubKey + '</span>', 'Global Wallet');
+        console.log('[GLOBAL-MODAL-DEBUG] Final public key shown in modal:', pubKey);
       } catch (err) {
-        showModal('Error: ' + err.message, 'Wallet Global');
-        try { console.error('[WALLET-DEBUG] Error backend:', err); } catch(e) {}
-        showModal('Error backend:<br>' + (err && err.message ? err.message : err), 'Depuración Wallet Global');
+        showModal('Error: ' + err.message, 'Global Wallet');
+        try { console.error('[WALLET-DEBUG] Backend error:', err); } catch(e) {}
+        showModal('Backend error:<br>' + (err && err.message ? err.message : err), 'Global Wallet Debug');
       }
     });
   }

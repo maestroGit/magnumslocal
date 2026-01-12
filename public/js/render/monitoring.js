@@ -6,11 +6,11 @@ import { fetchData } from '../core/api.js';
 
 export async function renderMonitoring() {
   try {
-    showToast && showToast('Consultando sistema...', 'info');
+    showToast && showToast('Fetching system info...', 'info');
     const systemInfo = await fetchData('/system-info');
     if (systemInfo.error) {
-      showModal && showModal(`Error al obtener información del sistema: ${systemInfo.error}`, 'Error del Sistema');
-      showToast && showToast('Error en consulta del sistema', 'error');
+      showModal && showModal(`Error al obtener información del sistema: ${systemInfo.error}`, 'System Error');
+      showToast && showToast('Error fetching system info', 'error');
       return;
     }
 
@@ -24,30 +24,30 @@ export async function renderMonitoring() {
 
     const monitoringModalContent = `
       <div class="modal-info" style="max-height:60vh;overflow-y:auto;padding-right:8px;box-sizing:border-box;">
-        <p><strong>🖥️ Monitor del Sistema Blockchain</strong></p>
+        <p><strong>🖥️ Blockchain System Monitor</strong></p>
         <p><strong>Estado:</strong> <span class="status-online">● Online</span></p>
         <p><strong>Última actualización:</strong> ${new Date().toLocaleString()}</p>
         <div class="modal-body">
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
-            <h3 class="monitor-title">🌐 Servidor</h3>
+            <h3 class="monitor-title">🌐 Server</h3>
             <ul class="monitor-list">
-              <li><strong>Puerto HTTP:</strong> ${systemInfo.blockchain?.server?.httpPort || 'N/A'}</li>
-              <li><strong>Puerto P2P:</strong> ${systemInfo.blockchain?.server?.p2pPort || 'N/A'}</li>
+              <li><strong>HTTP Port:</strong> ${systemInfo.blockchain?.server?.httpPort || 'N/A'}</li>
+              <li><strong>P2P Port:</strong> ${systemInfo.blockchain?.server?.p2pPort || 'N/A'}</li>
               <li><strong>URL:</strong> <a href="${systemInfo.blockchain?.server?.httpUrl || '#'}" target="_blank" class="monitor-link">${systemInfo.blockchain?.server?.httpUrl || 'N/A'}</a></li>
-              <li><strong>Tiempo activo:</strong> ${formatUptime(systemInfo.blockchain?.server?.uptime || 0)}</li>
-              <li><strong>Iniciado:</strong> ${formatDate(systemInfo.blockchain?.server?.startTime)}</li>
+              <li><strong>Uptime:</strong> ${formatUptime(systemInfo.blockchain?.server?.uptime || 0)}</li>
+              <li><strong>Started:</strong> ${formatDate(systemInfo.blockchain?.server?.startTime)}</li>
             </ul>
           </div>
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
-            <h3 class="monitor-title">🌍 Red P2P</h3>
+            <h3 class="monitor-title">🌍 P2P Network</h3>
             <ul class="monitor-list">
-              <li><strong>Estado:</strong> <span class="${systemInfo.blockchain?.network?.networkStatus === 'connected' ? 'status-online' : 'status-standalone'}">${systemInfo.blockchain?.network?.networkStatus === 'connected' ? '🔗 Conectado' : '🔍 Standalone'}</span></li>
-              <li><strong>Conexiones activas:</strong> ${systemInfo.blockchain?.network?.p2pConnections || 0}</li>
+              <li><strong>Status:</strong> <span class="${systemInfo.blockchain?.network?.networkStatus === 'connected' ? 'status-online' : 'status-standalone'}">${systemInfo.blockchain?.network?.networkStatus === 'connected' ? '🔗 Connected' : '🔍 Standalone'}</span></li>
+              <li><strong>Active Connections:</strong> ${systemInfo.blockchain?.network?.p2pConnections || 0}</li>
               <li><strong>Peers:</strong> ${systemInfo.blockchain?.network?.p2pPeers?.length || 0}</li>
             </ul>
           </div>
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
-            <h3 class="monitor-title">🖥️ Sistema</h3>
+            <h3 class="monitor-title">🖥️ System</h3>
             <ul class="monitor-list">
               <li><strong>Host:</strong> ${systemInfo.hostName || 'N/A'}</li>
               <li><strong>IPs:</strong> ${(systemInfo.network?.ips?.length ? systemInfo.network.ips.map(i => `${i.interface}: ${i.address}`).join(' | ') : 'N/A')}</li>

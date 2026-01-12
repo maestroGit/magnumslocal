@@ -10,11 +10,11 @@ import { showTraceabilityModal } from './traceability.js';
 export const submitTransaction = async (transactionData) => {
   try {
     console.log('[TX][MODULE] submitTransaction', transactionData);
-    showProgressModal('Procesando transacción...', 'Enviando', [
-      'Validando datos...',
-      'Conectando con la red...',
-      'Procesando transacción...',
-      'Confirmando resultado...'
+    showProgressModal('Process transaction...', 'Sending', [
+      'Validate data...',
+      'Connecting to network...',
+      'Processing transaction...',
+      'Confirming result...'
     ]);
 
     const response = await fetchData('/transaction', {
@@ -26,9 +26,9 @@ export const submitTransaction = async (transactionData) => {
     setTimeout(() => {
       closeCurrentModal();
       if (response.error || !response.success) {
-        console.error('[TX][MODULE] Error en transacción', response.error || response);
-        showModal(`❌ Error en la transacción: ${response.error || 'Error desconocido'}`, 'Error de Transacción');
-        showToast('❌ Error en transacción', 'error');
+        console.error('[TX][MODULE] Error en transaction', response.error || response);
+        showModal(`❌ Error transaction: ${response.error || 'Error desconocido'}`, 'Error de Transaction');
+        showToast('❌ Error transaction', 'error');
         return;
       }
       if (response.success && response.transaction) {
@@ -38,13 +38,13 @@ export const submitTransaction = async (transactionData) => {
           const transactionResultContent = `
             <div class="modal-success">
               <div class="success-icon">✅</div>
-              <h3>¡Transacción Completada!</h3>
+              <h3>¡Transacction Completed!</h3>
               <p><strong>ID:</strong> <code>${response.transaction.id || 'N/A'}</code></p>
-              <p><strong>Estado:</strong> <span class="status-success">Confirmada</span></p>
+              <p><strong>Situation:</strong> <span class="status-success">Confirmed</span></p>
             </div>
             <div class="modal-details">
               <details>
-                <summary>📋 Ver detalles completos</summary>
+                <summary>📋 View complete details</summary>
                 <pre class="json-display">${JSON.stringify(response.transaction, null, 2)}</pre>
               </details>
               <div style="margin-top: 15px;">
@@ -52,20 +52,20 @@ export const submitTransaction = async (transactionData) => {
                 <p><strong>💰 Cantidad:</strong> ${response.transaction.amount}</p>
               </div>
             </div>`;
-          safeModal('Transacción Exitosa', transactionResultContent);
+          safeModal('Transacction ✅Exitosa', transactionResultContent);
         }
-        showToast('✅ Transacción procesada exitosamente', 'success');
+        showToast('✅ Transacction completed', 'success');
       } else {
-        showModal('⚠️ La transacción se procesó pero no se recibieron datos válidos.', 'Advertencia');
-        showToast('⚠️ Advertencia: respuesta incompleta', 'warning');
+        showModal('⚠️ transacction procesda pero no se recibieron datos válidos.', 'Alert');
+        showToast('⚠️ Alert: respuesta incompleta', 'warning');
       }
     }, 1500);
   } catch (error) {
     setTimeout(() => {
       closeCurrentModal();
-      console.error('[TX][MODULE] Error enviando transacción', error);
-      showModal(`❌ Error al enviar la transacción: ${error.message}`, 'Error de Red');
-      showToast('❌ Error de conexión', 'error');
+      console.error('[TX][MODULE] Error enviando transacction', error);
+      showModal(`❌ Error enviar transacction: ${error.message}`, 'Error de Red');
+      showToast('❌ Error conexion', 'error');
     }, 800);
   }
 };
@@ -109,15 +109,15 @@ export const openTransactionModal = async () => {
 
   const transactionFormContent = `
     <form id="transactionForm">
-      <label for="recipientInput">Destinatario (Clave Pública):</label>
-      <input type="text" id="recipientInput" name="recipient" placeholder="Introduce la clave pública del destinatario" required>
-      <label for="amountInput">Cantidad:</label>
+      <label for="recipientInput"> Beneficiary address(Public Key):</label>
+      <input type="text" id="recipientInput" name="recipient" placeholder="Insert beneficiary public key" required>
+      <label for="amountInput">Import:</label>
       <input type="number" id="amountInput" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
-      <label for="passphraseInput">Passphrase para firmar:</label>
-      <input type="password" id="passphraseInput" name="passphrase" placeholder="Introduce tu passphrase" required value="javi">
+      <label for="passphraseInput">Passphrase for signing:</label>
+      <input type="password" id="passphraseInput" name="passphrase" placeholder="Enter passphrase" required value="javi">
       <div id="utxoSelectList" class="utxo-select-list">
           ${utxosDisponibles.map((u, i) => {
-            // Detectar si el UTXO proviene de una transacción coinbase (inputs vacíos)
+            // Detectar si el UTXO proviene de una transacction coinbase (inputs vacíos)
             const isCoinbase = u.inputs && Array.isArray(u.inputs) && u.inputs.length === 0;
             return `
               <div class="coincontrol-utxo-row${isCoinbase ? ' coinbase-utxo' : ''}">
@@ -129,9 +129,9 @@ export const openTransactionModal = async () => {
             `;
           }).join('')}
       </div>
-      <button type="submit">Enviar Transacción</button>
+      <button type="submit">Transaction</button>
     </form>`;
-  safeModal('Nueva Transacción (Coin Control)', transactionFormContent);
+  safeModal('CREATE TRANSACTION', transactionFormContent);
 
   const form = document.getElementById('transactionForm');
   if (!form) return;
@@ -140,9 +140,9 @@ export const openTransactionModal = async () => {
     const recipient = document.getElementById('recipientInput').value.trim();
     const amount = parseFloat(document.getElementById('amountInput').value);
     const passphrase = document.getElementById('passphraseInput').value;
-    if (!recipient) return showModal('Por favor, introduce una clave pública válida para el destinatario.', 'Error de Validación');
-    if (amount <= 0) return showModal('La cantidad debe ser mayor que 0.', 'Error de Validación');
-    if (!passphrase) return showModal('La passphrase es obligatoria para firmar la transacción.', 'Error de Validación');
+    if (!recipient) return showModal('Please, insert a valid public key for the beneficiary.', 'Validation Error');
+    if (amount <= 0) return showModal('The amount must be greater than 0.', 'Validation Error');
+    if (!passphrase) return showModal('The passphrase is required to sign the transaction.', 'Validation Error');
 
     const selectedUTXOs = Array.from(document.querySelectorAll('.utxo-checkbox:checked')).map(cb => ({
       txId: cb.dataset.txid,
@@ -150,10 +150,10 @@ export const openTransactionModal = async () => {
       amount: parseFloat(cb.dataset.amount),
       address: cb.dataset.address
     }));
-    if (selectedUTXOs.length === 0) return showModal('Selecciona al menos un UTXO para la transacción.', 'Coin Control');
+    if (selectedUTXOs.length === 0) return showModal('Select at least one UTXO for the transaction.', 'Coin Control');
 
     const transactionData = { recipient, amount, passphrase, inputs: selectedUTXOs, mode: 'bodega' };
-    showConfirmModal(`¿Estás seguro de que deseas enviar ${amount} a:<br><code>${recipient}</code> usando ${selectedUTXOs.length} UTXOs?`, () => submitTransaction(transactionData), null, 'Confirmar Transacción');
+    showConfirmModal(`Are you sure you want to send ${amount} to:<br><code>${recipient}</code> using ${selectedUTXOs.length} UTXOs?`, () => submitTransaction(transactionData), null, 'Confirm Transaction');
   });
 };
 

@@ -18,11 +18,11 @@ export function initDomEvents() {
     blocksBtn.addEventListener('click', async () => {
       try {
         const blocks = await fetchData('/blocks');
-        if (blocks?.error) { showModal && showModal(`Error loading Blocks: ${blocks.error}`, 'Error'); return; }
+        if (blocks?.error) { showModal && showModal(`Error cargando bloques: ${blocks.error}`, 'Error'); return; }
         renderBlocks(blocks);
       } catch (e) {
         console.error('[events] error fetching /blocks', e);
-        showModal && showModal('Failed to load blocks.', 'Connection Error');
+        showModal && showModal('No se pudieron cargar los bloques.', 'Error de Conexión');
       }
     });
     blocksBtn.dataset.bound = '1';
@@ -34,11 +34,11 @@ export function initDomEvents() {
     mempoolBtn.addEventListener('click', async () => {
       try {
         const pool = await fetchData('/transactionsPool');
-        if (pool?.error) { showModal && showModal(`Error loading mempool: ${pool.error}`, 'Error'); return; }
+        if (pool?.error) { showModal && showModal(`Error cargando mempool: ${pool.error}`, 'Error'); return; }
         renderTransactionsPool(pool);
       } catch (e) {
         console.error('[events] error fetching /transactionsPool', e);
-        showModal && showModal('Failed to load mempool.', 'Connection Error');
+        showModal && showModal('No se pudo cargar la mempool.', 'Error de Conexión');
       }
     });
     mempoolBtn.dataset.bound = '1';
@@ -49,39 +49,39 @@ export function initDomEvents() {
   if (mineBtn && !mineBtn.dataset.bound) {
     mineBtn.addEventListener('click', async () => {
       try {
-        // 1) Check mempool before mining
-        showToast && showToast('🔎 Checking mempool…', 'info');
+        // 1) Comprobar mempool antes de minar
+        showToast && showToast('🔎 Comprobando mempool…', 'info');
         const pool = await fetchData('/transactionsPool');
         if (pool?.error) {
-          showModal && showModal(`Failed to query mempool: ${pool.error}`, 'MemPool Error');
+          showModal && showModal(`No se pudo consultar la mempool: ${pool.error}`, 'Error de MemPool');
           return;
         }
         if (!Array.isArray(pool)) {
-          showModal && showModal('Unexpected mempool response (not a list).', 'MemPool Error');
+          showModal && showModal('Respuesta inesperada de mempool (no es una lista).', 'Error de MemPool');
           return;
         }
         if (pool.length === 0) {
           const emptyMsg = `
             <div class="modal-info">
-              <p><strong>ℹ️ Empty MemPool</strong></p>
-              <p>There are no pending transactions. Mining will not start.</p>
+              <p><strong>ℹ️ MemPool vacía</strong></p>
+              <p>No hay transacciones pendientes. No se iniciará el minado.</p>
             </div>
             <div class="modal-body">
-              <p>Create a transaction (e.g., "Register" or "Consumed" bottle)  and try again.</p>
+              <p>Crea una transacción (por ejemplo, "Register bottle" o "Consumed bottle") y vuelve a intentarlo.</p>
             </div>`;
           if (typeof window.safeModal === 'function') {
-            window.safeModal('Mining blocked', emptyMsg);
+            window.safeModal('Minado bloqueado', emptyMsg);
           } else if (showModal) {
-            showModal(emptyMsg, 'Mining blocked');
+            showModal(emptyMsg, 'Minado bloqueado');
           }
-          showToast && showToast('⛔ Empty MemPool, mine cancel', 'warning');
+          showToast && showToast('⛔ MemPool vacía, minado cancelado', 'warning');
           return;
         }
 
-        // 2) There are transactions: proceed to mine
-        showToast && showToast(`⛏️ Mine ${pool.length} transaction(s)…`, 'info');
+        // 2) Hay transacciones: proceder a minar
+        showToast && showToast(`⛏️ Minando ${pool.length} transacción(es)…`, 'info');
         const res = await fetchData('/mine', { method: 'POST' });
-        if (res?.error) { showModal && showModal(`Error ⛏️mine: ${res.error}`, 'Error ⛏️mine'); return; }
+        if (res?.error) { showModal && showModal(`Error al minar: ${res.error}`, 'Error de Minado'); return; }
         // El backend /mine devuelve JSON del bloque, pero para asegurar datos completos refrescamos /blocks
         const blocks = await fetchData('/blocks');
         let lastBlock = null;
@@ -94,26 +94,27 @@ export function initDomEvents() {
         const minedModal = `
           <div id="sideModalPanel" class="modal" style="display:flex; align-items: flex-start; justify-content: center; z-index:30000;">
             <div class="modal-content" style="max-width:600px; min-width:320px; margin:48px auto 0 auto;">
-              <h2>⛏️✔️</h2>
+              <span class="close" onclick="window.closeSideModalPanel && window.closeSideModalPanel()">&times;</span>
+              <h2>Minado completado</h2>
               <div class="balance-result-modal" style="text-align:center;">
-                <p><strong>Block:</strong> ${lastBlock?.hash ? String(lastBlock.hash).slice(0,20)+'\u001a' : 'N/A'}</p>
+                <p><strong>Bloque:</strong> ${lastBlock?.hash ? String(lastBlock.hash).slice(0,20)+'\u001a' : 'N/A'}</p>
                 <p><strong>Timestamp:</strong> ${lastBlock?.timestamp ? new Date(lastBlock.timestamp).toLocaleString() : 'N/A'}</p>
-                <p><strong>Transactions included:</strong> ${txCount}</p>
+                <p><strong>Transacciones incluidas:</strong> ${txCount}</p>
               </div>
               <div class="modal-body" style="text-align:center;">
-                ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">Block</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
+                ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">Ver nuevo bloque</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
               </div>
             </div>
           </div>`;
-        showToast && showToast('⛏️Mine✅', 'success');
+        showToast && showToast('✅ Minado completado', 'success');
         if (typeof window.safeModal === 'function') {
-          window.safeModal('New block mined', minedModal);
+          window.safeModal('Nuevo bloque minado', minedModal);
         } else if (showModal) {
-          showModal(minedModal, 'New block ⛏️mined');
+          showModal(minedModal, 'Nuevo bloque minado');
         }
       } catch (e) {
         console.error('[events] error POST /mine-transactions', e);
-        showModal && showModal('Could not execute mining.', 'Connection Error');
+        showModal && showModal('No se pudo ejecutar el minado.', 'Error de Conexión');
       }
     });
     mineBtn.dataset.bound = '1';
@@ -122,14 +123,14 @@ export function initDomEvents() {
   const balanceBtn = document.getElementById('balanceWallet');
   if (balanceBtn && !balanceBtn.dataset.bound) {
     balanceBtn.addEventListener('click', async () => {
-      showToast('Checking balance...', 'info');
+      showToast('Consultando balance...', 'info');
       const balance = await fetchData('/balance');
       if (balance.error) {
-        showModal(`Error balance: ${balance.error}`, 'Error');
-        showToast('Error balance', 'error');
+        showModal(`Error al consultar balance: ${balance.error}`, 'Error');
+        showToast('Error al consultar balance', 'error');
       } else {
         renderBalance(balance);
-        showToast('Balance correct', 'success');
+        showToast('Balance consultado correctamente', 'success');
       }
     });
     balanceBtn.dataset.bound = '1';
@@ -139,14 +140,14 @@ export function initDomEvents() {
   const pkBtn = document.getElementById('publicKeyWallet');
   if (pkBtn && !pkBtn.dataset.bound) {
     pkBtn.addEventListener('click', async () => {
-      showToast('Getting public key...', 'info');
+      showToast('Obteniendo clave pública...', 'info');
       const publicKey = await fetchData('/public-key');
       if (publicKey.error) {
-        showModal(`Error getting public key: ${publicKey.error}`, 'Error');
-        showToast('Error getting public key', 'error');
+        showModal(`Error al obtener clave pública: ${publicKey.error}`, 'Error');
+        showToast('Error al obtener clave pública', 'error');
       } else {
         renderPublicKey(publicKey);
-        showToast('Public key obtained', 'success');
+        showToast('Clave pública obtenida', 'success');
       }
     });
     pkBtn.dataset.bound = '1';
@@ -219,7 +220,7 @@ export function initDomEvents() {
                 try { window._lastBlocks = b; } catch {}
                 showBlockTransactions(b.length - 1);
               } else {
-                showModal && showModal('No blocks available to display.', 'Empty Blockchain');
+                showModal && showModal('No hay bloques disponibles para mostrar.', 'Blockchain vacía');
               }
             });
             return; // Defer action to async fetch
@@ -238,9 +239,9 @@ export function initDomEvents() {
       if (btn.dataset.copyTxid) {
         const txid = btn.dataset.copyTxid;
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(txid).then(() => showToast && showToast('TXID copied', 'success')).catch(() => showToast && showToast('Could not copy', 'error'));
+          navigator.clipboard.writeText(txid).then(() => showToast && showToast('TXID copiado', 'success')).catch(() => showToast && showToast('No se pudo copiar', 'error'));
         } else {
-          try { showToast && showToast('Copy not supported', 'warning'); } catch {}
+          try { showToast && showToast('Copia no soportada', 'warning'); } catch {}
         }
       }
       // Cerrar modal inline (data-close-inline)

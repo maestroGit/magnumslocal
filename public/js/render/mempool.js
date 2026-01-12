@@ -15,13 +15,13 @@ export function renderTransactionsPool(transactionsPool) {
     transactionsContainer.innerHTML = '<p>No hay datos en mempool</p>';
     const emptyPoolContent = `
       <div class="modal-info">
-        <p><strong>ℹ️ MemPool vacío</strong></p>
-        <p>No hay transacciones pendientes en el pool de memoria.</p>
+        <p><strong>ℹ️ MemPool empty</strong></p>
+        <p>No pending transactions in the memory pool.</p>
       </div>
       <div class="modal-body">
-        <p>Todas las transacciones han sido procesadas.</p>
+        <p>All transactions have been processed.</p>
       </div>`;
-  safeModal('MemPool - Estado Actual', emptyPoolContent);
+  safeModal('MemPool', emptyPoolContent);
     return;
   }
 
@@ -73,7 +73,7 @@ export function renderTransactionsPool(transactionsPool) {
 
   const mempoolModalContent = `
     <div class="modal-info">
-      <p><strong>📊 MemPool - Transacciones Pendientes</strong></p>
+      <p><strong>📊 MemPool - Pending Transactions</strong></p>
       <p><strong>Total de transacciones:</strong> ${transactionsPool.length}</p>
       <p><strong>Volumen total:</strong> ${Number.isFinite(Number(totalAmount)) ? Number(totalAmount).toFixed(2) : 'N/A'}</p>
     </div>
@@ -121,7 +121,7 @@ export function renderTransactionsPool(transactionsPool) {
       }).join('')}
     </div>`;
 
-  safeModal('MemPool - Transacciones Cargadas', mempoolModalContent);
+  safeModal('MemPool - Transactions Loaded', mempoolModalContent);
 
   showToast && showToast(`MemPool listo: ${transactionsPool.length} transacciones`, 'success');
 }

@@ -8,7 +8,7 @@ import { safeModal, showModal, showToast, showProgressModal, closeCurrentModal }
 // 🔐 Genera un QR con prueba blockchain (propiedad / verificación)
 export const generateQRWithProof = async (loteId, transactionId) => {
   try {
-    showProgressModal('QR with proof...', 'Blockchain', [
+    showProgressModal('Generating QR with proof...', 'Blockchain', [
       'Searching transaction...',
       'Verifying ownership...',
       'Generating secure QR...',
@@ -68,6 +68,7 @@ export const showQRModal = (qrBase64, loteData) => {
     }
     const modalContent = `
       <div style="text-align:center;">
+        <h2>QR with transaction data</h2>
         ${advertencia}
         <img id="qrImageModal" src="${src}" alt="QR Blockchain" style="max-width:250px; margin:20px 0;">
         <div style="margin-top:15px; text-align:left;">
@@ -77,7 +78,7 @@ export const showQRModal = (qrBase64, loteData) => {
           <strong>Verified at:</strong> ${loteData.verificationData?.verifiedAt ? new Date(loteData.verificationData.verifiedAt).toLocaleString() : 'N/A'}<br>
         </div>
         <div style="margin-top:20px;">
-          <a href="${src}" download="QR_${loteData.loteId || 'lote'}.png" style="background:#1976d2;color:#fff;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:1em;text-decoration:none;display:inline-block;">💾 Download QR</a>
+          <a href="${src}" download="QR_${loteData.loteId || 'lote'}.png" style="background:#1976d2;color:#fff;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:1em;text-decoration:none;display:inline-block;">💾 Descargar QR</a>
         </div>
       </div>
     `;
@@ -126,28 +127,28 @@ export const showTraceabilityModal = (transactionData) => {
           <div><label for="precio">Price:</label><input type="text" id="precio" value="${transactionData.amount}€" readonly style="background: #f8f9fa; color: #6c757d;"></div>
         </div>
         <label for="nombreProducto">Product Name:</label>
-        <input type="text" id="nombreProducto" placeholder="Ej: Rioja Gran Reserva" required>
+        <input type="text" id="nombreProducto" placeholder="Eg: Rioja Gran Reserva" required>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div><label for="fechaProduccion">Fecha Producción:</label><input type="date" id="fechaProduccion" value="${new Date().toISOString().split('T')[0]}"></div>
-          <div><label for="fechaConsumo">Aviso Consumo:</label><input type="date" id="fechaConsumo" value="${new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString().split('T')[0]}"></div>
+          <div><label for="fechaProduccion">Production Date:</label><input type="date" id="fechaProduccion" value="${new Date().toISOString().split('T')[0]}"></div>
+          <div><label for="fechaConsumo">Consumption Notice:</label><input type="date" id="fechaConsumo" value="${new Date(new Date().setFullYear(new Date().getFullYear() + 5)).toISOString().split('T')[0]}"></div>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div><label for="origen">Origen:</label><input type="text" id="origen" placeholder="Ej: España"></div>
-          <div><label for="bodega">Bodega:</label><input type="text" id="bodega" placeholder="Ej: Bodegas Testing S.L."></div>
+          <div><label for="origen">Origin:</label><input type="text" id="origen" placeholder="Eg: Spain"></div>
+          <div><label for="bodega">Winery:</label><input type="text" id="bodega" placeholder="Eg: Bodegas Testing S.L."></div>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div><label for="año">Año:</label><input type="number" id="año" placeholder="Ej: 2021"></div>
-          <div><label for="variedad">Variedad:</label><input type="text" id="variedad" placeholder="Ej: Tempranillo"></div>
-          <div><label for="alcohol">Alcohol:</label><input type="text" id="alcohol" placeholder="Ej: 14.5%"></div>
+          <div><label for="año">Year:</label><input type="number" id="año" placeholder="Eg: 2021"></div>
+          <div><label for="variedad">Variety:</label><input type="text" id="variedad" placeholder="Eg: Tempranillo"></div>
+          <div><label for="alcohol">Alcohol:</label><input type="text" id="alcohol" placeholder="Eg: 14.5%"></div>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-          <div><label for="región">Region:</label><input type="text" id="región" placeholder="Ej: La Rioja"></div>
-          <div><label for="denominacionOrigen">Denomination of Origin:</label><input type="text" id="denominacionOrigen" placeholder="Ej: D.O.Ca Rioja"></div>
+          <div><label for="región">Region:</label><input type="text" id="región" placeholder="Eg: La Rioja"></div>
+          <div><label for="denominacionOrigen">Designation Origin:</label><input type="text" id="denominacionOrigen" placeholder="Eg: D.O.Ca Rioja"></div>
         </div>
         <label for="notaDeCata">🍷 Tasting Notes:</label>
-        <textarea id="notaDeCata" placeholder="Ej: Vino equilibrado con notas a frutos rojos y especias" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
+        <textarea id="notaDeCata" placeholder="Eg: Balanced wine with notes of red fruits and spices" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
         <label for="maridaje">🍴 Pairing:</label>
-        <textarea id="maridaje" placeholder="Ej: Carnes rojas, quesos curados, embutidos" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
+        <textarea id="maridaje" placeholder="Eg: Red meats, aged cheeses, cold cuts" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
         <label for="comentarios">📝 Notes</label>
         <textarea id="comentarios" placeholder="Additional comments (optional)" style="width: 100%; min-width: 350px; max-width: 100%;"></textarea>
         <div style="margin-top: 20px; text-align: center;">
@@ -178,11 +179,11 @@ export const showTraceabilityModal = (transactionData) => {
         console.log('[TRACEABILITY][MODULE] loteId rellenado por defecto:', loteId);
       }
       if (!transactionId) {
-        showModal('No se ha recibido el identificador de transacción.', 'Error de datos');
+        showModal('Transaction identifier not received.', 'Data Error');
         return;
       }
       try {
-        console.log('[TRACEABILITY][MODULE] Enviando metadata al endpoint /lotes', { loteId, transactionId });
+        console.log('[TRACEABILITY][MODULE] Sending metadata to /lotes endpoint', { loteId, transactionId });
         const metadata = {
           loteId,
           nombreProducto: document.getElementById('nombreProducto')?.value || 'Producto sin nombre',
@@ -207,7 +208,7 @@ export const showTraceabilityModal = (transactionData) => {
           body: JSON.stringify({ txId: transactionId, metadata })
         });
         if (loteResp.error || !loteResp.success) {
-          showModal('Error creating batch record: ' + (loteResp.error || 'Unknown error'), 'Error');
+          showModal('Error creando registro de lote: ' + (loteResp.error || 'Error desconocido'), 'Error');
           return;
         }
         await generateQRWithProof(loteId, transactionId);

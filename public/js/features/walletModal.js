@@ -6,17 +6,17 @@ export async function handleUTXOCheckClick() {
     const data = await res.json();
     if (data.error) {
       showModal(`Error: ${data.error}`, 'Error UTXO');
-      showToast('Error en consulta UTXO', 'error');
+      showToast('Error consult UTXO', 'error');
       return;
     }
     const utxoHtml = `
       <div class="utxo-result-modal">
         <h4>🔗 UTXO Set</h4>
-        <p><strong>Dirección:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
-        <p><strong>Balance UTXO:</strong> <span class="utxo-balance">${data.balance}</span></p>
-        <p><strong>UTXOs disponibles:</strong> ${data.utxos.length}</p>
+        <p><strong>Address:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
+        <p><strong>UTXO Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
+        <p><strong>Available UTXOs:</strong> ${data.utxos.length}</p>
         <div class="utxo-list-section">
-          <h5>Detalles de UTXOs:</h5>
+          <h5>UTXO Details:</h5>
           <div id="utxoListContainer" class="utxo-list-container">
             ${data.utxos.map(u => `
               <div class='utxo-card'>
@@ -43,11 +43,11 @@ export async function handleUTXOCheckClick() {
         container.dataset.bound = '1';
       }
     }, 50);
-    showToast(`UTXO Set consultado: ${data.utxos.length} UTXOs`, 'success');
+    showToast(`UTXO Set consult: ${data.utxos.length} UTXOs`, 'success');
   } catch (err) {
     console.error('[walletModal] UTXO fetch error', err);
-    showModal('Error al consultar UTXO Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
-    showToast('Error de conexión', 'error');
+    showModal('Error al consult UTXO Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
+    showToast('Error de conexiOn', 'error');
   }
 }
 // Wallet Modal Feature Module (ESM)
@@ -72,22 +72,22 @@ export function showWalletModal() {
     return;
   }
   const walletContent = `
-    <h3>Balance Clave Pública:</h3>
+    <h3>Consultar Balance de Clave Pública:</h3>
     <div style="margin:15px 0;">
-      <label for="addressInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Clave Pública:</label>
-      <input type="text" id="addressInputModal" placeholder="Introduce la clave pública..." style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
+      <label for="addressInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">PPublic key:</label>
+      <input type="text" id="addressInputModal" placeholder="Introduce public key..." style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button id="submitPublicKeyModal" style="flex:1;min-width:150px;">Balance</button>
       </div>
     </div>
-    <h3>Cargar Wallet desde Archivo:</h3>
+    <h3>Load Wallet from File:</h3>
     <div style="margin:15px 0;">
       <label for="fileInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Seleccionar archivo de wallet:</label>
       <input type="file" id="fileInputModal" accept=".json" style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
-      <button id="submitHardwareWalletModal" style="width:100%;">Cargar Wallet</button>
+      <button id="submitHardwareWalletModal" style="width:100%;">Load Wallet</button>
     </div>
     <div id="infoWalletModal" style="display:none"></div>
-    <!-- infoWalletModal eliminado para evitar duplicidad de modales -->
+   
   `;
   modalBody.innerHTML = walletContent;
   // Ensure modal is visible even if it has .hidden
@@ -133,25 +133,25 @@ export function setupWalletModalEvents() {
   if (submitBalanceBtn && !submitBalanceBtn.dataset.bound) {
     submitBalanceBtn.addEventListener('click', async () => {
       const publicKey = document.getElementById('addressInputModal')?.value?.trim();
-      if (!publicKey) { showModal('Por favor, introduce una clave pública válida.', 'Error de Validación'); return; }
-      showToast('Consultando balance...', 'info');
+      if (!publicKey) { showModal('Please enter a valid public key.', 'Validation Error'); return; }
+      showToast('Consult balance...', 'info');
       try {
         const response = await fetch(`${apiBaseUrl}/address-balance`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ address: publicKey }) });
         const data = await response.json();
-        if (data.error) { showModal(`Error al consultar balance: ${data.error}`, 'Error'); showToast('Error en consulta de balance', 'error'); return; }
+        if (data.error) { showModal(`Error consulting balance: ${data.error}`, 'Error'); showToast('Error consulting balance', 'error'); return; }
         const modalHtml = `
           <div id="sideModalPanel" style="background: #220F17; color: #fff; box-shadow: rgba(0,0,0,0.25) 0px 8px 24px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); padding: 16px; max-width: 600px; width: min(42vw, 600px); max-height: 80vh; overflow: auto; display: block; margin: 48px auto 0 auto;">
-            <p><strong>Direccion:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
+            <p><strong>Address:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
             <p><strong>Balance:</strong> <span style="color:#f7931a;font-weight:bold;font-size:18px;">${data.balance}</span></p>
-            <p><strong>Estado:</strong> ${data.message}</p>
-            <p><strong>Consulta:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Status:</strong> ${data.message}</p>
+            <p><strong>Query:</strong> ${new Date().toLocaleString()}</p>
           </div>`;
         showModal(modalHtml, 'Balance');
         showToast('Balance consultado exitosamente', 'success');
       } catch (err) {
         console.error('[walletModal] balance fetch error', err);
         showModal('Ocurrió un error inesperado al consultar el balance.', 'Error de Conexión');
-        showToast('Error conexion', 'error');
+        showToast('Error de conexión', 'error');
       }
     });
     submitBalanceBtn.dataset.bound = '1';
@@ -167,34 +167,41 @@ export function setupWalletModalEvents() {
     submitFileBtn.addEventListener('click', async () => {
       const fileInput = document.getElementById('fileInputModal');
       const file = fileInput?.files?.[0];
-      if (!file) { showModal('No se ha seleccionado ningún archivo para cargar.', 'Error de Validación'); return; }
-      showToast('Subiendo archivo de wallet...', 'info');
+      if (!file) {
+        showModal('No file selected for upload.', 'Validation Error');
+        return;
+      }
+      showToast('Uploading wallet file...', 'info');
       const formData = new FormData(); formData.append('usbPath', file);
       try {
         const response = await fetch(`${apiBaseUrl}/hardware-address`, { method:'POST', body: formData });
         if (!response.ok) {
-          const errorMessage = await response.text(); showModal(`Error al subir archivo: ${errorMessage}`, 'Error de Carga'); showToast('Error al subir archivo', 'error'); return;
+          const errorMessage = await response.text();
+          showModal(`Error uploading file: ${errorMessage}`, 'Upload Error');
+          showToast('Error uploading file', 'error');
+          return;
         }
         const data = await response.json();
         if (data.message === 'Success' && data.publicKey) {
-          const inputEl = document.getElementById('addressInputModal'); if (inputEl) inputEl.value = data.publicKey;
-            const modalHtml = `
-              <div class="wallet-upload-modal">
-                <h4>📁 Archivo Cargado Exitosamente</h4>
-                <p><strong>✅ Archivo:</strong> ${file.name}</p>
-                <p><strong>Tamaño:</strong> ${(file.size/1024).toFixed(2)} KB</p>
-                <p><strong>Clave pública cargada:</strong></p>
-                <p style="word-break:break-all;font-family:monospace;background:#1a1320;color:#fff;padding:10px;border-radius:5px;font-size:12px;">${data.publicKey}</p>
-                <p><strong>Fecha de carga:</strong> ${new Date().toLocaleString()}</p>
-              </div>`;
-            showModal(modalHtml, 'Carga de Wallet');
-            showToast('Archivo de wallet cargado', 'success');
+          const inputEl = document.getElementById('addressInputModal');
+          if (inputEl) inputEl.value = data.publicKey;
+          const modalHtml = `
+            <div class="wallet-upload-modal">
+              <h4>📁 File Uploaded Successfully</h4>
+              <p><strong>✅ File:</strong> ${file.name}</p>
+              <p><strong>Size:</strong> ${(file.size/1024).toFixed(2)} KB</p>
+              <p><strong>Loaded Public Key:</strong></p>
+              <p style="word-break:break-all;font-family:monospace;background:#1a1320;color:#fff;padding:10px;border-radius:5px;font-size:12px;">${data.publicKey}</p>
+              <p><strong>Upload Date:</strong> ${new Date().toLocaleString()}</p>
+            </div>`;
+          showModal(modalHtml, 'Wallet Upload');
+          showToast('Wallet file uploaded', 'success');
         } else {
-          showModal('Error al cargar el wallet o no se encontró una clave pública válida en el archivo.', 'Error de Wallet');
-          showToast('Error al procesar wallet', 'error');
+          showModal('Error loading wallet or no valid public key found in file.', 'Wallet Error');
+          showToast('Error processing wallet', 'error');
         }
       } catch (err) {
-        showModal(`Error de conexión: ${err.message}`, 'Error de Red'); showToast('Error de conexión', 'error');
+        showModal(`Connection error: ${err.message}`, 'Network Error'); showToast('Connection error', 'error');
       }
     });
     submitFileBtn.dataset.bound = '1';

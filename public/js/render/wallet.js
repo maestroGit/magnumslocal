@@ -9,68 +9,68 @@ export function renderBalance(balanceData) {
   const balanceModalContent = `
     <div class="modal-info">
       
-      <p><strong>Estado:</strong> ${balanceData.message || 'Consultado'}</p>
+      <p><strong>Status:</strong> ${balanceData.message || 'Queried'}</p>
     </div>
     <div class="modal-body">
       <div class="modal-info">
-        <p><strong>Clave Pública:</strong></p>
+        <p><strong>Public Key:</strong></p>
         <p class="wallet-publickey-value tx-id">${balanceData.address}</p>
-        <p><strong>Balance Actual:</strong> <span class="wallet-balance">${balanceData.balance}</span></p>
+        <p><strong>Current Balance:</strong> <span class="wallet-balance">${balanceData.balance}</span></p>
       </div>
-      <p>Información Adicional:</p>
+      <p>Additional Info:</p>
       <ul>
-        <li><strong>Fecha de consulta:</strong> ${new Date().toLocaleString()}</li>
+        <li><strong>Query Date:</strong> ${new Date().toLocaleString()}</li>
       </ul>
     </div>`;
-  safeModal('Balance de Wallet', balanceModalContent);
+  safeModal('Balance Wallet', balanceModalContent);
 }
 
 export function renderPublicKey(publicKey) {
   const publicKeyModalContent = `
     <div class="modal-info">
-      <p><strong>🔑 Clave Pública Actual</strong></p>
-      <p><strong>Estado:</strong> Activa</p>
+      <p><strong>🔑 Current Public Key</strong></p>
+      <p><strong>Status:</strong> Active</p>
     </div>
     <div class="modal-body">
-      <h3>Información de la Clave:</h3>
+      <h3>Key Information:</h3>
       <div class="modal-info">
-        <p><strong>Clave Pública:</strong></p>
+        <p><strong>Public Key:</strong></p>
         <pre class="json-display">${JSON.stringify(publicKey.publicKey, null, 2)}</pre>
       </div>
-      <h3>Detalles:</h3>
+      <h3>Details:</h3>
       <ul>
-        <li><strong>Formato:</strong> JSON</li>
-        <li><strong>Tipo:</strong> Clave pública ECDSA</li>
-        <li><strong>Fecha de consulta:</strong> ${new Date().toLocaleString()}</li>
-        <li><strong>Estado de la red:</strong> Conectado</li>
+        <li><strong>Format:</strong> JSON</li>
+        <li><strong>Type:</strong> ECDSA Public Key</li>
+        <li><strong>Query Date:</strong> ${new Date().toLocaleString()}</li>
+        <li><strong>Network Status:</strong> Connected</li>
       </ul>
     </div>`;
-  safeModal('Clave Pública del Sistema', publicKeyModalContent);
+  safeModal('System Public Key', publicKeyModalContent);
 }
 
 export async function checkPublicKeyBalance() {
   try {
     const publicKey = document.getElementById('addressInput')?.value?.trim();
     if (!publicKey) {
-      showModal && showModal('Por favor, introduce una clave pública válida.', 'Error de Validación');
+      showModal && showModal('Please enter a valid public key.', 'Validation Error');
       return;
     }
-    showToast && showToast('Consultando balance...', 'info');
+    showToast && showToast('Checking balance...', 'info');
     const response = await fetch(`${apiBaseUrl}/address-balance`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: publicKey })
     });
     const data = await response.json();
     if (data.error) {
-      showModal && showModal(`Error al consultar balance: ${data.error}`, 'Error');
-      showToast && showToast('Error en consulta de balance', 'error');
+      showModal && showModal(`Error checking balance: ${data.error}`, 'Error');
+      showToast && showToast('Error checking balance', 'error');
     } else {
       renderBalance(data);
-      showToast && showToast('Balance consultado exitosamente', 'success');
+      showToast && showToast('Balance checked successfully', 'success');
     }
   } catch (error) {
     console.error('Error fetching balance:', error);
-    showModal && showModal('Ocurrió un error inesperado al consultar el balance.', 'Error de Conexión');
-    showToast && showToast('Error de conexión', 'error');
+    showModal && showModal('An unexpected error occurred while checking the balance.', 'Connection Error');
+    showToast && showToast('Connection error', 'error');
   }
 }
 
@@ -82,7 +82,7 @@ export async function uploadFile() {
     console.warn('No file selected for hardware wallet upload.');
     return;
   }
-  showToast && showToast('Subiendo archivo de wallet...', 'info');
+  showToast && showToast('Uploading wallet file...', 'info');
   const formData = new FormData(); formData.append('usbPath', file);
   try {
     const response = await fetch(`${apiBaseUrl}/hardware-address`, { method: 'POST', body: formData });
@@ -98,27 +98,27 @@ export async function uploadFile() {
       const input = document.getElementById('addressInput'); if (input) input.value = data.publicKey;
       const successMessage = `
         <div class="modal-info">
-          <p><strong>✅ Archivo subido exitosamente!</strong></p>
-          <p><strong>Clave pública cargada:</strong></p>
+          <p><strong>✅ File uploaded successfully!</strong></p>
+          <p><strong>Loaded Public Key:</strong></p>
           <p class="wallet-publickey-value tx-id">${data.publicKey}</p>
         </div>
         <div class="modal-body">
-          <h3>Información del archivo:</h3>
+          <h3>File Information:</h3>
           <ul>
-            <li><strong>Nombre del archivo:</strong> ${file.name}</li>
-            <li><strong>Tamaño:</strong> ${(file.size/1024).toFixed(2)} KB</li>
-            <li><strong>Fecha de carga:</strong> ${new Date().toLocaleString()}</li>
-            <li><strong>Estado:</strong> Cargado exitosamente</li>
+            <li><strong>File Name:</strong> ${file.name}</li>
+            <li><strong>Size:</strong> ${(file.size/1024).toFixed(2)} KB</li>
+            <li><strong>Upload Date:</strong> ${new Date().toLocaleString()}</li>
+            <li><strong>Status:</strong> Successfully uploaded</li>
           </ul>
         </div>`;
-  safeModal('Wallet Cargado', successMessage);
-      showToast && showToast('Archivo de wallet cargado', 'success');
+  safeModal('Wallet Loaded', successMessage);
+      showToast && showToast('Wallet file uploaded', 'success');
     } else {
-      showModal && showModal('Error al cargar el wallet o no se encontró una clave pública válida en el archivo.', 'Error de Wallet');
-      showToast && showToast('Error al procesar wallet', 'error');
+      showModal && showModal('Error loading wallet or no valid public key found in the file.', 'Wallet Error');
+      showToast && showToast('Error processing wallet', 'error');
     }
   } catch (error) {
-    showModal && showModal(`Error de conexión: ${error.message}`, 'Error de Red');
-    showToast && showToast('Error de conexión', 'error');
+    showModal && showModal(`Connection error: ${error.message}`, 'Network Error');
+    showToast && showToast('Connection error', 'error');
   }
 }

@@ -61,11 +61,14 @@ async function handleImportKeystore(e) {
         sessionStorage.setItem('importedKeystore', JSON.stringify(keystore));
       }
       // Puedes conectar aquí la lógica de los botones
+      document.getElementById('btnConsume').onclick = () => {
+        window.location.href = 'consume-keystore.html';
+      };
       document.getElementById('btnTransfer').onclick = () => {
         window.location.href = 'transfer-keystore.html';
       };
-      document.getElementById('btnConsult').onclick = () => {
-        alert('Funcionalidad de consulta no implementada aún.');
+      document.getElementById('btnHistory').onclick = () => {
+        window.location.href = 'history-keystore.html';
       };
     } catch (e) {
       statusEl.textContent = 'Passphrase incorrecta o keystore corrupto.';

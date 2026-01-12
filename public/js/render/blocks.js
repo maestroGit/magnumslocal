@@ -10,25 +10,25 @@ export function showBlockTransactions(blockIndex) {
     const block = blocks[blockIndex];
     if (!block) {
       // Fallback directo usando safeModal (title, html)
-      safeModal('Error', 'Bloque no encontrado');
+      safeModal('Error', 'Block not found');
       return;
     }
     const txs = Array.isArray(block.data) ? block.data : [];
     const content = `
       <div class="modal-info">
-        <p><strong>📦 Transactions Blocks #${blockIndex}</strong></p>
+        <p><strong>💸 Transactions of Block #${blockIndex}</strong></p>
         <p><strong>Hash:</strong> ${block.hash}</p>
         <p><strong>Timestamp:</strong> ${new Date(block.timestamp).toLocaleString()}</p>
         <p><strong>Total transactions:</strong> ${txs.length}</p>
       </div>
       <div class="modal-body">
-        ${txs.length === 0 ? '<p>No hay transactions en este block.</p>' : '<ul>' + txs.map((tx, i) => {
+        ${txs.length === 0 ? '<p>No transactions in this block.</p>' : '<ul>' + txs.map((tx, i) => {
             const txId = (tx && tx.id) ? tx.id : (typeof tx === 'string' ? tx : JSON.stringify(tx).substring(0,40));
             return `<li class=\"tx-item\">
               <div class=\"tx-header\">
                 <strong class=\"tx-label\">Tx:</strong>
                 <code class=\"tx-id\">${txId}</code>
-                <button class=\"dashboard-btn secondary tx-copy-btn\" type=\"button\" data-copy-txid=\"${txId}\">Copy TXID</button>
+                <button class=\"dashboard-btn secondary tx-copy-btn\" type=\"button\" data-copy-txid=\"${txId}\">COPY TXID</button>
               </div>
               <pre class=\"json-display\">${typeof tx === 'string' ? tx : JSON.stringify(tx, null, 2)}</pre>
             </li>`
@@ -36,10 +36,10 @@ export function showBlockTransactions(blockIndex) {
       </div>
     `;
   // Uso unificado de safeModal
-    safeModal(`Transactions - Block #${blockIndex}`, content);
+    safeModal(`💸Transactions - Blocks #${blockIndex}`, content);
   } catch (err) {
     console.error('showBlockTransactions error', err);
-    alert('Error transacctions: ' + err.message);
+    alert('Error showing transactions: ' + err.message);
   }
 }
 
@@ -72,9 +72,9 @@ export function renderBlocks(blocks, options = {}) {
 
   const blocksModalContent = `
     <div class="modal-info">
-      <p><strong>✅ Blocks Loaded Successfully</strong></p>
+      <p><strong>✅ Blocks loaded successfully</strong></p>
       <p><strong>Total blocks:</strong> ${blocks.length}</p>
-      <p><strong>Último block:</strong> ${
+      <p><strong>Last block:</strong> ${
         blocks.length > 0 ? new Date(blocks[blocks.length - 1].timestamp).toLocaleString() : 'N/A'
       }</p>
     </div>

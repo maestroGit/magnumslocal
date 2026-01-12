@@ -274,7 +274,12 @@ class P2PServer {
     this.sockets.forEach((socket) => this.sendTransaction(socket, transaction));
   };
 
-  // Ordena a todos los peers limpiar el pool de transacciones
+  // broadcastClearTransactions Ese endpoint NO existe en tu código actual.
+  // Si quisieras implementarlo para tener un comando de emergencia, 
+  // tendrías que agregarlo manualmente en server.js, por ejemplo después de los otros endpoints admin.
+  // Sería como un comando administrativo de emergencia que ordena a todos los peers limpiar el pool de transacciones
+  // ❌ Pero nadie lo llama (no hay endpoint ni código que lo use)
+  // ❌ No existe /admin/clear-all-mempools en server.js
   broadcastClearTransactions = () => {
     this.sockets.forEach((socket) =>
       socket.send(

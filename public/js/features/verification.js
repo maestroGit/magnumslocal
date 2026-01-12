@@ -16,10 +16,10 @@ export async function verifyQRProof(qrData) {
     };
 
     if (typeof showProgressModal === 'function') {
-      showProgressModal('Verificando autenticidad...', 'Blockchain', [
-        'Analizando QR...',
-        'Consultando blockchain...',
-        'Verificando propiedad...'
+      showProgressModal('Verifying authenticity...', 'Blockchain', [
+        'Analyzing QR...',
+        'Consult blockchain...',
+        'Verifying ownership...'
       ]);
     } else {
       console.info('[verifyQRProof] showProgressModal not available, scheduling inline spinner (debounced 150ms)');

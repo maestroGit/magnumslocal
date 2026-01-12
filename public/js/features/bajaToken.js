@@ -9,22 +9,22 @@ export function openBajaTransactionModal() {
     const walletAddress = await getCurrentPublicKey();
     const bajaFormContent = `
       <form id="bajaTransactionForm">
-        <h3>🗑️ Baja de Transacción</h3>
-        <label for="transactionIdBaja">ID de Transacción:</label>
-        <input type="text" id="transactionIdBaja" name="transactionIdBaja" placeholder="Introduce el ID de la transacción" required>
-        <label for="propietarioBaja">Propietario (solo lectura):</label>
+        <h3>- 🚚 Complete the form to receive your wine</h3>
+        <label for="transactionIdBaja">Transaction ID:</label>
+        <input type="text" id="transactionIdBaja" name="transactionIdBaja" placeholder="Enter the transaction ID" required>
+        <label for="propietarioBaja">Owner (read-only):</label>
         <input type="text" id="propietarioBaja" name="propietarioBaja" value="${walletAddress}" readonly required style="background:#eee;">
-        <label for="motivoBaja">Motivo:</label>
+        <label for="motivoBaja">Reason:</label>
         <select id="motivoBaja" name="motivoBaja" required>
           <option value="burn">Retirar (burn)</option>
           <option value="bodega">Enviar a bodega</option>
         </select>
         <div style="margin-top:12px;">
-          <button type="submit" class="dashboard-btn primary">Confirmar Baja</button>
-          <button type="button" id="leerQRBajaBtn" class="dashboard-btn secondary" style="margin-left:10px;">Leer QR</button>
+        <button type="button" id="leerQRBajaBtn" class="dashboard-btn secondary" style="margin-left:10px;">Read QR</button>
+        <button type="submit" class="dashboard-btn primary">Consume</button>
         </div>
       </form>`;
-    safeModal('Baja de Transacción', bajaFormContent);
+    safeModal('Remove to consume', bajaFormContent);
     const form = document.getElementById('bajaTransactionForm');
     if (!form) return;
     form.addEventListener('submit', async (ev) => {
@@ -33,12 +33,12 @@ export function openBajaTransactionModal() {
       const transactionId = document.getElementById('transactionIdBaja')?.value?.trim();
       const motivo = document.getElementById('motivoBaja')?.value || 'burn';
       if (!propietario || !transactionId) {
-        showModal && showModal('Debes completar todos los campos requeridos', 'Validación');
+        showModal && showModal('Complete all required fields', 'Validation');
         return;
       }
       if (propietario !== walletAddress) {
-        showModal && showModal('El propietario debe coincidir con la wallet importada.', 'Validación');
-        console.error('[BURN] Intento de firmar con una wallet distinta a la importada', { propietario, walletAddress });
+        showModal && showModal('Owner must match the imported wallet.', 'Validation');
+        console.error('[BURN] Attempt to sign with a wallet different from the imported one', { propietario, walletAddress });
         return;
       }
       await submitBajaToken({ transactionId, ownerPublicKey: propietario, motivo });
@@ -46,7 +46,7 @@ export function openBajaTransactionModal() {
     const leerQRBtn = document.getElementById('leerQRBajaBtn');
     if (leerQRBtn && !leerQRBtn.dataset.bound) {
       leerQRBtn.addEventListener('click', () => {
-        showModal && showModal('Futura implementación de lectura QR para baja.', 'Leer QR');
+        showModal && showModal('Future implementation of QR reading for removal.', 'Read QR');
       });
       leerQRBtn.dataset.bound = '1';
     }
@@ -61,12 +61,12 @@ export function openBajaTransactionModal() {
     const motivo = document.getElementById('motivoBaja')?.value || 'burn';
 
     if (!propietario || !transactionId) {
-      showModal && showModal('Debes completar todos los campos requeridos', 'Validación');
+      showModal && showModal('Complete all required fields', 'Validation');
       return;
     }
     if (propietario !== (window.walletAddress || '')) {
-      showModal && showModal('El propietario debe coincidir con la wallet importada.', 'Validación');
-      console.error('[BURN] Intento de firmar con una wallet distinta a la importada', { propietario, walletAddress: window.walletAddress });
+      showModal && showModal('Owner must match the imported wallet.', 'Validation');
+      console.error('[BURN] Attempt to sign with a wallet different from the imported one', { propietario, walletAddress: window.walletAddress });
       return;
     }
 
@@ -76,7 +76,7 @@ export function openBajaTransactionModal() {
   const leerQRBtn = document.getElementById('leerQRBajaBtn');
   if (leerQRBtn && !leerQRBtn.dataset.bound) {
     leerQRBtn.addEventListener('click', () => {
-      showModal && showModal('Futura implementación de lectura QR para baja.', 'Leer QR');
+      showModal && showModal('Future implementation of QR reading for removal.', 'Read QR');
     });
     leerQRBtn.dataset.bound = '1';
   }
@@ -84,8 +84,8 @@ export function openBajaTransactionModal() {
 
 export async function submitBajaToken({ transactionId, ownerPublicKey, motivo, utxoTxId, utxoOutputIndex }) {
   try {
-    showProgressModal && showProgressModal('Procesando baja...', 'Baja de Token', [
-      'Validando datos...', 'Buscando transacción...', 'Creando transacción de baja...'
+    showProgressModal && showProgressModal('Processing removal...', 'Token Removal', [
+      'Validating data...', 'Searching transaction...', 'Creating removal transaction...'
     ]);
     const result = await fetchData('/baja-token', {
       method: 'POST',
@@ -94,15 +94,15 @@ export async function submitBajaToken({ transactionId, ownerPublicKey, motivo, u
     });
     closeCurrentModal && closeCurrentModal();
     if (result?.success) {
-      showModal && showModal(`✅ ${result.message}<br>ID: <code>${result.transactionId}</code><br>Destino: <code>${result.destino}</code>`, 'Baja de Token Exitosa');
-      showToast && showToast('Baja realizada correctamente', 'success');
+      showModal && showModal(`✅ ${result.message}<br>ID: <code>${result.transactionId}</code><br>Destination: <code>${result.destino}</code>`, 'Token Removal Successful');
+      showToast && showToast('Removal completed successfully', 'success');
     } else {
-      showModal && showModal(`❌ Error: ${result?.error || 'No se pudo realizar la baja'}`, 'Error Baja Token');
-      showToast && showToast('Error en baja', 'error');
+      showModal && showModal(`❌ Error: ${result?.error || 'Removal could not be completed'}`, 'Token Removal Error');
+      showToast && showToast('Removal error', 'error');
     }
   } catch (err) {
     closeCurrentModal && closeCurrentModal();
-    showModal && showModal(`Error al realizar la baja: ${err.message}`, 'Error Baja Token');
-    showToast && showToast('Error de conexión', 'error');
+    showModal && showModal(`Error performing removal: ${err.message}`, 'Token Removal Error');
+    showToast && showToast('Connection error', 'error');
   }
 }

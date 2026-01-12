@@ -34,11 +34,11 @@ Solo modifica los .env de los nodos secundarios para apuntar al relay Seenode.
 #
 # Usa este archivo como plantilla para nodos que NO actúan como relay,
 # sino que se conectan a la red a través del relay principal (Seenode).
-#
-# Relay principal: wss://app.blockswine.com:443
-###############################################################
 
- Ahora tienes el script npm start:example, que copia .env.example a .env y arranca el servidor con esa configuración. Solo ejecuta:
+# Relay principal: wss://app.blockswine.com:443
+
+
+Ahora tienes el script npm start:example, que copia .env.example a .env y arranca el servidor con esa configuración. Solo ejecuta:
 
 npm run start:example
 
@@ -92,12 +92,12 @@ $ npx wscat -c wss://app.blockswine.com:443
 Connected (press CTRL+C to quit)
 < {"type":"HANDSHAKE_HTTP_URL","nodeId":"node_8252","httpUrl":"http://192.168.5.192:80","timestamp":1765901079615}
 < {"type":"CHAIN","chain":[{"timestamp":1738879340000,"previousHash":"0000000000000000000000000000000000000000000000000000000000000000","hash":"000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f","data":[{"id":"init-fund-1","lote":null,"inputs":[],"outputs":[{"amount":500,"address":"04788167aa54d7998c72a27c2aa4d912851c17e4e58111a7a309b1a92174db1b9cc28f29f4454e7eb762b0c8a3245b843c9f990598a534be11463ea72a5c80e889"}]}],"body":"5b7b226964223a22696e69742d66756e642d31222c226c6f7465223a6e756c6c2c22696e70757473223a5b5d2c226f757470757473223a5b7b22616d6f756e74223a3530302c2261646472657373223a22303437383831223a2230343738383136376161353464373939386337326132376332616134643931323835316331376534653538313131613761333039623161393231373464623162396363323866323966343435346537656237363262306338613332343562383433633966393930353938613533346265313134363365613732613563383065383839227d5d7d5d","nonce":"5b7b226964223a22696e69742d66756e642d31222c226c6f7465223a6e756c6c2c22696e70757473223a5b5d2c226f757470757473223a5b7b22616d6f756e74223a3530302c2261646472657373223a2230343738383136376161353464373939386337326132376332616134643931323835316331376534653538313131613761333039623161393231373464623162396363323866323966343435346537656237363262306338613332343562383433633966393930353938613533346265313134363365613732613563383065383839227d5d7d5d","difficulty":2,"processTime":0}]}
->
+
 
 
 ¿Quieres que te ayude a modificar tu server.js para que todo escuche en el mismo puerto (por ejemplo, 80) y así el proxy funcione para ambos protocolos?
 
-
+# Probar WebSockets en local
 Para probar WebSockets en local, puedes usar la herramienta wscat o un cliente WebSocket en JavaScript. Aquí tienes dos formas sencillas:
 
 1. Usando wscat (recomendado):

@@ -803,6 +803,10 @@ button:hover {
     /* Ajusta el ancho al 50% */
     box-sizing: border-box;
     /* Asegura que el padding y border se incluyan en el ancho total */
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .transaction p {
@@ -2533,5 +2537,83 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     .two-btn-actions .dashboard-btn {
         flex-basis: 100%;
         min-width: 0;
+    }
+}
+
+/* === Fix Issue #4: Prevenir desbordamiento de tarjetas de transacciones en MemPool === */
+.transaction-modal-item,
+.monitor-card {
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Texto largo (IDs, direcciones, hashes) con elipsis */
+.tx-id,
+.transaction-modal-item .tx-id,
+.monitor-card .tx-id {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+    word-break: break-all;
+}
+
+/* Ajuste específico para transacciones dentro de modales */
+.modal-content .transaction,
+.modal-content .transaction-modal-item,
+.modal-content .monitor-card {
+    max-width: calc(100% - 20px);
+    margin: 8px auto;
+    overflow: hidden;
+}
+
+/* Detalles colapsables dentro de transacciones */
+.transaction-modal-item details,
+.monitor-card details {
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.transaction-modal-item details summary,
+.monitor-card details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+.transaction-modal-item ul,
+.monitor-card ul {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    padding-left: 20px;
+}
+
+.transaction-modal-item ul li,
+.monitor-card ul li {
+    margin: 6px 0;
+    word-break: break-word;
+}
+
+/* Responsive: pantallas pequeñas */
+@media (max-width: 700px) {
+    .transaction,
+    .transaction-modal-item,
+    .monitor-card {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+    
+    .tx-id {
+        font-size: 0.75rem;
+        max-width: 100%;
+    }
+    
+    .transaction-modal-item ul,
+    .monitor-card ul {
+        padding-left: 12px;
     }
 }

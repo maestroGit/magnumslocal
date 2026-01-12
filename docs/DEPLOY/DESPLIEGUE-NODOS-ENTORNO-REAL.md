@@ -397,3 +397,56 @@ Lee la variable PEERS del entorno.
 Intenta conectar a cada peer.
 Muestra logs en la terminal sobre el estado de cada conexión (exitosa o fallida).
 Gestiona los mensajes y errores de la red P2P.
+
+
+# la cadena se comparta, los PEERS NO se escuchan bidireccionalamente.
+
+magnumslocal                    magnumsmaster (relay)
+    |                                |
+    +---> socket de salida -------->  (recibe en WebSocketServer)
+    |                                |
+    (NO PUEDE RECIBIR               (NO CONECTA DE VUELTA)
+     aquí porque solo es cliente)
+
+Cuando magnumslocal intenta hacer broadcastTransaction():
+broadcastTransaction = (transaction) => {
+  this.sockets.forEach((socket) => this.sendTransaction(socket, transaction));
+};
+
+this.sockets es un array VACÍO en magnumslocal porque:
+
+magnumslocal solo tiene conexión de salida (cliente P2P)
+No actúa como servidor P2P (no tiene WebSocketServer con conexiones entrantes)
+Entonces this.sockets siempre está vacío
+Resultado: broadcastTransaction() no envía nada a nadie
+Cuando magnumsmaster intenta hacer broadcastTransaction():
+
+magnumsmaster no tiene a magnumslocal en su lista de sockets
+Porque magnumsmaster NO se conecta a magnumslocal
+Apenas espera a que magnumslocal se conecte a él
+La única forma de sincronizar transacciones es por HTTP (o hacer que ambos nodos sean servidores P2P, lo que es más complejo).
+
+# Problema 
+Tanto magnumsmaster como magnumslocal están configurados como nodos secundarios apuntando al mismo relay externo (Seenode):
+magnumsmaster (.env.local):
+  HTTP_PORT=6001
+  P2P_PORT=6003
+  PEERS=wss://app.blockswine.com:443
+
+magnumslocal (.env):
+  HTTP_PORT=6001
+  P2P_PORT=6003
+  PEERS=wss://app.blockswine.com:443
+
+Ninguno de los dos es el relay que actúa como servidor principal.
+
+Para que funcione la sincronización de transacciones entre magnumsmaster y magnumslocal:
+
+Opción 1: Hacer que magnumsmaster sea el relay local
+
+magnumsmaster: PEERS= (vacío, actúa como relay)
+magnumslocal: PEERS=ws://localhost:6003 (se conecta a magnumsmaster)
+Opción 2: Hacer que ambos se conecten bidireccionalamente entre sí
+
+Más complejo, requiere que ambos sean servidores P2P
+
