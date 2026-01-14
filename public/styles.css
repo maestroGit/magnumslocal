@@ -17,13 +17,20 @@
 }
 /* Botón pequeño para copiar TXID en el modal de UTXOs */
 .utxo-card-actions .utxo-copy-btn {
-    font-size: 0.62em;
-    padding: 1px 6px;
-    min-width: unset;
-    height: 18px;
-    border-radius: 4px;
-    line-height: 1.05;
-    letter-spacing: 0.01em;
+    font-size: 0.75em;
+    padding: 4px 10px;
+    min-width: 60px;
+    height: 26px;
+    border-radius: 6px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.utxo-card-actions .utxo-copy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 @media (max-width: 700px) {
     .card-header {
@@ -202,10 +209,20 @@
     gap: 8px;
     margin-top: 8px;
 }
+/* UTXO Result Modal - ensure centered display */
+.utxo-result-modal {
+    text-align: left;
+    max-width: 100%;
+}
 .utxo-balance {
     color: #f7931a;
     font-weight: bold;
     font-size: 18px;
+}
+/* UTXO Result Modal - ensure centered display */
+.utxo-result-modal {
+    text-align: left;
+    max-width: 100%;
 }
 /* UTXO Card Styles */
 .utxo-card {
@@ -1137,6 +1154,8 @@ button:hover {
 /* Estilos para modales - Consistente con el diseño del proyecto */
 .modal {
     display: flex; /* visible by default; hidden via .hidden */
+    align-items: center;
+    justify-content: center;
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -1151,7 +1170,7 @@ button:hover {
 
 .modal-content {
     background-color: #220F17;
-    margin: 5% auto;
+    margin: auto;
     padding: 30px;
     border: none;
     border-radius: 15px;
