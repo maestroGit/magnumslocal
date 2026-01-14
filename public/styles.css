@@ -221,11 +221,6 @@
     margin: 10px 0;
     line-height: 1.6;
 }
-/* Ensure UTXO modal stays centered even when other modals are open */
-#errorModal .modal-content:has(.utxo-result-modal) {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
 /* UTXO Card Styles */
 .utxo-card {
     padding: 10px;
@@ -1168,7 +1163,7 @@ button:hover {
 
 .modal-content {
     background-color: #220F17;
-    margin: 5% auto;
+    margin: 0 auto;
     padding: 30px;
     border: none;
     border-radius: 15px;
@@ -1520,7 +1515,7 @@ button:hover {
 @media (max-width: 480px) {
     .modal-content {
         width: 98%;
-        margin: 5% auto;
+        margin: 0 auto;
         padding: 15px;
     }
     
