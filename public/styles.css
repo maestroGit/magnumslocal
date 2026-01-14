@@ -207,6 +207,25 @@
     font-weight: bold;
     font-size: 18px;
 }
+/* UTXO Result Modal - ensure proper centering */
+.utxo-result-modal {
+    width: 100%;
+    max-width: 600px;
+}
+.utxo-result-modal h4 {
+    color: #FFC48C;
+    margin-bottom: 15px;
+    text-align: center;
+}
+.utxo-result-modal p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+/* Ensure UTXO modal stays centered even when other modals are open */
+#errorModal .modal-content:has(.utxo-result-modal) {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
 /* UTXO Card Styles */
 .utxo-card {
     padding: 10px;
@@ -1143,6 +1162,8 @@ button:hover {
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(3px);
     animation: fadeIn 0.3s ease-in-out;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-content {

@@ -21,12 +21,13 @@ export function showModal(message, title = 'Información') {
   // Position this modal side-by-side and above others
   modal.style.zIndex = '25000';
   modal.classList.remove('hidden');
-  // Offset the modal to the right if wallet modal is open
+  // Offset the modal to the right if wallet modal is open, BUT NOT for UTXO Set modal
   try {
     const wallet = document.getElementById('walletModalContainer');
     const isWalletOpen = wallet && !wallet.classList.contains('hidden');
     const content = modal.querySelector('.modal-content');
-    if (isWalletOpen && content) {
+    const isUtxoModal = title === 'UTXO Set' || message.includes('utxo-result-modal');
+    if (isWalletOpen && content && !isUtxoModal) {
       content.style.marginLeft = '24px';
     } else if (content) {
       content.style.marginLeft = '';

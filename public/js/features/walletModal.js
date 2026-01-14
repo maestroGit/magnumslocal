@@ -38,7 +38,21 @@ export async function handleUTXOCheckClick() {
       const container = document.getElementById('utxoListContainer');
       if (container && !container.dataset.bound) {
         container.addEventListener('click', async (ev) => {
-          // ...existing code...
+          const btn = ev.target.closest('.utxo-copy-btn');
+          if (!btn) return;
+          const txid = btn.dataset.txid;
+          if (!txid) return;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(txid);
+              showToast('TXID copiado al portapapeles', 'success');
+            } else {
+              showToast('Función de copiar no disponible', 'warning');
+            }
+          } catch (err) {
+            console.error('[walletModal] Copy error', err);
+            showToast('Error al copiar TXID', 'error');
+          }
         });
         container.dataset.bound = '1';
       }
