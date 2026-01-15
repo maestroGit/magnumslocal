@@ -1,6 +1,6 @@
 # 🍷 Large Magnum Master - Blockchain Wine System
 
-> **Sistema blockchain completo para trazabilidad de vinos con red P2P, minado distribuido y gestión UTXO avanzada.** 
+> **Sistema blockchain completo para trazabilidad de vinos con red P2P, minado distribuido, gestión UTXO avanzada y soporte UPnP automático.** 
 
 ## 🏁 Quick Start
 
@@ -8,16 +8,20 @@
 # 1. Instalar dependencias
 npm install
 
-# 2. Iniciar servidor blockchain
+# 2. Configurar UPnP (opcional - habilitado por defecto)
+# Edita .env: ENABLE_UPNP=true
+
+# 3. Iniciar servidor blockchain
 npm start
 
-# 3. Acceder al dashboard
+# 4. Acceder al dashboard
 http://localhost:3000
 ```
 
 ## 📋 Índice
 
 - [🏗️ Arquitectura](#️-arquitectura)
+- [🔓 Soporte UPnP](#-soporte-upnp)
 - [🎮 Gestión de Nodos](#-gestión-de-nodos)
 - [🔧 API Endpoints](#-api-endpoints)
 - [📚 Documentación](#-documentación)
@@ -58,6 +62,42 @@ magnumsmaster/
 - **Bug fixes aplicados:** 18+ críticos resueltos
 - **Tests implementados:** Suite completa
 - **Estado:** ✅ **LISTO PARA PRODUCCIÓN**
+
+---
+
+## 🔓 Soporte UPnP
+
+### **Configuración Automática de Puertos**
+
+Este repositorio (`magnumslocal`) incluye soporte UPnP para apertura automática de puertos:
+
+```bash
+# Configurar en .env
+ENABLE_UPNP=true  # Activar UPnP (por defecto)
+P2P_PORT=5001     # Puerto a abrir automáticamente
+```
+
+#### **Arquitectura:**
+- **magnumsmaster** (relay): Port forwarding manual → Producción
+- **magnumslocal** (nodos cliente): UPnP automático → Desarrollo/Local
+
+#### **Comportamiento:**
+- ✅ **UPnP disponible** → Puerto abierto automáticamente, nodo puede recibir conexiones
+- ⚠️ **UPnP no disponible** → Nodo funciona en modo cliente (solo conexiones salientes)
+- 🔧 **No bloqueante** → El arranque continúa aunque UPnP falle
+
+#### **Logs de Arranque:**
+```bash
+# Éxito
+🔄 Intentando abrir puerto 5001 con UPnP...
+✅ UPnP: Puerto 5001 abierto en router (IP pública: 203.0.113.45)
+
+# Fallback
+🔄 Intentando abrir puerto 5001 con UPnP...
+⚠️ UPnP no disponible. Este nodo funcionará en modo cliente (outbound-only)
+```
+
+📖 **Documentación completa:** [docs/UPNP-SETUP.md](docs/UPNP-SETUP.md)
 
 ---
 

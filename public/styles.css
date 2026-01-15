@@ -1084,8 +1084,14 @@ button:hover {
         font-size: 2rem;
     }
     
+    /* General card actions go vertical on mobile */
     .card-actions {
         flex-direction: column;
+    }
+    
+    /* Exception: two-btn-actions uses its own responsive rule (see Issue #18) */
+    .card-actions.two-btn-actions {
+        /* flex-direction set by specific rule below at 767px breakpoint */
     }
     
     .dashboard-btn {
@@ -2470,10 +2476,20 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     min-width: 120px;
 }
 
-/* Exactly two buttons side-by-side when space allows */
+/* Exactly two buttons side-by-side when space allows (desktop) */
 .two-btn-actions .dashboard-btn {
     flex: 1 1 calc((100% - 12px) / 2);
     min-width: 140px;
+}
+
+/* Ensure two-btn-actions override two-row-actions behavior */
+.card-actions.two-row-actions.two-btn-actions .dashboard-btn {
+    flex: 1 1 calc((100% - 12px) / 2);
+    min-width: 140px;
+}
+
+.card-actions.two-row-actions.two-btn-actions .dashboard-btn:last-child {
+    flex: 1 1 calc((100% - 12px) / 2);
 }
 
 .dashboard-btn {
@@ -2545,16 +2561,28 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     filter: brightness(1.05);
 }
 
-/* helper: two buttons side-by-side on wide screens, stack on small */
-.two-btn-actions .dashboard-btn {
+/* === Issue #18: Two-button actions layout (Register + Consumed) === */
+/* Desktop/Tablet (>= 768px): Horizontal layout */
+.card-actions.two-btn-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.card-actions.two-btn-actions .dashboard-btn {
     flex: 1 1 120px;
     min-width: 120px;
     width: auto !important;
 }
 
-@media (max-width: 520px) {
-    .two-btn-actions .dashboard-btn {
+/* Mobile (< 768px): Vertical layout */
+@media (max-width: 767px) {
+    .card-actions.two-btn-actions {
+        flex-direction: column;
+    }
+    
+    .card-actions.two-btn-actions .dashboard-btn {
         flex-basis: 100%;
+        width: 100% !important;
         min-width: 0;
     }
 }

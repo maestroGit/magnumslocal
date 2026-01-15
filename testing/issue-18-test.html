@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue #18 Test - Responsive Button Layout</title>
+    <link rel="stylesheet" href="../public/styles.css">
+    <style>
+        body {
+            background: #0a0506;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 40px;
+        }
+        .test-section h2 {
+            color: #f7931a;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .test-description {
+            color: #e9e3e3;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(247, 147, 26, 0.1);
+            border-radius: 8px;
+        }
+        .breakpoint-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #220F17;
+            color: #f7931a;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 9999;
+            border: 2px solid #f7931a;
+        }
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        @media (max-width: 767px) {
+            .breakpoint-indicator::before {
+                content: "📱 MOBILE < 768px";
+            }
+        }
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .breakpoint-indicator::before {
+                content: "💻 TABLET 768-1023px";
+            }
+        }
+        @media (min-width: 1024px) {
+            .breakpoint-indicator::before {
+                content: "🖥️ DESKTOP >= 1024px";
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="breakpoint-indicator"></div>
+    
+    <div class="test-container">
+        <h1 style="color: #f7931a; text-align: center; margin-bottom: 40px;">
+            🧪 Test Issue #18: Responsive Button Layout
+        </h1>
+
+        <!-- Test 1: Card original del issue -->
+        <div class="test-section">
+            <h2>✅ Test 1: Card "💸 Transacción" (Caso Original)</h2>
+            <div class="test-description">
+                <strong>Comportamiento esperado:</strong><br>
+                • Desktop/Tablet (≥768px): Botones <strong>horizontales</strong> (uno al lado del otro)<br>
+                • Móvil (&lt;768px): Botones <strong>verticales</strong> (uno debajo del otro)<br>
+                • Clases: <code>card-actions two-row-actions two-btn-actions</code>
+            </div>
+            
+            <div class="visual-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>💸 Transacción</h2>
+                    </div>
+                    <p>Operar en la red</p>
+                    <div class="card-actions two-row-actions two-btn-actions">
+                        <button class="dashboard-btn primary">Register</button>
+                        <button class="dashboard-btn primary">Consumed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 2: Card con solo two-btn-actions -->
+        <div class="test-section">
+            <h2>✅ Test 2: Card con solo "two-btn-actions"</h2>
+            <div class="test-description">
+                <strong>Verificar:</strong> Misma funcionalidad sin la clase <code>two-row-actions</code>
+            </div>
+            
+            <div class="visual-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>🔧 Test Limpio</h2>
+                    </div>
+                    <p>Solo clase two-btn-actions</p>
+                    <div class="card-actions two-btn-actions">
+                        <button class="dashboard-btn primary">Action 1</button>
+                        <button class="dashboard-btn primary">Action 2</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 3: Comparación con otras cards -->
+        <div class="test-section">
+            <h2>📊 Test 3: Comparación con otras configuraciones de botones</h2>
+            <div class="test-description">
+                <strong>Asegurar:</strong> No se rompen otros estilos existentes
+            </div>
+            
+            <div class="visual-grid">
+                <!-- Card con 1 botón -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>⛏️ Mining</h2>
+                    </div>
+                    <p>Ronda de PoW</p>
+                    <div class="card-actions">
+                        <button class="dashboard-btn primary">Mine</button>
+                    </div>
+                </div>
+
+                <!-- Card con 3 botones (Wallet style) -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>👛 Wallet</h2>
+                    </div>
+                    <p>Gestionar billetera</p>
+                    <div class="card-actions two-row-actions">
+                        <button id="balanceWallet" class="dashboard-btn primary">Balance</button>
+                        <button id="publicKeyWallet" class="dashboard-btn primary">Public Key</button>
+                        <button id="walletModal" class="dashboard-btn primary">Wallet</button>
+                    </div>
+                </div>
+
+                <!-- Card con 2 botones secundarios -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>🍷 WineLovers</h2>
+                    </div>
+                    <p>Acceso WineLovers</p>
+                    <div class="card-actions two-btn-actions">
+                        <button class="dashboard-btn secondary">Tokens</button>
+                        <button class="dashboard-btn secondary">History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 4: Edge cases -->
+        <div class="test-section">
+            <h2>⚠️ Test 4: Edge Cases</h2>
+            <div class="test-description">
+                <strong>Casos especiales:</strong> Botones con texto largo, diferentes variantes
+            </div>
+            
+            <div class="visual-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>📝 Texto Largo</h2>
+                    </div>
+                    <p>Botones con etiquetas extensas</p>
+                    <div class="card-actions two-btn-actions">
+                        <button class="dashboard-btn primary">Register Transaction</button>
+                        <button class="dashboard-btn primary">Consumed Tokens</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>🎨 Mixto</h2>
+                    </div>
+                    <p>Primary + Secondary</p>
+                    <div class="card-actions two-btn-actions">
+                        <button class="dashboard-btn primary">Primary</button>
+                        <button class="dashboard-btn secondary">Secondary</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instrucciones de prueba -->
+        <div class="test-section" style="margin-top: 60px; border-top: 2px solid #f7931a; padding-top: 40px;">
+            <h2>📋 Instrucciones de Prueba</h2>
+            <div class="test-description" style="background: rgba(247, 147, 26, 0.15);">
+                <ol style="color: #e9e3e3; line-height: 1.8;">
+                    <li><strong>Desktop (≥768px):</strong> Redimensiona el navegador a anchura completa. Los botones en cards con <code>two-btn-actions</code> deben estar <strong>horizontales</strong> (lado a lado).</li>
+                    <li><strong>Tablet (768-1023px):</strong> Redimensiona a ancho medio. Comportamiento igual que desktop: botones <strong>horizontales</strong>.</li>
+                    <li><strong>Móvil (&lt;768px):</strong> Redimensiona a ancho estrecho (&lt;768px). Los botones deben cambiar a <strong>columna vertical</strong> (uno debajo del otro).</li>
+                    <li><strong>DevTools:</strong> Usa F12 → Toggle Device Toolbar para probar breakpoints específicos:
+                        <ul>
+                            <li>iPhone SE: 375px ✅ Vertical</li>
+                            <li>iPad Mini: 768px ✅ Horizontal (justo en el breakpoint)</li>
+                            <li>iPad Air: 820px ✅ Horizontal</li>
+                            <li>Desktop: 1920px ✅ Horizontal</li>
+                        </ul>
+                    </li>
+                    <li><strong>Comparación:</strong> Verifica que las otras cards (1 botón, 3 botones) no se vean afectadas.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Criterios de éxito -->
+        <div class="test-section">
+            <h2>✅ Criterios de Éxito (Issue #18)</h2>
+            <div class="test-description" style="background: rgba(34, 197, 94, 0.15); border: 2px solid #22c55e;">
+                <ul style="color: #e9e3e3; line-height: 1.8; list-style: none; padding-left: 0;">
+                    <li>✅ Los botones aparecen <strong>horizontales</strong> en pantallas ≥ 768px</li>
+                    <li>✅ Los botones aparecen <strong>verticales</strong> en pantallas &lt; 768px</li>
+                    <li>✅ El diseño es <strong>consistente</strong> con otras cards del dashboard</li>
+                    <li>✅ No se rompe ningún otro estilo existente</li>
+                    <li>✅ El espaciado (gap) es consistente en ambos modos</li>
+                    <li>✅ Los botones mantienen el tamaño adecuado sin desbordamiento</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer style="text-align: center; margin-top: 60px; padding: 20px; color: #666;">
+            <p>📝 <strong>Issue #18:</strong> Modificar alineación de botones Register y Consumed</p>
+            <p>🔗 Repositorio: maestroGit/magnumslocal</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                💡 <strong>Tip:</strong> Usa Ctrl+Shift+M (Chrome DevTools) para toggle device mode<br>
+                y Ctrl+Shift+R para reload sin cache
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Log para debugging
+        console.log('🧪 Issue #18 Test Page Loaded');
+        console.log('📱 Window Width:', window.innerWidth + 'px');
+        console.log('📊 Breakpoint:', 
+            window.innerWidth < 768 ? 'MOBILE' : 
+            window.innerWidth < 1024 ? 'TABLET' : 'DESKTOP'
+        );
+
+        // Listener para resize
+        window.addEventListener('resize', () => {
+            console.log('📐 Resized to:', window.innerWidth + 'px', 
+                window.innerWidth < 768 ? '(MOBILE)' : '(DESKTOP/TABLET)'
+            );
+        });
+
+        // Validación automática de layout
+        function validateLayout() {
+            const twoButtonCards = document.querySelectorAll('.two-btn-actions');
+            const isMobile = window.innerWidth < 768;
+            
+            twoButtonCards.forEach((card, index) => {
+                const computedStyle = window.getComputedStyle(card);
+                const flexDirection = computedStyle.flexDirection;
+                
+                const expected = isMobile ? 'column' : 'row';
+                const isCorrect = flexDirection === expected;
+                
+                console.log(
+                    `Card ${index + 1}:`,
+                    `flex-direction = ${flexDirection}`,
+                    `(expected: ${expected})`,
+                    isCorrect ? '✅' : '❌'
+                );
+            });
+        }
+
+        // Ejecutar validación al cargar y al resize
+        window.addEventListener('load', validateLayout);
+        window.addEventListener('resize', validateLayout);
+    </script>
+</body>
+</html>

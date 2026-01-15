@@ -2706,3 +2706,16 @@ app.use((err, req, res, next) => {
 
 // Inicia el servidor P2P (peer-to-peer) para conexiones de red entre nodos, usando el mismo servidor HTTP
 p2pServer.listen(server);
+
+// Manejo de se\u00f1ales para cierre limpio del servidor
+process.on('SIGTERM', async () => {
+  console.log('\ud83d\udea8 SIGTERM recibido. Cerrando servidor...');
+  await p2pServer.closeUPnP();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('\ud83d\udea8 SIGINT recibido. Cerrando servidor...');
+  await p2pServer.closeUPnP();
+  process.exit(0);
+});

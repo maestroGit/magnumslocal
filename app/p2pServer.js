@@ -4,6 +4,7 @@ import WebSocket, { WebSocketServer } from "ws";
 import os from "os";
 import fs from "fs";
 import https from "https";
+import natUpnp from "nat-upnp";
 
 // Utilidad: obtiene la primera IP externa IPv4 disponible (no interna)
 const getLocalExternalIP = () => {
@@ -35,6 +36,9 @@ class P2PServer {
     this.transactionsPool = transactionsPool;
     this.sockets = [];   // Sockets conectados (WebSocket)
     this.peers = [];     // Lista de peers enriquecida: [{ socket, nodeId, httpUrl, lastSeen }]
+    // Propiedades para UPnP
+    this.upnpClient = null;
+    this.upnpMapping = null;
     // Leer peers desde process.env.PEERS en el momento de instanciar la clase
     console.log("[DEBUG][P2PServer] process.env.PEERS:", process.env.PEERS);
     this.peersEnv = process.env.PEERS && process.env.PEERS.trim()
@@ -63,6 +67,14 @@ class P2PServer {
     wss.on("error", (err) => {
       console.error("❌ Error en WebSocketServer (relay):", err);
     });
+
+    // Intenta abrir puerto con UPnP (no bloqueante)
+    if (process.env.ENABLE_UPNP !== "false") {
+      this.setupUPnP().catch(err => {
+        console.warn("⚠️ UPnP: Error silencioso durante setup:", err.message);
+      });
+    }
+
     this.connectToPeers();
   };
 
@@ -286,6 +298,82 @@ class P2PServer {
         JSON.stringify({ type: MESSAGE_TYPES.clear_transactions })
       )
     );
+  };
+
+  // Configura UPnP para apertura automática de puertos (modo no bloqueante)
+  setupUPnP = async () => {
+    let client = null;
+    try {
+      console.log(`🔄 Intentando abrir puerto ${P2P_PORT} con UPnP...`);
+      
+      // Crear cliente UPnP con timeout de 5 segundos
+      client = natUpnp.createClient();
+      
+      // Timeout para la conexión al router
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout UPnP: 5 segundos")), 5000)
+      );
+
+      // Mapear puerto P2P (TCP)
+      const mappingPromise = new Promise((resolve, reject) => {
+        client.portMapping({
+          public: P2P_PORT,
+          private: P2P_PORT,
+          ttl: 3600, // 1 hora
+          description: "MagnumsLocal P2P Node"
+        }, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      await Promise.race([mappingPromise, timeoutPromise]);
+      
+      // Obtener IP pública (con callback para evitar errores de nat-upnp)
+      const externalIp = await new Promise((resolve, reject) => {
+        client.externalIp((err, ip) => {
+          if (err) reject(err);
+          else resolve(ip);
+        });
+      });
+      
+      console.log(`✅ UPnP: Puerto ${P2P_PORT} abierto en router (IP pública: ${externalIp})`);
+      
+      // Cerrar cliente inmediatamente - no necesitamos polling continuo
+      if (client && client.close) {
+        client.close();
+      }
+      
+      // Guardar referencia para cleanup al cerrar
+      this.upnpMapping = { public: P2P_PORT };
+      this.upnpClient = natUpnp.createClient(); // Cliente nuevo para cleanup
+      
+    } catch (err) {
+      console.warn(`⚠️ UPnP no disponible. Este nodo funcionará en modo cliente (outbound-only)`);
+      console.warn(`   Razón: ${err.message}`);
+      
+      // Cerrar cliente si hubo error
+      if (client && client.close) {
+        client.close();
+      }
+      // No lanzar excepción - el nodo puede funcionar sin UPnP
+    }
+  };
+
+  // Cierra el mapping UPnP al apagar el servidor
+  closeUPnP = async () => {
+    try {
+      if (this.upnpClient && this.upnpMapping) {
+        await this.upnpClient.portUnmapping({
+          public: P2P_PORT
+        });
+        console.log(`🔒 UPnP: Puerto ${P2P_PORT} cerrado en router`);
+        this.upnpClient = null;
+        this.upnpMapping = null;
+      }
+    } catch (err) {
+      // Error silencioso al cerrar - no es crítico
+    }
   };
 }
 

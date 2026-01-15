@@ -84,19 +84,78 @@ git clone https://github.com/tuusuario/tu-bloquechain
 cd tu-bloquechain
 npm install
 3. Configura los nodos
+
+**IMPORTANTE: Arquitectura de Red**
+
+Este repositorio (`magnumslocal`) utiliza un enfoque híbrido:
+
+- **magnumsmaster** (relay público): Nodo en producción con port forwarding manual
+- **magnumslocal** (nodos cliente): Nodos locales con **soporte UPnP automático**
+
+#### Opción A: Usar UPnP (Recomendado para nodos locales)
+
+Si tus routers soportan UPnP, la configuración es automática:
+
+```bash
+# En el archivo .env de cada nodo
+HTTP_PORT=3001
+P2P_PORT=5001
+PEERS=wss://app.blockswine.com:443  # Relay público
+ENABLE_UPNP=true  # ✅ Activar UPnP
+```
+
+El nodo intentará abrir automáticamente el puerto 5001 en tu router. Si funciona, verás:
+```
+🔄 Intentando abrir puerto 5001 con UPnP...
+✅ UPnP: Puerto 5001 abierto en router (IP pública: 203.0.113.45)
+```
+
+**Ventajas:**
+- ✅ No requiere acceso al router
+- ✅ Configuración plug & play
+- ✅ Ideal para desarrollo y nodos locales
+
+**Limitaciones:**
+- ⚠️ Requiere UPnP habilitado en el router
+- ⚠️ Algunos ISP lo bloquean
+
+#### Opción B: Port Forwarding Manual (Relay o UPnP no disponible)
+
+Si UPnP no está disponible o estás configurando el relay público:
+
 Decide puertos HTTP y P2P para cada nodo. Por ejemplo:
-Raspberry Francia (Budeos): HTTP 3001, P2P 5001
-Raspberry España (Logroño): HTTP 3002, P2P 5002
-Cada nodo debe saber de su(s) peer(s):
-Francia: PEERS=ws://ip_espana:5002
-España: PEERS=ws://ip_francia:5001
-IMPORTANTE: Si están detrás de routers, tendrás que hacer port forwarding en ambos lugares para los puertos 5001 y 5002 (P2P).
+- Raspberry Francia (Budeos): HTTP 3001, P2P 5001
+- Raspberry España (Logroño): HTTP 3002, P2P 5002
+
+Configura cada nodo:
+- Francia: `PEERS=ws://ip_espana:5002`
+- España: `PEERS=ws://ip_francia:5001`
+
+**IMPORTANTE:** Abre los puertos manualmente en el router (5001, 5002) para tráfico P2P.
+
+```bash
+# En el archivo .env
+ENABLE_UPNP=false  # Desactivar UPnP
+```
 4. Asigna IPs públicas o usa DDNS
-Determina la IP pública de cada Pi (puedes usar ipinfo.io desde línea de comandos: curl ifconfig.me)
-Si las IPs cambian frecuentemente, usa duckdns.org o similar para obtener un dominio dinámico.
-5. Abre puertos en el router (forwarding)
-Configura el router de cada bodega para redirigir puertos (ejemplo: 5001 → Pi Francia, 5002 → Pi España).
-Esto permite conexiones entre nodos aunque estén en redes privadas distintas.
+
+**Si usas UPnP:**
+- El nodo obtiene automáticamente tu IP pública
+- Logs mostrarán: `✅ UPnP: Puerto 5001 abierto en router (IP pública: X.X.X.X)`
+
+**Si usas port forwarding manual:**
+- Determina la IP pública de cada Pi: `curl ifconfig.me`
+- Si las IPs cambian frecuentemente, usa [duckdns.org](https://duckdns.org) para DDNS
+
+5. Abre puertos en el router (solo si NO usas UPnP)
+
+**Solo necesario si `ENABLE_UPNP=false`:**
+
+Configura el router de cada bodega para redirigir puertos:
+- Francia: Puerto 5001 → IP local de Pi Francia
+- España: Puerto 5002 → IP local de Pi España
+
+**Si usas UPnP, este paso NO es necesario** (se hace automáticamente).
 
 6. Inicia el nodo en cada Raspberry
 En Francia (Budeos):
