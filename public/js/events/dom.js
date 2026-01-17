@@ -92,24 +92,24 @@ export function initDomEvents() {
         }
         const txCount = Array.isArray(lastBlock?.data) ? lastBlock.data.length : 0;
         const minedModal = `
-          <div id="sideModalPanel" class="modal" style="display:flex; align-items: flex-start; justify-content: center; z-index:30000;">
-            <div class="modal-content" style="max-width:600px; min-width:320px; margin:48px auto 0 auto;">
-              <h2>⛏️✔️</h2>
-              <div class="balance-result-modal" style="text-align:center;">
-                <p><strong>Block:</strong> ${lastBlock?.hash ? String(lastBlock.hash).slice(0,20)+'\u001a' : 'N/A'}</p>
-                <p><strong>Timestamp:</strong> ${lastBlock?.timestamp ? new Date(lastBlock.timestamp).toLocaleString() : 'N/A'}</p>
-                <p><strong>Transactions included:</strong> ${txCount}</p>
-              </div>
-              <div class="modal-body" style="text-align:center;">
-                ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">Block</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
-              </div>
+          <div style="text-align:center;">
+            <h2 class="modal-title">New block mined</h2>
+            <div class="balance-result-modal">
+              <div style="font-size:2em;margin-bottom:10px;">⛏️✔️</div>
+              <p><strong>Block:</strong> ${lastBlock?.hash ? String(lastBlock.hash).slice(0,20)+'\u001a' : 'N/A'}</p>
+              <p><strong>Timestamp:</strong> ${lastBlock?.timestamp ? new Date(lastBlock.timestamp).toLocaleString() : 'N/A'}</p>
+              <p><strong>Transactions included:</strong> ${txCount}</p>
             </div>
+            <div class="modal-actions">
+              ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">BLOCK</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
+            </div>
+            <button class="dashboard-btn secondary modal-close-btn" style="margin-top:18px;">Cerrar</button>
           </div>`;
         showToast && showToast('⛏️Mine✅', 'success');
         if (typeof window.safeModal === 'function') {
-          window.safeModal('New block mined', minedModal);
+          window.safeModal('', minedModal);
         } else if (showModal) {
-          showModal(minedModal, 'New block ⛏️mined');
+          showModal(minedModal, 'New block mined');
         }
       } catch (e) {
         console.error('[events] error POST /mine-transactions', e);

@@ -3,6 +3,19 @@
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
+  "bin": "magnumslocal.exe",
+  "pkg": {
+    "scripts": [
+      "server.js"
+    ],
+    "assets": [
+      "app/**/*",
+      "public/**/*",
+      "src/**/*",
+      "wallet/**/*",
+      ".env"
+    ]
+  },
   "scripts": {
     "test": "jest --watchAll",
     "dev": "nodemon server.js",
