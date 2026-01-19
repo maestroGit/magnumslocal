@@ -1,3 +1,13 @@
+## Plan: Concatenar motivo al final de la dirección burn
+Para que el motivo de baja se incluya como sufijo en la dirección de destino del output, debes modificar la línea donde se define burnAddress y construir el output usando ese valor concatenado.
+
+Steps
+Modificar la línea donde se define burnAddress para concatenar el motivo:
+Usar: const burnAddress = '0x0000000000000000000000000000000000000000' + motivo.toUpperCase();
+Asegurarse de que el output use la nueva variable burnAddress:
+La línea: const outputs = [{ amount: Number(selectedUTXO.amount), address: burnAddress }];
+Verificar que el motivo esté en mayúsculas y sin espacios para mantener formato blockchain.
+
 # 🍷 VINUM Token – Transferible y Redimible
 
 ## 🛒 Compra (off-chain)

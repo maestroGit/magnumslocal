@@ -193,7 +193,8 @@ form.addEventListener('submit', async function (e) {
         address: selectedUTXO.address,
         amount: Number(selectedUTXO.amount)
       }];
-      const burnAddress = '0x0000000000000000000000000000000000000000';
+      //const burnAddress = '0x0000000000000000000000000000000000000000';
+      const burnAddress = '0x0000000000000000000000000000000000000000' + motivo.toUpperCase();
       const outputs = [{ amount: Number(selectedUTXO.amount), address: burnAddress }];
 
       const outputsCanonical = JSON.stringify(outputs);
@@ -220,7 +221,7 @@ form.addEventListener('submit', async function (e) {
       const res = await fetch(base + '/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signedTransaction: txObj })
+        body: JSON.stringify({ signedTransaction: txObj, motivo }) // el valor del motivo de baja (motivo: "burn" o "bodega") se envía al backend junto con la transacción en la petición.
       });
       if (!res.ok) {
         statusEl.textContent = 'Error al enviar la transacción: ' + res.status;
