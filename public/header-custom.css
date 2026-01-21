@@ -50,14 +50,14 @@
   .site-header .container { padding: 6px 10px !important; }
   .site-header .nav { gap: 6px !important; }
   .site-header .nav .btn { height: 28px !important; padding: 3px 6px !important; border-radius: 7px !important; }
-  .site-header .nav .btn .metric-value { font-size: 0.95rem !important; }
+  .site-header .nav .btn .metric-value { font-size: 1rem !important; }
   .site-header .container { justify-content: center !important; }
   .site-header .logo-icon { display: none !important; }
   .site-header .nav { display: none !important; }
   #hamburger-menu-btn { display: flex !important; position: absolute; top: 10px; right: 12px; z-index: 2100; width: 36px; height: 36px; align-items: center; justify-content: center; background: #261117; color: #220F17; border-radius: 50%; border: none; font-size: 1.2em; }
   #hamburger-menu-btn span { color: #fff !important; }
   #hamburger-menu-btn.active { background: #220F17 !important; color: #ff7b00 !important; outline: 2px solid #ff7b00 !important; }
-  .site-header .nav.open { display: flex !important; flex-direction: column !important; position: absolute; top: 54px; right: 0; width: 25vw; min-width: 120px; max-width: 200px; background: #220F17; box-shadow: 0 4px 16px #0003; border-radius: 0 0 12px 12px; padding: 0; z-index: 2000; }
+  .site-header .nav.open { display: flex !important; flex-direction: column !important; position: absolute; top: 54px; right: 0; width: 25vw; min-width: 120px; max-width: 200px; background: #181018 !important; box-shadow: 0 4px 16px #0003; border-radius: 0 0 12px 12px; padding: 0; z-index: 2000; }
 }
 /* Estilos específicos para la cabecera y metric-value */
 .site-header {

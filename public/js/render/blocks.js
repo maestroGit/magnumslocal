@@ -72,7 +72,7 @@ export function renderBlocks(blocks, options = {}) {
 
   const blocksModalContent = `
     <div class="modal-info">
-      <p><strong>✅ Blocks loaded successfully</strong></p>
+      <p><strong>✅ Blocks loaded</strong></p>
       <p><strong>Total blocks:</strong> ${blocks.length}</p>
       <p><strong>Last block:</strong> ${
         blocks.length > 0 ? new Date(blocks[blocks.length - 1].timestamp).toLocaleString() : 'N/A'
