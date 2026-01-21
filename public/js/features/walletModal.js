@@ -15,7 +15,6 @@ export async function handleUTXOCheckClick() {
         <p><strong>Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
         <p><strong>Available:</strong> ${data.utxos.length}</p>
         <div class="utxo-list-section">
-          <h5>Details:</h5>
           <div id="utxoListContainer" class="utxo-list-container">
             ${data.utxos.map(u => `
               <div class='utxo-card'>
@@ -45,8 +44,8 @@ export async function handleUTXOCheckClick() {
     showToast(`UTXO Set consult: ${data.utxos.length} UTXOs`, 'success');
   } catch (err) {
     console.error('[walletModal] UTXO fetch error', err);
-    showModal('Error al consult UTXO Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
-    showToast('Error de conexiOn', 'error');
+    showModal('Error consult UTXO Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
+    showToast('Error connected', 'error');
   }
 }
 // Wallet Modal Feature Module (ESM)
@@ -144,11 +143,11 @@ export function setupWalletModalEvents() {
             <p><strong>Query:</strong> ${new Date().toLocaleString()}</p>
           </div>`;
         showModal(modalHtml, 'Balance');
-        showToast('Balance consultado exitosamente', 'success');
+        showToast('Balance consult successfully', 'success');
       } catch (err) {
         console.error('[walletModal] balance fetch error', err);
-        showModal('Ocurrió un error inesperado al consultar el balance.', 'Error de Conexión');
-        showToast('Error de conexión', 'error');
+        showModal('Unexpected error consulting balance.', 'Connection Error');
+        showToast('Connection error', 'error');
       }
     });
     submitBalanceBtn.dataset.bound = '1';
