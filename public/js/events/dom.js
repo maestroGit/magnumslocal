@@ -103,7 +103,6 @@ export function initDomEvents() {
             <div class="modal-actions">
               ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">BLOCK</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}
             </div>
-            <button class="dashboard-btn secondary modal-close-btn" style="margin-top:18px;">Cerrar</button>
           </div>`;
         showToast && showToast('⛏️Mine✅', 'success');
         if (typeof window.safeModal === 'function') {

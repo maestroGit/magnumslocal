@@ -1,6 +1,6 @@
 // UTXO Set lookup for Winery card (single definition at end)
 export async function handleUTXOCheckClick() {
-  showToast('Consultando UTXO Set (wallet global)...', 'info');
+  showToast('Consult UTXO Set (wallet global)...', 'info');
   try {
     const res = await fetch(`${apiBaseUrl}/utxo-balance/global`);
     const data = await res.json();
@@ -11,12 +11,11 @@ export async function handleUTXOCheckClick() {
     }
     const utxoHtml = `
       <div class="utxo-result-modal">
-        <h4>🔗 UTXO Set</h4>
         <p><strong>Address:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
-        <p><strong>UTXO Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
-        <p><strong>Available UTXOs:</strong> ${data.utxos.length}</p>
+        <p><strong>Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
+        <p><strong>Available:</strong> ${data.utxos.length}</p>
         <div class="utxo-list-section">
-          <h5>UTXO Details:</h5>
+          <h5>Details:</h5>
           <div id="utxoListContainer" class="utxo-list-container">
             ${data.utxos.map(u => `
               <div class='utxo-card'>
@@ -72,17 +71,15 @@ export function showWalletModal() {
     return;
   }
   const walletContent = `
-    <h3>Consultar Balance de Clave Pública:</h3>
     <div style="margin:15px 0;">
-      <label for="addressInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">PPublic key:</label>
+      <label for="addressInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Address:</label>
       <input type="text" id="addressInputModal" placeholder="Introduce public key..." style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button id="submitPublicKeyModal" style="flex:1;min-width:150px;">Balance</button>
       </div>
     </div>
-    <h3>Load Wallet from File:</h3>
     <div style="margin:15px 0;">
-      <label for="fileInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Seleccionar archivo de wallet:</label>
+      <label for="fileInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Load Wallet from File:</label>
       <input type="file" id="fileInputModal" accept=".json" style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
       <button id="submitHardwareWalletModal" style="width:100%;">Load Wallet</button>
     </div>

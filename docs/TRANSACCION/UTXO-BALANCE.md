@@ -1,3 +1,8 @@
+# 20/01/2026
+# Sincronización de utxoManager tras replaceChain
+
+p2pServer.js
+Magnumsmaster, igual que en magnumslocal. Ahora, tras recibir y aplicar una nueva cadena, se reconstruye el set de UTXOs a partir de todos los bloques, asegurando que el endpoint de UTXOs devuelva los datos correctos. El cambio incluye un comentario claro para identificar la sección de sincronización.
 # UTXO Balance — flujo y comportamiento
 
 Este documento explica cómo el proyecto calcula el balance UTXO para una clave pública (public key), las diferencias entre los dos métodos disponibles (scan en blockchain vs UTXO set), y la corrección aplicada para evitar duplicidades en el UTXO set.

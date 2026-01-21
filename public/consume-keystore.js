@@ -31,7 +31,7 @@ if (!pubKey || !keystore) {
 }
 
 async function loadUTXOs(address) {
-  statusEl.textContent = 'Cargando UTXOs...';
+  statusEl.textContent = 'Enjoy your Magnum moment...';
   utxos = await fetchUTXOs(address);
   // Prune pending marks: keep only those still present in UTXOs
   try {

@@ -52,27 +52,27 @@ export const submitTransaction = async (transactionData) => {
                 <p><strong>💰 Cantidad:</strong> ${response.transaction.amount}</p>
               </div>
             </div>`;
-          safeModal('Transacction ✅Exitosa', transactionResultContent);
+          safeModal('Transaction ✅Successful', transactionResultContent);
         }
-        showToast('✅ Transacction completed', 'success');
+        showToast('✅ Transaction completed', 'success');
       } else {
-        showModal('⚠️ transacction procesda pero no se recibieron datos válidos.', 'Alert');
-        showToast('⚠️ Alert: respuesta incompleta', 'warning');
+        showModal('⚠️ Transaction processed, but no valid data was received', 'Alert');
+        showToast('⚠️ Alert: incomplete response', 'warning');
       }
     }, 1500);
   } catch (error) {
     setTimeout(() => {
       closeCurrentModal();
-      console.error('[TX][MODULE] Error enviando transacction', error);
-      showModal(`❌ Error enviar transacction: ${error.message}`, 'Error de Red');
-      showToast('❌ Error conexion', 'error');
+      console.error('[TX][MODULE] Error sending transaction', error);
+      showModal(`❌ Error sending transaction: ${error.message}`, 'Network Error');
+      showToast('❌ Connection error', 'error');
     }, 800);
   }
 };
 
 // Render coin control transaction modal (fetch UTXOs & build form)
 export const openTransactionModal = async () => {
-  showProgressModal('Cargando UTXOs...', 'Coin Control', ['Consultando UTXOs...']);
+  showProgressModal('Loading Magnums...', 'Coin Control', ['Fetching Magnums...']);
   let utxoData;
   try {
     // Siempre obtener la clave pública activa del backend
@@ -81,25 +81,25 @@ export const openTransactionModal = async () => {
       console.log('[COIN CONTROL] Clave pública activa obtenida de getCurrentPublicKey:', address);
     if (!address) {
       closeCurrentModal();
-      showModal('No hay dirección de wallet activa. Carga una wallet primero.', 'Coin Control');
+      showModal('No active wallet address. Please load a wallet first.', 'Coin Control');
       return;
     }
     const { apiBaseUrl } = await import('../core/config.js');
     const base = (apiBaseUrl || '').replace(/\/undefined$/,'');
-    console.log('[COIN CONTROL] Consultando UTXOs para:', address, 'en', `${base}/utxo-balance/${address}`);
+    console.log('[COIN CONTROL] Fetching UTXOs for:', address, 'at', `${base}/utxo-balance/${address}`);
     const res = await fetch(`${base}/utxo-balance/${address}`);
     utxoData = await res.json();
-    console.log('[COIN CONTROL] Respuesta UTXO:', utxoData);
+    console.log('[COIN CONTROL] UTXO response:', utxoData);
     window._debugUtxos = utxoData.utxos;
   } catch (err) {
     closeCurrentModal();
-    console.error('[COIN CONTROL] Error obteniendo UTXOs:', err);
-    showModal('No se pudo obtener el UTXO set.', 'Error Coin Control');
+    console.error('[COIN CONTROL] Error fetching UTXOs:', err);
+    showModal('Failed to fetch UTXO set.', 'Coin Control Error');
     return;
   }
   closeCurrentModal();
   if (!utxoData || !Array.isArray(utxoData.utxos) || utxoData.utxos.length === 0) {
-    showModal('No hay UTXOs disponibles para seleccionar.', 'Coin Control');
+    showModal('No UTXOs available for selection.', 'Coin Control');
     return;
   }
   // Filtrar UTXOs pendientes/gastados antes de renderizar
@@ -109,7 +109,7 @@ export const openTransactionModal = async () => {
 
   const transactionFormContent = `
     <form id="transactionForm">
-      <label for="recipientInput"> Beneficiary address(Public Key):</label>
+      <label for="recipientInput"> Beneficiary address:</label>
       <input type="text" id="recipientInput" name="recipient" placeholder="Insert beneficiary public key" required>
       <label for="amountInput">Import:</label>
       <input type="number" id="amountInput" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
@@ -131,7 +131,7 @@ export const openTransactionModal = async () => {
       </div>
       <button type="submit">Transaction</button>
     </form>`;
-  safeModal('CREATE TRANSACTION', transactionFormContent);
+  safeModal('TRANSACTION', transactionFormContent);
 
   const form = document.getElementById('transactionForm');
   if (!form) return;

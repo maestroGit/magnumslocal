@@ -24,8 +24,8 @@ if (!pubKey) {
   if (statusEl) {
     statusEl.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span>No hay wallet importada. Vuelve a importar tu keystore.</span>
-      <a class="keystore-btn primary" href="import-keystore.html">Importar</a>
+      <span>No wallet imported. Please import your keystore again.</span>
+      <a class="keystore-btn primary" href="import-keystore.html">Import</a>
     </div>`;
   }
   if (btnRefresh) btnRefresh.disabled = true;

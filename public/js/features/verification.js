@@ -36,7 +36,7 @@ export async function verifyQRProof(qrData) {
         spinner.style.pointerEvents = 'none';
         spinner.innerHTML = `<div style="display:flex; align-items:center; gap:10px; background:rgba(28,34,45,0.92); color:#fff; padding:10px 14px; border-radius:999px; box-shadow:0 6px 18px rgba(0,0,0,0.3); font-size:14px;">
           <span class="spinner" style="width:22px;height:22px;border:3px solid rgba(255,255,255,0.25);border-top-color:#2c7be5;border-radius:50%;display:inline-block;animation:spin 0.9s linear infinite"></span>
-          <span style="font-weight:600;">Verificando...</span>
+          <span style="font-weight:600;">Verifying...</span>
         </div>`;
         document.body.appendChild(spinner);
         if (!document.getElementById('inline-spinner-style')) {

@@ -23,7 +23,7 @@ if (!pubKey) {
 }
 
 async function loadUTXOs(address) {
-  statusEl.textContent = 'Cargando UTXOs...';
+  statusEl.textContent = 'Transfer the pleasure of your Magnum...';
   utxos = await fetchUTXOs(address);
   console.log('[DEBUG][transfer-keystore.js] utxos recibidos:', utxos);
   renderUTXOList();

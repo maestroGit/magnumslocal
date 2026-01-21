@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- CSP actualizada para permitir localhost y Seenode subdominios -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:6002 ws://localhost:6001 https://*.apps.run-on-seenode.com http://*.apps.run-on-seenode.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-  <title>Blocks</title>
+  <title>Blockswine</title>
   <!-- Enlace al archivo de estilos CSS externo -->
   <link rel="stylesheet" type="text/css" href="styles.css">
   <!-- Unify UI behavior with blocksWine: metric-value and compact header nav -->
@@ -170,16 +170,14 @@
       <div class="dashboard-card">
         <div class="card-header">
           <h2>🍇 Winery</h2>
-          
         </div>
-        <p>Gestión Bodega</p>
         <div class="card-actions two-row-actions">
-          <button id="balanceWallet" class="dashboard-btn primary wine-hover-btn">Balance</button>
           <button id="publicKeyWallet" class="dashboard-btn primary wine-hover-btn">pub</button>
+          <button id="balanceWallet" class="dashboard-btn primary wine-hover-btn">Balance</button>
         </div>
         <div class="card-actions two-row-actions two-btn-actions">
-          <button id="walletModal" class="dashboard-btn primary wine-hover-btn" data-bound="1">Wallet</button>
-          <button id="utxoSetBtn" class="dashboard-btn primary wine-hover-btn">UTXO Set</button>
+          <button id="walletModal" class="dashboard-btn primary wine-hover-btn" data-bound="1">Consult</button>
+          <button id="utxoSetBtn" class="dashboard-btn primary wine-hover-btn">UTXO</button>
         </div>
       </div>
 
@@ -297,4 +295,3 @@
     </div>
   </div>
   </body>
-</html>

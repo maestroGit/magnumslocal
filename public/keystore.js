@@ -93,7 +93,7 @@ async function generateKeystore(pass) {
       publicKey: pubHex,
       encryptedPrivateKey
     };
-    document.getElementById('keystoreStatus').textContent = 'Keystore generado correctamente.';
+    document.getElementById('keystoreStatus').textContent = 'Wallet created successfully.';
     document.getElementById('downloadKeystore').disabled = false;
     console.log('[keystore.js] Keystore generado:', keystoreData);
   });
