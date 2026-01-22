@@ -1,3 +1,6 @@
+button:hover {
+    background-color: #e07d0b;
+}
 /* --- Migrado desde styles.css: reglas de botones y variantes --- */
 .keystore-btn,
 .keystore-btn.primary {
