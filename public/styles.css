@@ -15,14 +15,6 @@
     /*
     ...bloques migrados de modales...
     */
-    border-radius: 6px;
-    padding: 12px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    line-height: 1.4;
-    overflow-x: auto;
-    border: 1px solid rgba(255, 196, 140, 0.35);
-}
 
 /* JSON/pre blocks that use a light background should explicitly set dark text */
 .json-display,
@@ -63,7 +55,6 @@
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
     border: none;
-
 
 /* Mejorar placeholders */
 input::placeholder, textarea::placeholder {
@@ -261,11 +252,7 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     opacity: 0.9;
 }
 
-.master {
-    color: #8B1A1A; /* Rojo vino */
-    font-style: italic;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
+
 
 
 
@@ -306,110 +293,6 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
 
 
 /* 🍷 Estilos para el modal QR */
-.qr-container {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.qr-info {
-    flex: 1;
-    min-width: 250px;
-}
-
-.qr-info h3 {
-    color: #722f37;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-    border-bottom: 2px solid #8b1538;
-    padding-bottom: 8px;
-}
-
-.qr-info p {
-    margin: 8px 0;
-    font-size: 0.9em;
-}
-
-.qr-info strong {
-    color: #8b1538;
-    font-weight: 600;
-}
-
-.qr-code {
-    flex: 0 0 auto;
-    text-align: center;
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border: 2px solid #f3f4f6;
-}
-
-.qr-code img {
-    border-radius: 8px;
-    max-width: 100%;
-    height: auto;
-}
-/* Specific size for QR image shown in modal */
-.qr-image { max-width: 300px; height: auto; }
-
-.qr-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-    flex-wrap: wrap;
-}
-
-/* 🔐 Estilos para la información de verificación blockchain */
-.verification-info {
-    margin-top: 20px;
-    padding: 15px;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    border-radius: 10px;
-    color: white;
-    box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
-}
-
-.verification-badge {
-    font-weight: bold;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1em;
-}
-
-.verification-details {
-    font-size: 0.85em;
-    opacity: 0.9;
-    line-height: 1.4;
-}
-
-.verification-details small {
-    display: block;
-    margin: 2px 0;
-}
-
-/* Animación sutil para verificación */
-.verification-info {
-    animation: verificationGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes verificationGlow {
-    from {
-        box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
-    }
-    to {
-        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.5);
-    }
-}
-
-.qr-actions .dashboard-btn {
-    min-width: 150px;
-}
 
 /* Responsive para el modal QR */
 @media (max-width: 768px) {
@@ -614,20 +497,7 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     border-top: 1px solid #dee2e6;
 }
 
-/* Responsive para test page */
-@media (max-width: 768px) {
-    .test-container {
-        padding: 15px;
-    }
-    
-    .status-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .test-container h1 {
-        font-size: 1.4rem;
-    }
-}
+
 
 /* Eliminar scroll horizontal en el modal de wallet */
 #walletModalBody, .modal-body {
@@ -771,35 +641,6 @@ input:not([required])::placeholder, textarea:not([required])::placeholder {
     flex: 1 1 calc((100% - 12px) / 2);
 }
 
-.dashboard-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 16px;
-    line-height: 1.2;
-    font-size: 1rem;
-    font-family: inherit;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    min-height: 38px;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-.dashboard-btn.primary {
-    background: var(--accent);
-    color: #1f0f15;
-}
-.dashboard-btn.primary:hover {
-    background: var(--accent-2);
-}
-.dashboard-btn.secondary {
-    background: #2b1a22;
-    color: #ffd7b3;
-    border-color: #53313f;
-}
-.dashboard-btn.secondary:hover {
-    background: #3a222c;
-}
 .wine-hover-btn:hover {
     box-shadow: 0 2px 10px rgba(247,147,26,0.25);
 }
