@@ -1,0 +1,225 @@
+/* --- Migrado desde styles.css: reglas de botones y variantes --- */
+.keystore-btn,
+.keystore-btn.primary {
+    text-decoration: none !important;
+}
+.keystore-btn.primary {
+    background: #f7931a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.keystore-btn.primary:hover {
+    background: #6B0F0F;
+    color: #fff;
+}
+.dashboard-btn.secondary.show-block-txs-btn,
+.tx-actions .dashboard-btn.secondary.show-block-txs-btn {
+    background: var(--accent) !important;
+    background-color: var(--accent) !important;
+    color: #fff !important;
+    border: none !important;
+}
+.dashboard-btn.secondary.show-block-txs-btn:hover,
+.tx-actions .dashboard-btn.secondary.show-block-txs-btn:hover {
+    background: #6B0F0F !important;
+    background-color: #6B0F0F !important;
+    color: #fff !important;
+}
+.burn-btn {
+    background-color: #d32f2f !important;
+    color: #fff !important;
+    border: none !important;
+}
+.nav .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    min-width: 90px;
+    padding: 0 18px;
+    font-size: 1em;
+    border: none;
+    background: #eaeafc;
+    color: #222;
+    border-radius: 8px;
+    margin-left: 8px;
+    margin-right: 0;
+    cursor: pointer;
+    transition: background 0.2s;
+    box-sizing: border-box;
+}
+.nav .btn:hover, .nav .btn:focus {
+    background: #d1d1f7;
+}
+.nav a.btn {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    min-width: 90px;
+    padding: 0 18px;
+    font-size: 1em;
+    border-radius: 8px;
+    margin-left: 8px;
+    margin-right: 0;
+    box-sizing: border-box;
+}
+.wallet-footer-actions .wallet-btn {
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
+    font-size: clamp(12px, 1.6vw, 14px);
+    padding: 0 12px;
+    height: 36px;
+    border-radius: 8px;
+    font-weight: 600;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    min-width: 100px;
+    white-space: nowrap;
+}
+.wallet-footer-actions .wallet-btn:hover,
+.wallet-footer-actions .wallet-btn:focus,
+.wallet-footer-actions .wallet-btn:active,
+.wallet-footer-actions .wallet-btn:focus-visible {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+    outline: none;
+}
+.wine-hover-btn {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.wine-hover-btn:hover,
+.wine-hover-btn:focus,
+.wine-hover-btn:focus-visible,
+.wine-hover-btn:active {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+button {
+    background-color: #f7931a;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    font-size: 16px;
+    margin: 4px 0;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+button:hover {
+    background-color: #e07d0b;
+}
+button {
+    background-color: #f7931a;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+button:hover {
+    background-color: #e07d0b;
+}
+.dashboard-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 120px;
+}
+.dashboard-btn.primary {
+    background-color: #f7931a;
+    color: white;
+    border: none;
+}
+.dashboard-btn.primary:hover {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    border: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+.dashboard-btn.secondary {
+    background-color: #f7931a;
+    color: #fff;
+    border: none;
+}
+.dashboard-btn.secondary:hover {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    border: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+.dashboard-btn:hover,
+.dashboard-btn.primary:hover,
+.dashboard-btn.secondary:hover,
+.dashboard-btn.btn-outline:hover,
+button.dashboard-btn:hover,
+.modal-content button:hover,
+button.modal-action:hover,
+/* unify wallet form buttons */
+.wallet-btn:hover,
+.wallet-btn.primary:hover,
+.wallet-btn.secondary:hover,
+.wallet-footer-actions .wallet-btn:hover,
+/* catch-all to align remaining buttons */
+button:hover {
+    background-color: #6B0F0F !important; /* borgoña profundo */
+    color: #ffffff !important;
+    border: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+.wallet-btn {
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    line-height: 1;
+    font-size: clamp(12px, 1.6vw, 14px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.wallet-btn.secondary,
+.wallet-btn.primary {
+    background-color: #f7931a;
+    color: #fff;
+    border: 2px solid #f7931a;
+}
+.wallet-btn.wine-hover-btn:hover,
+.wallet-btn.wine-hover-btn:focus,
+.wallet-btn.wine-hover-btn:active,
+.wallet-btn.wine-hover-btn:focus-visible {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}

@@ -9,232 +9,232 @@
         margin-top: 96px !important;
     }
 }
-.keystore-btn,
-.keystore-btn.primary {
-    text-decoration: none !important;
-}
-.keystore-btn.primary {
-    background: #f7931a;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.keystore-btn.primary:hover {
-    background: #6B0F0F;
-    color: #fff;
-}
-.dashboard-btn.secondary.show-block-txs-btn,
-.tx-actions .dashboard-btn.secondary.show-block-txs-btn {
-    background: var(--accent) !important;
-    background-color: var(--accent) !important;
-    color: #fff !important;
-    border: none !important;
-}
-.dashboard-btn.secondary.show-block-txs-btn:hover,
-.tx-actions .dashboard-btn.secondary.show-block-txs-btn:hover {
-    background: #6B0F0F !important;
-    background-color: #6B0F0F !important;
-    color: #fff !important;
-}
-.card-actions.two-row-actions.two-btn-actions {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 12px;
-}
-.card-actions.two-row-actions.two-btn-actions {
-    flex-direction: row !important;
-}
-/* Ajuste para que el formulario de transacción no desborde el modal */
-.modal-content form#transactionForm {
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow-x: auto;
-    word-break: break-word;
-}
-.modal-content .utxo-select-list {
-    max-width: 100%;
-    overflow-x: auto;
-    display: block;
-}
-.modal-content .coincontrol-utxo-row {
-    flex-wrap: wrap;
-    word-break: break-all;
-    min-width: 0;
-}
-/* Botón pequeño para copiar TXID en el modal de UTXOs */
-.utxo-card-actions .utxo-copy-btn {
-    font-size: 0.75em;
-    padding: 4px 10px;
-    min-width: 60px;
-    height: 26px;
-    border-radius: 6px;
-    line-height: 1.2;
-    letter-spacing: 0.02em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.utxo-card-actions .utxo-copy-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-@media (max-width: 700px) {
-    .card-header {
-        justify-content: center !important;
-        text-align: center;
+
+    /* --- MIGRADO A button.css ---
+    .keystore-btn,
+    .keystore-btn.primary {
+        text-decoration: none !important;
     }
-    .card-header h2, .card-header h3 {
-        width: 100%;
-        text-align: center;
+    .keystore-btn.primary {
+        background: #f7931a;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
     }
-}
-@media (max-width: 700px) {
-    .site-header .nav {
-        display: none !important;
-        position: absolute;
-        top: 54px;
-        right: 0;
-        width: 25vw;
-        min-width: 120px;
-        max-width: 200px;
-        background: #220F17;
-        flex-direction: column;
-        align-items: stretch;
-        z-index: 2000;
-        box-shadow: 0 4px 16px #0003;
-        border-radius: 0 0 12px 12px;
-        padding: 0;
-        margin: 0;
-        gap: 0;
-        transition: max-height 0.3s;
+    .keystore-btn.primary:hover {
+        background: #6B0F0F;
+        color: #fff;
     }
-    .site-header .nav.open {
-        display: flex !important;
-        max-height: 320px;
-        overflow: visible;
-        right: 0;
-        left: auto;
+    .dashboard-btn.secondary.show-block-txs-btn,
+    .tx-actions .dashboard-btn.secondary.show-block-txs-btn {
+        background: var(--accent) !important;
+        background-color: var(--accent) !important;
+        color: #fff !important;
+        border: none !important;
     }
-    #hamburger-menu-btn {
-        display: flex !important;
-        position: absolute;
-        top: 10px;
-        right: 12px;
-        z-index: 2100;
-        width: 36px;
-        height: 36px;
+    .dashboard-btn.secondary.show-block-txs-btn:hover,
+    .tx-actions .dashboard-btn.secondary.show-block-txs-btn:hover {
+        background: #6B0F0F !important;
+        background-color: #6B0F0F !important;
+        color: #fff !important;
+    }
+    .burn-btn {
+        background-color: #d32f2f !important;
+        color: #fff !important;
+        border: none !important;
+    }
+    .nav .btn {
+        display: flex;
         align-items: center;
         justify-content: center;
-        background: #261117;
-        color: #220F17;
-        border-radius: 50%;
+        height: 38px;
+        min-width: 90px;
+        padding: 0 18px;
+        font-size: 1em;
         border: none;
-        font-size: 1.2em;
-            #hamburger-menu-btn span {
-                color: #fff !important;
-            }
-            #hamburger-menu-btn:visited span,
-            #hamburger-menu-btn:focus span,
-            #hamburger-menu-btn:active span,
-            #hamburger-menu-btn[aria-expanded] span {
-                color: #fff !important;
-            }
-        box-shadow: 0 2px 12px #0003;
-        opacity: 0.98;
-        transition: background 0.2s, color 0.2s;
-        padding: 0;
+        background: #eaeafc;
+        color: #222;
+        border-radius: 8px;
+        margin-left: 8px;
+        margin-right: 0;
+        cursor: pointer;
+        transition: background 0.2s;
+        box-sizing: border-box;
     }
-    #hamburger-menu-btn:active, #hamburger-menu-btn:focus {
-        background: #fff;
-        color: #ff7b00;
-        outline: 2px solid #ff7b00;
+    .nav .btn:hover, .nav .btn:focus {
+        background: #d1d1f7;
     }
-    .site-header .nav .btn {
-        width: 100%;
-        border-radius: 0;
-        border-bottom: 1px solid #fff2;
-        text-align: left;
-        padding: 14px 18px;
-        font-size: 1.08em;
-        background: none;
+    .nav a.btn {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+        min-width: 90px;
+        padding: 0 18px;
+        font-size: 1em;
+        border-radius: 8px;
+        margin-left: 8px;
+        margin-right: 0;
+        box-sizing: border-box;
+    }
+    .wallet-footer-actions .wallet-btn {
+        min-width: 0;
+        white-space: normal;
+        word-break: break-word;
+        font-size: clamp(12px, 1.6vw, 14px);
+        padding: 0 12px;
+        height: 36px;
+        border-radius: 8px;
+        font-weight: 600;
+        line-height: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+        min-width: 100px;
+        white-space: nowrap;
+    }
+    .wallet-footer-actions .wallet-btn:hover,
+    .wallet-footer-actions .wallet-btn:focus,
+    .wallet-footer-actions .wallet-btn:active,
+    .wallet-footer-actions .wallet-btn:focus-visible {
+        background-color: #6B0F0F !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+        outline: none;
+    }
+    .wine-hover-btn {
+        transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    }
+    .wine-hover-btn:hover,
+    .wine-hover-btn:focus,
+    .wine-hover-btn:focus-visible,
+    .wine-hover-btn:active {
+        background-color: #6B0F0F !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+    }
+    button {
+        background-color: #f7931a;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        font-size: 16px;
+        margin: 4px 0;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #e07d0b;
+    }
+    button {
+        background-color: #f7931a;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #e07d0b;
+    }
+    .dashboard-btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        min-width: 120px;
+    }
+    .dashboard-btn.primary {
+        background-color: #f7931a;
+        color: white;
+        border: none;
+    }
+    .dashboard-btn.primary:hover {
+        background-color: #6B0F0F !important;
+        color: #ffffff !important;
+        border: none !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+    }
+    .dashboard-btn.secondary {
+        background-color: #f7931a;
         color: #fff;
-        box-shadow: none;
-        margin: 0;
+        border: none;
     }
-    .site-header .nav .btn:last-child {
-        border-bottom: none;
+    .dashboard-btn.secondary:hover {
+        background-color: #6B0F0F !important;
+        color: #ffffff !important;
+        border: none !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(107,15,15,0.22);
     }
-}
-
-.modal-content ul {
-    max-width: 100%;
-    overflow-x: auto;
-    display: block;
-    padding: 0;
-    margin: 0 0 12px 0;
-    box-sizing: border-box;
-}
-
-.modal-content li {
-    box-sizing: border-box;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    max-width: 100%;
-    min-width: 0;
-}
-/* Asegura que el aspa (close-modal-btn) del sideModalPanel sea siempre visible */
-#sideModalPanel .close-modal-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 30100;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 22px;
-    line-height: 1;
-    cursor: pointer;
-    margin: 0;
-    padding: 0 6px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.close {
-    color: #FFC48C;
-    float: right;
-    font-size: 32px;
-    font-weight: bold;
-    cursor: pointer;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    background-color: rgba(255, 196, 140, 0.12);
-}
-#sideModalPanel {
-    position: fixed !important;
-    overflow: visible !important;
-    top: 70px !important; /* Baja el panel para dejar espacio al aspa y evitar que tape el contenido */
-}
-/* Asegurar orden de apilamiento correcto: los modales centrales arriba del panel lateral */
-.modal:not(#sideModalPanel) {
-    z-index: 35000 !important;
-}
-#sideModalPanel {
-    z-index: 15000 !important; /* por debajo del modal central */
-}
+    .dashboard-btn:hover,
+    .dashboard-btn.primary:hover,
+    .dashboard-btn.secondary:hover,
+    .dashboard-btn.btn-outline:hover,
+    button.dashboard-btn:hover,
+    .modal-content button:hover,
+    button.modal-action:hover,
+    /* unify wallet form buttons */
+    .wallet-btn:hover,
+    .wallet-btn.primary:hover,
+    .wallet-btn.secondary:hover,
+    .wallet-footer-actions .wallet-btn:hover,
+    /* catch-all to align remaining buttons */
+    button:hover {
+        background-color: #6B0F0F !important; /* borgoña profundo */
+        color: #ffffff !important;
+        border: none !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+    }
+    .wallet-btn {
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        line-height: 1;
+        font-size: clamp(12px, 1.6vw, 14px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border: none;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    }
+    .wallet-btn.secondary,
+    .wallet-btn.primary {
+        background-color: #f7931a;
+        color: #fff;
+        border: 2px solid #f7931a;
+    }
+    .wallet-btn.wine-hover-btn:hover,
+    .wallet-btn.wine-hover-btn:focus,
+    .wallet-btn.wine-hover-btn:active,
+    .wallet-btn.wine-hover-btn:focus-visible {
+        background-color: #6B0F0F !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+    }
 /* Mejorar legibilidad de la clave pública global en escritorio */
 @media (min-width: 601px) {
     .wallet-publickey-header {
@@ -1140,9 +1140,7 @@ button:hover {
     }
     
     /* Exception: two-btn-actions uses its own responsive rule (see Issue #18) */
-    .card-actions.two-btn-actions {
-        /* flex-direction set by specific rule below at 767px breakpoint */
-    }
+
     
     .dashboard-btn {
         flex: none;
