@@ -101,16 +101,30 @@ class P2PServer {
           this.connectSocket(socket);
         });
 
+        // Log detallado en caso de error en el socket cliente
         socket.on("error", (error) => {
-          console.warn(
-            `⚠️ Error conectando a peer ${cleanPeer}: ${error.message}`
-          );
+          console.error("[ERROR][Cliente] Socket error al conectar a peer:", {
+            peer: cleanPeer,
+            message: error.message,
+            stack: error.stack,
+            socketReadyState: socket.readyState
+          });
           console.log(
             `🔄 Reintentando conexión a ${cleanPeer} en 5 segundos...`
           );
           setTimeout(() => {
             this.connectToPeers();
           }, 5000);
+        });
+
+        // Log detallado en caso de cierre de la conexión desde el cliente
+        socket.on("close", (code, reason) => {
+          console.warn("[CLOSE][Cliente] Socket cerrado por el peer:", {
+            peer: cleanPeer,
+            code,
+            reason: reason ? reason.toString() : undefined,
+            socketReadyState: socket.readyState
+          });
         });
       } catch (error) {
         console.warn(
