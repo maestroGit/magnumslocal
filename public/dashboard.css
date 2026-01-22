@@ -1,0 +1,262 @@
+/* --- Migrado desde styles.css: reglas Dashboard y variantes --- */
+.dashboard {
+    max-width: none;
+    margin: 0 auto;
+    padding: 6px; /* tighter top spacing */
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(247, 147, 26, 0.1), rgba(247, 147, 26, 0.05));
+    border-radius: 15px;
+    border: none;
+}
+
+.dashboard-header h1 {
+    color: #f7931a;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(2, auto);
+    column-gap: clamp(10px, 1.2vw, 20px);
+    row-gap: clamp(16px, 3.5vh, 40px); /* reduce vertical gap to lift rows */
+    width: 100%;
+    min-height: calc(100vh - 100px);
+    padding: 6px; /* less inner padding to sit higher */
+    box-sizing: border-box;
+    place-content: start center; /* start vertically, centered horizontally */
+    justify-items: stretch;
+    align-items: start;
+}
+
+.dashboard-card {
+    background: #220F17;
+    border: none;
+    border-radius: 15px;
+    padding: 18px;
+    box-shadow: 0 8px 32px rgba(247, 147, 26, 0.3);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    min-width: 0;
+    max-width: none;
+    margin-left: unset;
+    margin-right: unset;
+    height: auto;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(247, 147, 26, 0.4);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card-header h2 {
+    color: #FFC48C;
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.card-header h3 {
+    color: #FFC48C;
+    margin: 0;
+}
+
+.dashboard-card p {
+    color: #e9e3e3;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    text-align: center; /* center card descriptions */
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px; /* compact spacing between buttons */
+    flex-wrap: nowrap; /* allow buttons to expand on one line */
+    padding-inline: 14px; /* ensure edge padding so last button never hits edge */
+    justify-content: center; /* keep 3 buttons visually centered in the card */
+}
+.card-actions.two-row-actions {
+    flex-wrap: wrap;
+}
+.card-actions.two-row-actions .dashboard-btn {
+    flex: 1 1 calc(50% - 8px);
+}
+.card-actions.two-row-actions .dashboard-btn:last-child {
+    flex: 1 1 100%;
+}
+
+@media (min-width: 769px) {
+    #balanceWallet,
+    #publicKeyWallet,
+    #walletModal {
+        flex: 1 1 auto; /* allow expansion like other cards */
+    }
+    #balanceWallet, #publicKeyWallet, #walletModal { white-space: nowrap; }
+    .dashboard-card .card-actions { align-items: center; }
+}
+
+.dashboard-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 120px;
+}
+
+.dashboard-btn.primary {
+    background-color: #f7931a;
+    color: white;
+    border: none;
+}
+
+.dashboard-btn.primary:hover {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    border: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+
+.dashboard-btn.secondary {
+    background-color: #f7931a;
+    color: #fff;
+    border: none;
+}
+
+.dashboard-btn.secondary:hover {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    border: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+
+.dashboard-btn:hover,
+.dashboard-btn.primary:hover,
+.dashboard-btn.secondary:hover,
+.dashboard-btn.btn-outline:hover,
+button.dashboard-btn:hover,
+.modal-content button:hover,
+button.modal-action:hover,
+.wallet-btn:hover,
+.wallet-btn.primary:hover,
+.wallet-btn.secondary:hover,
+.wallet-footer-actions .wallet-btn:hover,
+button:hover {
+    background-color: #6B0F0F !important;
+    color: #ffffff !important;
+    border: none !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    .card-actions {
+        flex-direction: column;
+    }
+    .dashboard-btn {
+        flex: none;
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-card {
+        font-size: 1.16em !important;
+        padding: 18px 8px !important;
+    }
+    .dashboard-card h2 {
+        font-size: 1.18em !important;
+    }
+    .dashboard-card p, .dashboard-card span, .dashboard-card button {
+        font-size: 1.12em !important;
+    }
+    .dashboard-grid {
+        justify-items: center !important;
+        align-items: center !important;
+        display: grid !important;
+    }
+    .dashboard-card {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        width: 98vw !important;
+        max-width: 420px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 12px 0 !important;
+        display: block !important;
+    }
+    .dashboard-cards-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .dashboard-card .dashboard-btn {
+        width: 100%;
+        flex: none;
+        font-size: clamp(12px, 4.5vw, 16px);
+        height: 40px;
+    }
+}
+
+/* --- Unified dashboard card and button styles (match magnumsmaster) --- */
+:root {
+    --accent: #f7931a;
+    --accent-2: #ffb14a;
+}
+
+.dashboard-card {
+    background: #220F17;
+    border: 1px solid #38202a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 10px #00000022;
+}
+.dashboard-card .card-header h2 {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+}
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 18px;
+}
+.two-row-actions .dashboard-btn {
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+.wallet-global-actions .dashboard-btn {
+    flex: 1 1 120px;
+    min-width: 120px;
+}

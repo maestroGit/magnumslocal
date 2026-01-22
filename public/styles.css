@@ -1,36 +1,5 @@
-@media (max-width: 700px) {
-    gap: 12px;
-    font-family: monospace;
-}
-.utxo-card-details {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-.utxo-card-address {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 13px;
-}
-.coincontrol-utxo-row label.utxo-meta {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
 
-/* Coinbase UTXO: premio de minado */
-.coincontrol-utxo-row.coinbase-utxo {
-  background-color: orange !important;
-}
-
-.utxo-select-list {
-    max-height: 220px;
-    overflow-y: auto;
-    margin-bottom: 12px;
-    padding: 0;
-}
+ 
 .wallet-balance {
     color: #f7931a;
     font-size: 18px;
@@ -72,107 +41,6 @@ body {
 .nav .btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 38px;
-    min-width: 90px;
-    padding: 0 18px;
-    font-size: 1em;
-    border: none;
-    background: #eaeafc;
-    color: #222;
-    border-radius: 8px;
-    margin-left: 8px;
-    margin-right: 0;
-    cursor: pointer;
-    transition: background 0.2s;
-    box-sizing: border-box;
-}
-.nav .btn:hover, .nav .btn:focus {
-    background: #d1d1f7;
-}
-.nav a.btn {
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 38px;
-    min-width: 90px;
-    padding: 0 18px;
-    font-size: 1em;
-    border-radius: 8px;
-    margin-left: 8px;
-    margin-right: 0;
-    box-sizing: border-box;
-}
-/* Footer Wallet Global Bodega */
-.wallet-footer-card {
-    width: 100%;
-    max-width: 700px;
-    margin: 40px auto 0 auto;
-    padding: 18px 18px 14px 18px;
-    background: #f4f4fa;
-    border-top: 2px solid #bdbdfc;
-    border-radius: 14px 14px 0 0;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-/* Unify wallet footer title: use h2 style (and cover existing h3) */
-.wallet-footer-card h2,
-.wallet-footer-card h3 {
-    margin-bottom: 10px;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #FFC48C; /* align with card header titles */
-    text-align: left; /* avoid global h2 center override */
-}
-.wallet-footer-content {
-    display: flex;
-    flex-direction: column;
-    gap: 6px; /* juntar más los elementos */
-    width: 100%;
-}
-.wallet-footer-content label {
-    font-size: 1em;
-    margin-bottom: 2px;
-}
-.wallet-footer-content input[type="file"],
-.wallet-footer-content input[type="password"] {
-    padding: 6px 8px;
-        margin-top: 16px !important; /* Solo un pequeño margen visual */
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    background: #fff;
-}
-.wallet-footer-actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(100px, 1fr));
-    gap: 6px; /* menor separación entre botones */
-    width: 100%;
-    min-width: 0;
-    margin-top: 6px;
-    align-items: center; /* alinear verticalmente como dashboard */
-}
-.wallet-footer-actions .wallet-btn {
-    min-width: 0;
-    white-space: normal;
-    word-break: break-word;
-    font-size: clamp(12px, 1.6vw, 14px);
-    padding: 0 12px; /* iguala padding horizontal con dashboard */
-    height: 36px; /* iguala altura con botones del dashboard */
-    border-radius: 8px;
-    font-weight: 600;
-    line-height: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-    min-width: 100px; /* asegurar una fila como en dashboard */
-    white-space: nowrap; /* evitar saltos de línea en el texto */
-}
-
-/* Igualar estados de interacción con los del dashboard */
-.wallet-footer-actions .wallet-btn:hover,
 .wallet-footer-actions .wallet-btn:focus,
 .wallet-footer-actions .wallet-btn:active,
 .wallet-footer-actions .wallet-btn:focus-visible {
@@ -286,19 +154,6 @@ h1.logo {
 }
 .nav .btn.active { background: #2B171F; color:#fff; border:1px solid rgba(139,22,49,.5); }
 
-/* Utility: apply consistent "vino" hover to any button */
-.wine-hover-btn {
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-}
-.wine-hover-btn:hover,
-.wine-hover-btn:focus,
-.wine-hover-btn:focus-visible,
-.wine-hover-btn:active {
-    background-color: #6B0F0F !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(107,15,15,0.22);
-}
 
 /* Offset main content below sticky header */
 /* Lift dashboard closer to the top under sticky header */
@@ -1207,81 +1062,6 @@ button:hover {
     100% { transform: rotate(360deg); }
 }
 
-/* Notificaciones toast para feedback rápido */
-.toast-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: #f7931a;
-    color: white;
-    padding: 16px 22px;
-    border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-    z-index: 2000;
-    animation: slideInFromRight 0.3s ease-out;
-    max-width: 300px;
-    word-wrap: break-word;
-    font-weight: 600;
-    font-size: 15px;
-}
-
-.toast-notification.success {
-    background-color: #28a745;
-}
-
-.toast-notification.error {
-    background-color: #dc3545;
-}
-
-.toast-notification.warning {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-@keyframes slideInFromRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Mejoras para el diseño responsive */
-@media (max-width: 480px) {
-    .modal-content {
-        width: 98%;
-        margin: 5% auto;
-        padding: 15px;
-    }
-    
-    .modal-content h2 {
-        font-size: 18px;
-    }
-    
-    .modal-content input,
-    .modal-content select,
-    .modal-content textarea {
-        font-size: 14px;
-        padding: 10px;
-    }
-    
-    .close {
-        font-size: 24px;
-        top: 8px;
-        right: 12px;
-    }
-    
-    .toast-notification {
-        right: 10px;
-        left: 10px;
-        max-width: none;
-    }
-
-    /* (removido: ajustes de tamaño) */
-}
 
 /* 🧪 Estilos para botones de testing rápido */
 .testing-buttons {
