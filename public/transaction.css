@@ -1,0 +1,70 @@
+/* Transaction item styles */
+.tx-item { list-style: none; }
+.tx-label { color: #333; font-weight: 700; }
+.tx-id {
+    color: #fff !important;
+    background: #3A2324 !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    word-break: break-all;
+}
+.tx-copy-btn { padding: 6px 10px; font-size: 0.9rem; }
+.transaction-modal-item,
+.monitor-card {
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Texto largo (IDs, direcciones, hashes) con elipsis */
+.transaction-modal-item .tx-id {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+    word-break: break-all;
+}
+
+/* Ajuste específico para transacciones dentro de modales */
+.modal-content .transaction,
+.modal-content .transaction-modal-item,
+.modal-content .monitor-card {
+    max-width: calc(100% - 20px);
+    margin: 8px auto;
+    overflow: hidden;
+}
+
+/* Detalles colapsables dentro de transacciones */
+.transaction-modal-item details {
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.transaction-modal-item details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
+}
+
+.transaction-modal-item ul {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    padding-left: 20px;
+}
+
+.transaction-modal-item ul li {
+    margin: 6px 0;
+    word-break: break-word;
+}
+
+@media (max-width: 700px) {
+    .transaction,
+    .transaction-modal-item {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+}

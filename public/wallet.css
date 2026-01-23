@@ -52,9 +52,22 @@
 }
 .wallet-publickey-header {
 	font-size: 1.08em;
-	color: #c9aeb6;
+	color: #faf8f8;
 	word-break: break-all;
 	margin-bottom: 8px;
+	margin-top: 90px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+}
+
+@media (max-width: 700px) {
+	.wallet-publickey-header {
+		margin-top: 56px;
+		font-size: 0.75em;
+		padding: 0 8px;
+	}
 }
 .wallet-publickey {
 	font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', 'monospace';
@@ -154,4 +167,11 @@
 .wallet-history-item .wallet-history-type {
 	font-size: 0.98em;
 	color: #ffc48c;
+}
+
+/* Eliminar scroll horizontal en el modal de wallet */
+#walletModalBody, .modal-body {
+  overflow-x: hidden !important;
+  max-width: 100%;
+  box-sizing: border-box;
 }

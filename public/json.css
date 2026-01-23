@@ -1,0 +1,17 @@
+/* JSON/pre blocks that use a light background should explicitly set dark text */
+.json-display,
+.json-display pre {
+	background: #2F1D25 !important;
+	color: #ffffff;
+	padding: 8px;
+	border-radius: 6px;
+	border: 1px solid rgba(255, 196, 140, 0.35);
+	overflow-x: auto;
+	font-family: 'Courier New', monospace;
+	font-size: 13px;
+	line-height: 1.4;
+    white-space: pre-wrap;      /* Permite saltos de línea automáticos */
+    word-break: break-all;      /* Rompe palabras largas */
+    overflow-wrap: anywhere;    /* Rompe donde sea necesario */
+}
+

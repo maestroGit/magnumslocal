@@ -1,0 +1,351 @@
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+/* Loading spinner */
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #f7931a;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Utility */
+.hidden { display: none !important; }
+
+/* Status confirmados */
+.status-confirmed,
+.status-pending,
+.status-error {
+    background: #e9ecef;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.status-confirmed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Lista de estados */
+.status-list {
+    margin: 15px 0;
+}
+
+.status-item {
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.status-item.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-item.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-item.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* === CSS inline migrado desde view.html para unificación === */
+.metric-value {
+  font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(90deg, var(--button-bg, #ff7b00), #ff932a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.site-header .nav .btn .metric-value {
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+@media (max-width: 700px) {
+  .site-header .container { padding: 6px 10px; }
+  .site-header .nav { gap: 6px; }
+  .site-header .nav .btn { height: 28px; padding: 3px 6px; border-radius: 7px; }
+  .site-header .nav .btn .metric-value { font-size: 0.95rem; }
+  /* Hide logo image and nav buttons on mobile: show only title */
+  .site-header .container { justify-content: center; }
+  .site-header .logo-icon { display: none !important; }
+  .site-header .nav { display: none !important; }
+}
+
+/* Grid de información en modales */
+.info-grid {
+    display: grid;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.info-grid p {
+    margin: 0;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.info-grid strong {
+    color: #495057;
+}
+
+/* Status cards para sistema */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.status-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #f7931a;
+}
+
+.status-card h4 {
+    margin: 0 0 10px 0;
+    color: #f7931a;
+    font-size: 0.9rem;
+}
+
+.status-card p {
+    margin: 5px 0;
+    font-size: 0.8rem;
+}
+
+/* Estados de verificación */
+.verification-success,
+.verification-pending,
+.verification-error {
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.verification-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.verification-pending {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+}
+
+.verification-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+
+/* Información del sistema */
+.system-info {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+/* 🔄 Estilos para modal de progreso */
+.progress-container {
+    text-align: center;
+    padding: 20px;
+}
+
+
+
+.progress-steps {
+    margin: 20px 0;
+    text-align: left;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-left: 4px solid #28a745;
+}
+
+.step-icon {
+    margin-right: 10px;
+    font-size: 14px;
+    min-width: 20px;
+}
+
+.step-text {
+    font-size: 14px;
+    color: #495057;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff 0%, #28a745 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.progress-message {
+    color: #6c757d;
+    font-size: 12px;
+    font-style: italic;
+    margin: 10px 0 0 0;
+}
+
+/* 🎉 Estilos para modal de éxito */
+.modal-success {
+    text-align: center;
+    padding: 20px;
+}
+
+.success-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    animation: bounceIn 0.6s ease;
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.status-success {
+    color: #28a745;
+    font-weight: bold;
+    background: #d4edda;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.header-decoration {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.wine-leaf, .wine-bottle {
+    font-size: 24px;
+    opacity: 0.7;
+    animation: gentle-float 3s ease-in-out infinite;
+}
+
+.wine-bottle {
+    animation-delay: 1.5s;
+}
+
+@keyframes gentle-float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+.header-content {
+    text-align: center;
+    flex: 1;
+    padding: 0;
+    margin: 0;
+}
+
+.main-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+}
+
+.grape-icon, .blockchain-icon {
+    font-size: 0.8em;
+    vertical-align: middle;
+    margin: 0 8px;
+    opacity: 0.9;
+}
+
+
+
+.tagline {
+    font-size: 0.9em;
+    color: #008C45; /* Verde vidrio botella */
+    font-style: italic;
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .header-decoration {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .wine-leaf, .wine-bottle {
+        display: none;
+    }
+    
+    .main-title {
+        font-size: 1.8em;
+    }
+    
+    .elegant-subtitle {
+        font-size: 1em;
+    }
+}

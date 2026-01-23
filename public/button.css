@@ -226,3 +226,16 @@ button:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(107,15,15,0.22);
 }
+
+/* Mobile (< 768px): Vertical layout */
+@media (max-width: 767px) {
+    .card-actions.two-btn-actions {
+        flex-direction: column;
+    }
+    
+    .card-actions.two-btn-actions .dashboard-btn {
+        flex-basis: 100%;
+        width: 100% !important;
+        min-width: 0;
+    }
+}

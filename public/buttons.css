@@ -1,0 +1,55 @@
+/* === Dashboard Actions & Buttons (unified) === */
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: auto;
+    min-width: 100px;
+    height: 36px;
+    font-weight: 600;
+}
+
+.dashboard-btn.primary {
+    background-color: #ff7b00;
+    color: #fff;
+}
+
+.dashboard-btn.secondary {
+    background-color: #333;
+    color: #fff;
+}
+.two-row-actions .dashboard-btn {
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+
+/* Exactly two buttons side-by-side when space allows (desktop) */
+.two-btn-actions .dashboard-btn {
+    flex: 1 1 calc((100% - 12px) / 2);
+    min-width: 140px;
+}
+
+/* Ensure two-btn-actions override two-row-actions behavior */
+.card-actions.two-row-actions.two-btn-actions .dashboard-btn {
+    flex: 1 1 calc((100% - 12px) / 2);
+    min-width: 140px;
+}
+
+.card-actions.two-row-actions.two-btn-actions .dashboard-btn:last-child {
+    flex: 1 1 calc((100% - 12px) / 2);
+}
+
+.wine-hover-btn:hover {
+    box-shadow: 0 2px 10px rgba(247,147,26,0.25);
+}

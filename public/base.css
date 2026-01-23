@@ -1,3 +1,18 @@
+/* Mejorar placeholders */
+input::placeholder, textarea::placeholder {
+    color: #6c757d;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Indicador visual para campos opcionales */
+input:not([required]), textarea:not([required]) {
+    border-left: 4px solid #28a745;
+}
+
+input:not([required])::placeholder, textarea:not([required])::placeholder {
+    color: #28a745;
+}
 /* base.css: Global and utility CSS extracted from styles.css */
 
 :root {
@@ -17,7 +32,7 @@ html, body {
     min-height: 100vh !important;
     max-height: 100vh !important;
     overflow-x: hidden !important;
-    font-size: 1.32em !important;
+    font-size: 1.2em;
     line-height: 1.5 !important;
 }
 
@@ -85,4 +100,20 @@ a {
     overflow-wrap: anywhere;
     word-break: break-word;
     line-break: anywhere;
+}
+
+/* Placeholder info para funciones en desarrollo */
+.placeholder-info {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.placeholder-info p {
+    margin: 5px 0;
+    color: #6c757d;
+    font-size: 0.8rem;
 }

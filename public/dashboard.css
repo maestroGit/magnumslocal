@@ -49,7 +49,7 @@
     margin-left: unset;
     margin-right: unset;
     height: auto;
-    min-height: 160px;
+    min-height: 170px;
     display: flex;
     flex-direction: column;
 }
@@ -101,6 +101,20 @@
     flex: 1 1 100%;
 }
 
+/* Responsive grid for card actions with multiple buttons */
+.card-actions.two-row-actions.two-btn-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    flex-wrap: unset;
+}
+
+@media (max-width: 600px) {
+    .card-actions.two-row-actions.two-btn-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (min-width: 769px) {
     #balanceWallet,
     #publicKeyWallet,
@@ -120,6 +134,11 @@
     transition: all 0.3s ease;
     flex: 1;
     min-width: 120px;
+    min-width: 140px;
+    white-space: normal;
+    padding: 8px 16px;
+    word-break: break-word;
+    font-size: 0.7em;
 }
 
 .dashboard-btn.primary {
@@ -194,7 +213,7 @@ button:hover {
         font-size: 1.18em !important;
     }
     .dashboard-card p, .dashboard-card span, .dashboard-card button {
-        font-size: 1.12em !important;
+        font-size: 1em !important;
     }
     .dashboard-grid {
         justify-items: center !important;
@@ -256,7 +275,4 @@ button:hover {
     flex: 1 1 140px;
     min-width: 140px;
 }
-.wallet-global-actions .dashboard-btn {
-    flex: 1 1 120px;
-    min-width: 120px;
-}
+
