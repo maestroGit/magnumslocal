@@ -9,6 +9,7 @@ const amountInput = document.getElementById('transferAmount');
 
 let utxos = [];
 let selectedUTXO = null;
+let selectedUTXOIndex = null;
 
 // Recuperar publicKey de sessionStorage (guardada tras importación)
 const pubKey = sessionStorage.getItem('importedPubKey');
@@ -20,10 +21,24 @@ if (!pubKey) {
   loadUTXOs(pubKey);
 }
 
+// Declarar variables globales para evitar ReferenceError
+let utxosDisponibles = [];
+let utxosPendientes = [];
+
 async function loadUTXOs(address) {
   statusEl.textContent = 'Transfer the pleasure of your Magnum...';
-  utxos = await fetchUTXOs(address);
-  console.log('[DEBUG][transfer-keystore.js] utxos recibidos:', utxos);
+  // Esperar objeto con utxosDisponibles y utxosPendientes
+  const data = await fetchUTXOs(address);
+  if (Array.isArray(data.utxosDisponibles) && Array.isArray(data.utxosPendientes)) {
+    utxosDisponibles = data.utxosDisponibles;
+    utxosPendientes = data.utxosPendientes;
+    utxos = utxosDisponibles;
+  } else {
+    // Soporte retrocompatible
+    utxosDisponibles = Array.isArray(data) ? data : data.utxos || [];
+    utxosPendientes = [];
+    utxos = utxosDisponibles;
+  }
   renderUTXOList();
 }
 
@@ -35,37 +50,49 @@ function renderUTXOList() {
     form.insertBefore(utxoListEl, form.querySelector('.card-actions'));
   }
   utxoListEl.innerHTML = '';
-  if (!utxos.length) {
+  if (!utxosDisponibles.length && !utxosPendientes.length) {
     utxoListEl.innerHTML = '<div style="color:#f7931a;margin-bottom:8px;">No hay UTXOs disponibles.</div>';
     amountInput.disabled = true;
     form.querySelector('button[type="submit"]').disabled = true;
     return;
   }
-  utxos.forEach((utxo, i) => {
+  // Renderizar UTXOs disponibles
+  utxosDisponibles.forEach((utxo, i) => {
     const cont = document.createElement('div');
     cont.className = 'utxo-row';
     cont.style = 'margin-bottom:6px;';
-    // Si el UTXO está gastado, lo marcamos visualmente
-    if (utxo.spent) {
-      cont.classList.add('utxo-spent');
-    }
     const radio = document.createElement('input');
     radio.type = 'radio';
     radio.name = 'utxoSelect';
     radio.value = i;
     radio.id = 'utxo_' + i;
     radio.className = 'utxo-radio';
-    radio.disabled = !!utxo.spent;
     radio.addEventListener('change', () => selectUTXO(i));
     cont.appendChild(radio);
     const label = document.createElement('label');
     label.htmlFor = radio.id;
     label.style = 'margin-left:8px;color:#fff;';
-    label.textContent = `UTXO #${i+1}: ${utxo.amount} unidades`;
-    if (utxo.spent) {
-      label.style.color = '#888';
-      label.textContent += ' (gastado)';
-    }
+    label.textContent = `UTXO #${i+1}: ${utxo.amount} 💰 `;
+    cont.appendChild(label);
+    utxoListEl.appendChild(cont);
+  });
+  // Renderizar UTXOs pendientes (en mempool)
+  utxosPendientes.forEach((utxo, i) => {
+    const cont = document.createElement('div');
+    cont.className = 'utxo-row utxo-pending';
+    cont.style = 'margin-bottom:6px;';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'utxoSelect';
+    radio.value = 'pending_' + i;
+    radio.id = 'utxo_pending_' + i;
+    radio.className = 'utxo-radio';
+    radio.disabled = true;
+    cont.appendChild(radio);
+    const label = document.createElement('label');
+    label.htmlFor = radio.id;
+    label.style = 'margin-left:8px;color:#f3b26f;';
+    label.textContent = `UTXO: ${utxo.amount} 💰 (pending mining)`;
     cont.appendChild(label);
     utxoListEl.appendChild(cont);
   });
@@ -75,6 +102,7 @@ function renderUTXOList() {
 
 function selectUTXO(idx) {
   selectedUTXO = utxos[idx];
+  selectedUTXOIndex = idx;
   console.log('[DEBUG][transfer-keystore.js] selectedUTXO al seleccionar:', selectedUTXO);
   amountInput.value = selectedUTXO.amount;
   amountInput.disabled = false;
@@ -140,6 +168,7 @@ form.addEventListener('submit', async function(e) {
   e.preventDefault();
   const recipient = recipientInput.value.trim();
   const amount = amountInput.value.trim();
+  console.log('[FRONTEND] Iniciando envío de transacción. Recipient:', recipient, 'Amount:', amount, 'selectedUTXO:', selectedUTXO, 'selectedUTXOIndex:', selectedUTXOIndex);
   if (!selectedUTXO) {
     statusEl.textContent = 'Selecciona un UTXO.';
     return;
@@ -158,8 +187,10 @@ form.addEventListener('submit', async function(e) {
   try {
     keystore = JSON.parse(sessionStorage.getItem('importedKeystore'));
     if (!keystore) throw new Error('Keystore no encontrado en sessionStorage.');
+    console.log('[FRONTEND] Keystore recuperado:', keystore);
   } catch (err) {
     statusEl.textContent = 'No se pudo recuperar el keystore importado.';
+    console.error('[FRONTEND] Error recuperando keystore:', err);
     return;
   }
 
@@ -182,6 +213,7 @@ form.addEventListener('submit', async function(e) {
   scrypt(passphrase, keystore.kdfParams.salt, 16384, 8, 1, 32, async (err, _, key) => {
     if (err) {
       statusEl.textContent = 'Error en KDF.';
+      console.error('[FRONTEND] Error en KDF:', err);
       return;
     }
     try {
@@ -310,6 +342,7 @@ console.log('¿Coinciden?:', derivedPubKey === keystore.publicKey);
 
       // Enviar al backend
       statusEl.textContent = 'Enviando transacción...';
+      console.log('[FRONTEND] Enviando transacción al backend:', txObj);
       let base = '';
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         base = 'http://localhost:6001';
@@ -325,14 +358,19 @@ console.log('¿Coinciden?:', derivedPubKey === keystore.publicKey);
       });
       if (!res.ok) {
         statusEl.textContent = 'Error al enviar la transacción: ' + res.status;
+        console.error('[FRONTEND] Error HTTP al enviar transacción:', res.status, res.statusText);
         return;
       }
       const data = await res.json();
-      statusEl.textContent = 'Transacción enviada correctamente. ID: ' + (data.id || '(sin id)');
+      statusEl.textContent = 'Transacción enviada correctamente. ID: ' + (data.id || data.transactionId || '(sin id)');
+      console.log('[FRONTEND] Respuesta backend:', data);
       // Marcar UTXO como gastado tras transacción exitosa
-      markUTXOAsSpent(selectedUTXO.value);
+      if (selectedUTXOIndex !== null) markUTXOAsSpent(selectedUTXOIndex);
+      // Opcional: recargar UTXOs desde backend para reflejar estado real
+      await loadUTXOs(pubKey);
     } catch (e) {
       statusEl.textContent = 'Error al firmar o enviar: ' + (e.message || e);
+      console.error('[FRONTEND] Error al firmar o enviar:', e);
     }
   });
 });

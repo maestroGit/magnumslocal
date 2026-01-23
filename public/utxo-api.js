@@ -16,6 +16,11 @@ export async function fetchUTXOs(address) {
     if (!res.ok) throw new Error("Failed to fetch utxos: " + res.status);
     const data = await res.json();
     console.log('[DEBUG][utxo-api.js] data recibido de backend:', data);
+    // Si el backend devuelve utxosDisponibles o utxosPendientes, retornar el objeto completo
+    if (data && (Array.isArray(data.utxosDisponibles) || Array.isArray(data.utxosPendientes))) {
+      return data;
+    }
+    // Retrocompatibilidad
     return Array.isArray(data) ? data : data.utxos || [];
   } catch (err) {
     console.error("fetchUTXOs error", err);

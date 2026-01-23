@@ -32,18 +32,16 @@ if (!pubKey || !keystore) {
 
 async function loadUTXOs(address) {
   statusEl.textContent = 'Enjoy your Magnum moment...';
-  utxos = await fetchUTXOs(address);
-  // Prune pending marks: keep only those still present in UTXOs
-  try {
-    const existing = new Set(utxos.map(u => `${u.txId}:${Number(u.outputIndex)}`));
-    const pruneKey = (k) => {
-      const arr = JSON.parse(sessionStorage.getItem(k) || '[]');
-      const pruned = arr.filter(x => existing.has(x));
-      sessionStorage.setItem(k, JSON.stringify(pruned));
-    };
-    pruneKey('pendingBurnUtxos');
-    pruneKey('pendingUtxos');
-  } catch (_) {}
+  const data = await fetchUTXOs(address);
+  if (Array.isArray(data.utxosDisponibles) && Array.isArray(data.utxosPendientes)) {
+    utxosDisponibles = data.utxosDisponibles;
+    utxosPendientes = data.utxosPendientes;
+    utxos = utxosDisponibles;
+  } else {
+    utxosDisponibles = Array.isArray(data) ? data : data.utxos || [];
+    utxosPendientes = [];
+    utxos = utxosDisponibles;
+  }
   renderUTXOList();
 }
 
@@ -55,20 +53,13 @@ function renderUTXOList() {
     form.insertBefore(utxoListEl, form.querySelector('.card-actions'));
   }
   utxoListEl.innerHTML = '';
-  if (!utxos.length) {
+  if (!utxosDisponibles.length && !utxosPendientes.length) {
     utxoListEl.innerHTML = '<div style="color:#f7931a;margin-bottom:8px;">No hay UTXOs disponibles.</div>';
     form.querySelector('button[type="submit"]').disabled = true;
     return;
   }
-  // Union of pending keys from both burn and generic
-  let pendingSet = new Set();
-  try {
-    const a = JSON.parse(sessionStorage.getItem('pendingBurnUtxos') || '[]');
-    const b = JSON.parse(sessionStorage.getItem('pendingUtxos') || '[]');
-    [...a, ...b].forEach(k => pendingSet.add(k));
-  } catch (_) {}
-
-  utxos.forEach((utxo, i) => {
+  // Renderizar UTXOs disponibles
+  utxosDisponibles.forEach((utxo, i) => {
     const cont = document.createElement('div');
     cont.className = 'utxo-row';
     cont.style = 'margin-bottom:6px;';
@@ -83,19 +74,27 @@ function renderUTXOList() {
     const label = document.createElement('label');
     label.htmlFor = radio.id;
     label.style = 'margin-left:8px;color:#fff;';
-    label.textContent = `UTXO #${i + 1}: ${utxo.amount} unidades`;
-    // Mark pending UTXO visually and block selection
-    try {
-      const key = `${utxo.txId}:${Number(utxo.outputIndex)}`;
-      if (pendingSet.has(key)) {
-        cont.classList.add('pending');
-        radio.disabled = true;
-        const badge = document.createElement('span');
-        badge.className = 'utxo-badge';
-        badge.textContent = 'Pendiente de minar';
-        label.appendChild(badge);
-      }
-    } catch (_) {}
+    label.textContent = `UTXO #${i + 1}: ${utxo.amount} 💰 `;
+    cont.appendChild(label);
+    utxoListEl.appendChild(cont);
+  });
+  // Renderizar UTXOs pendientes (en mempool)
+  utxosPendientes.forEach((utxo, i) => {
+    const cont = document.createElement('div');
+    cont.className = 'utxo-row pending';
+    cont.style = 'margin-bottom:6px;';
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = 'utxoSelect';
+    radio.value = 'pending_' + i;
+    radio.id = 'utxo_pending_' + i;
+    radio.className = 'utxo-radio';
+    radio.disabled = true;
+    cont.appendChild(radio);
+    const label = document.createElement('label');
+    label.htmlFor = radio.id;
+    label.style = 'margin-left:8px;color:#f3b26f;';
+    label.textContent = `UTXO: ${utxo.amount} 💰  (pending mining)`;
     cont.appendChild(label);
     utxoListEl.appendChild(cont);
   });
@@ -123,6 +122,8 @@ function validateForm() {
   form.querySelector('button[type="submit"]').disabled = !(passOk && utxoOk) || selectedPending;
 }
 
+  let utxosDisponibles = [];
+  let utxosPendientes = [];
 passInput.addEventListener('input', validateForm);
 
 form.addEventListener('submit', async function (e) {

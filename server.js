@@ -974,8 +974,32 @@ app.get("/utxo-balance/:address", (req, res) => {
   let utxos = utxoManager.getUTXOs(address);
   // Asegurar que cada UTXO tenga la propiedad address
   utxos = utxos.map(utxo => ({ ...utxo, address }));
-  const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
-  res.json({ address, balance, utxos });
+
+  // Inputs de la mempool
+  const mempoolInputs = tp.transactions.flatMap(tx => tx.inputs || []);
+
+  // UTXOs pendientes (referenciados en la mempool)
+  const utxosPendientes = utxos.filter(utxo =>
+    mempoolInputs.some(input =>
+      input.txId === utxo.txId &&
+      input.outputIndex === utxo.outputIndex &&
+      input.address === utxo.address &&
+      input.amount === utxo.amount
+    )
+  );
+
+  // UTXOs realmente disponibles
+  const utxosDisponibles = utxos.filter(utxo =>
+    !mempoolInputs.some(input =>
+      input.txId === utxo.txId &&
+      input.outputIndex === utxo.outputIndex &&
+      input.address === utxo.address &&
+      input.amount === utxo.amount
+    )
+  );
+
+  const balance = utxosDisponibles.reduce((sum, utxo) => sum + utxo.amount, 0);
+  res.json({ address, balance, utxosDisponibles, utxosPendientes });
 });
 
 // Endpoint para historial completo de una dirección (recibidos, gastados, quemados)
