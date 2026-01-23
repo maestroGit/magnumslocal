@@ -43,13 +43,7 @@
 	color: #fff;
 	outline: none;
 }
-.wallet-balance {
-	font-size: 1.4em;
-	font-weight: 700;
-	color: #ff7b00;
-	margin-bottom: 6px;
-	letter-spacing: 0.02em;
-}
+
 .wallet-publickey-header {
 	font-size: 1.08em;
 	color: #faf8f8;
