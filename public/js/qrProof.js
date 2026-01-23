@@ -50,7 +50,7 @@ function showQRTestUI() {
       </div>
       <!-- Botón Cerrar eliminado: solo se cierra con el aspa (X) del modal -->
     </div>`;
-  openQRModalWithContent('🔎 Validar transacciones en blocksWine', content);
+  openQRModalWithContent('Validar transacciones', content);
   const verifyBtn = document.getElementById('verifyTransactionBtn');
   if (verifyBtn) verifyBtn.addEventListener('click', verificarTransactionIDInline);
   const readBtn = document.getElementById('readQRImageBtn');

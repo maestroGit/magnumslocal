@@ -5,10 +5,7 @@
   background-clip: unset !important;
   -webkit-background-clip: unset !important;
 }
-.nav .btn .metric-value {
-  color: #fff !important;
-  background: none !important;
-}
+
 .logo, h1.logo {
   font-weight: 700 !important;
   letter-spacing: 0.6px !important;
@@ -47,13 +44,11 @@
 }
 
 @media (max-width: 700px) {
-  .site-header .container { padding: 6px 10px !important; }
-  .site-header .nav { gap: 6px !important; }
+  .site-header .container { padding: 6px 10px !important; justify-content: center !important; }
+  .site-header .nav { gap: 6px !important; display: none !important; }
   .site-header .nav .btn { height: 28px !important; padding: 3px 6px !important; border-radius: 7px !important; }
-  .site-header .nav .btn .metric-value { font-size: 1rem !important; }
-  .site-header .container { justify-content: center !important; }
+  .site-header .nav .btn .metric-value { font-size: 0.95rem !important; }
   .site-header .logo-icon { display: none !important; }
-  .site-header .nav { display: none !important; }
   #hamburger-menu-btn { display: flex !important; position: absolute; top: 10px; right: 12px; z-index: 2100; width: 36px; height: 36px; align-items: center; justify-content: center; background: #261117; color: #220F17; border-radius: 50%; border: none; font-size: 1.2em; }
   #hamburger-menu-btn span { color: #fff !important; }
   #hamburger-menu-btn.active { background: #220F17 !important; color: #ff7b00 !important; outline: 2px solid #ff7b00 !important; }
@@ -96,9 +91,7 @@
   transition: transform 0.3s !important;
   filter: none !important;
 }
-.rotatable {
-  /* Puedes agregar animación de rotación si lo deseas */
-}
+
 .logo-icon.white {
   filter: invert(1) brightness(1.4) contrast(1.05) !important;
   background: none !important;
@@ -189,10 +182,7 @@
   letter-spacing: 1px;
   margin: 0 16px;
 }
-.nav {
-  display: flex;
-  gap: 18px;
-}
+
 .btn {
   color: #fff;
   text-decoration: none;
@@ -216,9 +206,7 @@
   vertical-align: middle;
   transition: transform 0.3s;
 }
-.rotatable {
-  /* Puedes agregar animación de rotación si lo deseas */
-}
+
 .white {
   filter: brightness(1.1) drop-shadow(0 0 2px #fff);
 }
@@ -234,14 +222,4 @@
 .site-header .nav .btn .metric-value {
   font-size: 1rem;
   line-height: 1;
-}
-@media (max-width: 700px) {
-  .site-header .container { padding: 6px 10px; }
-  .site-header .nav { gap: 6px; }
-  .site-header .nav .btn { height: 28px; padding: 3px 6px; border-radius: 7px; }
-  .site-header .nav .btn .metric-value { font-size: 0.95rem; }
-  /* Hide logo image and nav buttons on mobile: show only title */
-  .site-header .container { justify-content: center; }
-  .site-header .logo-icon { display: none !important; }
-  .site-header .nav { display: none !important; }
 }
