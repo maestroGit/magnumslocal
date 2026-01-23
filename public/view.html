@@ -9,7 +9,15 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:6002 ws://localhost:6001 https://*.apps.run-on-seenode.com http://*.apps.run-on-seenode.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Blockswine</title>
   <!-- Enlace al archivo de estilos CSS externo -->
-  <link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="stylesheet" type="text/css" href="base.css">
+  <link rel="stylesheet" type="text/css" href="button.css">
+  <link rel="stylesheet" type="text/css" href="utxo.css">
+  <link rel="stylesheet" type="text/css" href="dashboard.css">
+  <link rel="stylesheet" type="text/css" href="modal.css">
+  <link rel="stylesheet" type="text/css" href="toast.css">
+  <link rel="stylesheet" type="text/css" href="wallet.css">
+  <link rel="stylesheet" type="text/css" href="utilities.css">
+  <link rel="stylesheet" type="text/css" href="transaction.css">
   <!-- Unify UI behavior with blocksWine: metric-value and compact header nav -->
   <link rel="stylesheet" type="text/css" href="header-custom.css">
   <!-- Favicon placeholder (will be replaced/resized by script) -->
@@ -82,7 +90,7 @@
   <div id="walletModalContainer" class="modal hidden">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <h2>💼 Gestión de Wallet</h2>
+      <h2>Gestión de Wallet</h2>
       <div id="walletModalBody" class="modal-body">
         <!-- Aquí se llenará dinámicamente el contenido de wallet -->
       </div>
@@ -107,8 +115,8 @@
           
         </div>
         <p>Cadena de bloques</p>
-        <div class="card-actions">
-          <button id="block" class="dashboard-btn primary">Blockchain</button>
+        <div class="card-actions two-row-actions two-btn-actions">
+          <button id="block" class="dashboard-btn primary wine-hover-btn">Blockchain</button>
         </div>
       </div>
 
@@ -121,8 +129,8 @@
           
         </div>
         <p>Transacciones</p>
-        <div class="card-actions">
-          <button id="transactionsPoolBtn" class="dashboard-btn primary">MemPool</button>
+        <div class="card-actions two-row-actions two-btn-actions">
+          <button id="transactionsPoolBtn" class="dashboard-btn primary wine-hover-btn">MemPool</button>
         </div>
       </div>
 
@@ -133,8 +141,8 @@
           
         </div>
         <p>Ronda de PoW.</p>
-        <div class="card-actions">
-          <button id="frontendMineBtn" class="dashboard-btn primary">Mine</button>
+        <div class="card-actions two-row-actions two-btn-actions">
+          <button id="frontendMineBtn" class="dashboard-btn primary wine-hover-btn">Mine</button>
         </div>
       </div>
 
@@ -146,8 +154,8 @@
         </div>
         <p>Operar en la red</p>
         <div class="card-actions two-row-actions two-btn-actions">
-          <button id="openTransactionModal" class="dashboard-btn primary">Register</button>
-          <button id="openTransactionBajaModal" class="dashboard-btn primary">Consumed</button>
+          <button id="openTransactionModal" class="dashboard-btn primary wine-hover-btn">Register</button>
+          <button id="openTransactionBajaModal" class="dashboard-btn primary wine-hover-btn">Consumed</button>
         </div>
       </div>
 
@@ -159,9 +167,8 @@
             
           </div>
           <p>Acceso WineLovers</p>
-          <div class="card-actions">
-            <button id="wineLoverBtn" class="dashboard-btn primary" data-open-url="keystore.html" data-open-target="_blank">Wallet</button>
-          
+          <div class="card-actions two-row-actions two-btn-actions">
+            <button id="wineLoverBtn" class="dashboard-btn primary wine-hover-btn" data-open-url="keystore.html" data-open-target="_blank">Wallet</button>
           </div>
         </div>
 
@@ -171,11 +178,9 @@
         <div class="card-header">
           <h2>🍇 Winery</h2>
         </div>
-        <div class="card-actions two-row-actions">
+        <div class="card-actions two-row-actions two-btn-actions">
           <button id="publicKeyWallet" class="dashboard-btn primary wine-hover-btn">pub</button>
           <button id="balanceWallet" class="dashboard-btn primary wine-hover-btn">Balance</button>
-        </div>
-        <div class="card-actions two-row-actions two-btn-actions">
           <button id="walletModal" class="dashboard-btn primary wine-hover-btn" data-bound="1">Consult</button>
           <button id="utxoSetBtn" class="dashboard-btn primary wine-hover-btn">UTXO</button>
         </div>
@@ -190,7 +195,7 @@
           
         </div>
         <p>Verificación QR</p>
-        <div class="card-actions">
+        <div class="card-actions two-row-actions two-btn-actions">
           <button id="checkQRButton" class="dashboard-btn primary wine-hover-btn">Check QR</button>
         </div>
       </div>
@@ -202,8 +207,8 @@
           
         </div>
         <p>Estado del equipo</p>
-        <div class="card-actions">
-          <button id="systemMonitor" class="dashboard-btn primary">Monitor</button>
+        <div class="card-actions two-row-actions two-btn-actions">
+          <button id="systemMonitor" class="dashboard-btn primary wine-hover-btn">Monitor</button>
         </div>
       </div>
         
@@ -216,8 +221,8 @@
             
           </div>
           <p>Página web</p>
-          <div class="card-actions">
-            <button id="blocksWineBtn" class="dashboard-btn primary" data-open-url="https://blockswine.com/" data-open-target="_blank">BlocksWine</button>
+          <div class="card-actions two-row-actions two-btn-actions">
+            <button id="blocksWineBtn" class="dashboard-btn primary wine-hover-btn" data-open-url="https://blockswine.com/" data-open-target="_blank">BlocksWine</button>
           </div>
         </div>
                 <!-- Wallet Global Bodega como card en el grid -->
@@ -226,7 +231,7 @@
             <h2>🔓 Winery</h2>
           </div>
           <p>Acceso Bodegas</p>
-          <div class="card-actions wallet-global-actions two-row-actions two-btn-actions">
+          <div class="card-actions two-row-actions two-btn-actions">
             <button id="wallet-global-generate" class="dashboard-btn primary wine-hover-btn" type="button">Create</button>
             <button id="wallet-global-upload" class="dashboard-btn primary wine-hover-btn" type="button">Upload</button>
           </div>

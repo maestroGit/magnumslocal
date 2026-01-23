@@ -1,0 +1,101 @@
+/* === QR & Verificación: exportado desde styles.css === */
+.qr-container {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+}
+
+.qr-info {
+	flex: 1;
+	min-width: 250px;
+}
+
+.qr-info h3 {
+	color: #722f37;
+	margin-bottom: 15px;
+	font-size: 1.2em;
+	border-bottom: 2px solid #8b1538;
+	padding-bottom: 8px;
+}
+
+.qr-info p {
+	margin: 8px 0;
+	font-size: 0.9em;
+}
+
+.qr-info strong {
+	color: #8b1538;
+	font-weight: 600;
+}
+
+.qr-code {
+	flex: 0 0 auto;
+	text-align: center;
+	background: white;
+	padding: 15px;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+	border: 2px solid #f3f4f6;
+}
+
+.qr-code img {
+	border-radius: 8px;
+	max-width: 100%;
+	height: auto;
+}
+/* Specific size for QR image shown in modal */
+.qr-image { max-width: 300px; height: auto; }
+
+.qr-actions {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	margin-top: 20px;
+	flex-wrap: wrap;
+}
+
+/* 🔐 Estilos para la información de verificación blockchain */
+.verification-info {
+	margin-top: 20px;
+	padding: 15px;
+	background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+	border-radius: 10px;
+	color: white;
+	box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+	animation: verificationGlow 2s ease-in-out infinite alternate;
+}
+
+.verification-badge {
+	font-weight: bold;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 1em;
+}
+
+.verification-details {
+	font-size: 0.85em;
+	opacity: 0.9;
+	line-height: 1.4;
+}
+
+.verification-details small {
+	display: block;
+	margin: 2px 0;
+}
+
+@keyframes verificationGlow {
+	from {
+		box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+	}
+	to {
+		box-shadow: 0 4px 12px rgba(5, 150, 105, 0.5);
+	}
+}
+
+.qr-actions .dashboard-btn {
+	min-width: 150px;
+}

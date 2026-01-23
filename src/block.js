@@ -199,10 +199,18 @@ static adjustDifficulty(previousBlock, currentTime) {
     let t1 = Date.now();
     let intentos = 0;
     console.log(`[MINERÍA] ⛏️ Iniciando minado de bloque...`);
+    // Debug: print previousBlock hashes to trace genesis logic
+    console.log(`[DEBUG] previousBlock.hash: ${previousBlock.hash}`);
+    console.log(`[DEBUG] previousBlock.previousHash: ${previousBlock.previousHash}`);
     do {
       nonce++;
       intentos++;
-      timestamp = 1738879340000; //Math.floor(new Date().getTime() / 1000) * 1000;
+      // Use fixed timestamp only for genesis, otherwise use Date.now()
+      if (previousBlock.previousHash === "0000000000000000000000000000000000000000000000000000000000000000") {
+        timestamp = previousBlock.timestamp;
+      } else {
+        timestamp = Date.now();
+      }
       difficulty = Block.adjustDifficulty(previousBlock, timestamp);
       hash = Block.hash(timestamp, previousHash, data, nonce, difficulty);
       if (intentos % 1000 === 0) {

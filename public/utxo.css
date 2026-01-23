@@ -1,0 +1,114 @@
+/* --- Migrado desde styles.css: reglas UTXO y variantes --- */
+.utxo-list-section {
+    margin-top: 10px;
+}
+.utxo-list-container {
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+/* .utxo-result-modal block removed as duplicate; already defined above */
+.utxo-balance {
+    color: #f7931a;
+    font-weight: bold;
+    font-size: 18px;
+}
+.utxo-result-modal {
+    text-align: left;
+    max-width: 100%;
+}
+.utxo-card {
+    padding: 10px;
+    border-radius: 8px;
+    background: #28A745;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-family: monospace;
+}
+.utxo-card-details {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.utxo-card-address {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+}
+.utxo-card-amount {
+    font-weight: 700;
+    margin-top: 6px;
+}
+.utxo-card-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+}
+.utxo-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+}
+.burn-btn {
+    background-color: #d32f2f !important;
+    color: #fff !important;
+    border: none !important;
+}
+.coincontrol-utxo-row .utxo-checkbox {
+    flex: 0 0 auto !important;
+    width: 15px !important;
+    min-width: 15px !important;
+    max-width: 15px !important;
+    height: 15px !important;
+    box-sizing: content-box !important;
+    display: inline-block !important;
+    margin-right: 8px;
+}
+.coincontrol-utxo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    background-color: rgb(40, 167, 69);
+    margin-bottom: 6px;
+}
+.coincontrol-utxo-row label.utxo-meta {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.coincontrol-utxo-row.coinbase-utxo {
+  background-color: orange !important;
+}
+.utxo-select-list {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    padding: 0;
+}
+.utxo-card-actions .utxo-copy-btn {
+    font-size: 0.75em;
+    padding: 4px 10px;
+    min-width: 60px;
+    height: 26px;
+    border-radius: 6px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.utxo-card-actions .utxo-copy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}

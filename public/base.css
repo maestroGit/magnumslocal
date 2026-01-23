@@ -1,0 +1,119 @@
+/* Mejorar placeholders */
+input::placeholder, textarea::placeholder {
+    color: #6c757d;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Indicador visual para campos opcionales */
+input:not([required]), textarea:not([required]) {
+    border-left: 4px solid #28a745;
+}
+
+input:not([required])::placeholder, textarea:not([required])::placeholder {
+    color: #28a745;
+}
+/* base.css: Global and utility CSS extracted from styles.css */
+
+:root {
+    --wine-main: #6A0D25;   /* vino intenso */
+    --wine-light: #8B1E3F;  /* luz */
+    --wine-dark: #3B0A14;   /* sombra */
+    --size: 80px;           /* tamaño más compacto para patrón */
+    --accent: #f7931a;
+    --accent-2: #ffb14a;
+}
+
+html, body {
+    width: 100vw !important;
+    min-width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-x: hidden !important;
+    font-size: 1.2em;
+    line-height: 1.5 !important;
+}
+
+body {
+    background-color: #3A1319;
+    background-image:
+        url('data:image/svg+xml;utf8,<svg width="192" height="192" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="24,4 44,14 44,34 24,44 4,34 4,14" fill="%23FF9800" stroke="%23FF9800" stroke-width="2"/><polygon points="24,4 44,14 24,24 4,14" fill="%23FF9800" opacity="0.85"/><polygon points="24,24 44,14 44,34 24,44" fill="%23FFB74D" opacity="0.7"/><polygon points="24,24 24,44 4,34 4,14" fill="%23A0522D" opacity="0.7"/><rect x="21" y="12" width="6" height="20" rx="3" fill="white" opacity="0.25"/><rect x="23" y="8" width="2" height="6" rx="1" fill="white" opacity="0.25"/></svg>'),
+        url('data:image/svg+xml;utf8,<svg width="192" height="192" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="24,4 44,14 44,34 24,44 4,34 4,14" fill="%23FF9800" stroke="%23FF9800" stroke-width="2"/><polygon points="24,4 44,14 24,24 4,14" fill="%23FF9800" opacity="0.85"/><polygon points="24,24 44,14 44,34 24,44" fill="%23FFB74D" opacity="0.7"/><polygon points="24,24 24,44 4,34 4,14" fill="%23A0522D" opacity="0.7"/><rect x="21" y="12" width="6" height="20" rx="3" fill="white" opacity="0.25"/><rect x="23" y="8" width="2" height="6" rx="1" fill="white" opacity="0.25"/></svg>');
+    background-repeat: repeat;
+    background-size: 192px 192px, 192px 192px;
+    background-position: 0 0, 96px 96px;
+    padding-top: 10px;
+}
+
+ul, ol {
+    padding-left: 2em;
+    margin: 1em 0;
+}
+li {
+    margin-bottom: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: inherit;
+    font-weight: bold;
+    color: inherit;
+    margin: 0.5em 0 0.25em 0;
+}
+a {
+    color: var(--accent, #f7931a);
+    text-decoration: underline;
+    cursor: pointer;
+}
+.text-center {
+    text-align: center !important;
+}
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #6B0F0F;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #8B1E3F;
+}
+::selection {
+    background: #f7931a;
+    color: #fff;
+}
+.hidden {
+    display: none !important;
+}
+.break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-break: anywhere;
+}
+
+/* Placeholder info para funciones en desarrollo */
+.placeholder-info {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.placeholder-info p {
+    margin: 5px 0;
+    color: #6c757d;
+    font-size: 0.8rem;
+}

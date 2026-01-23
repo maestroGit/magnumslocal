@@ -7,19 +7,14 @@ import { fetchData } from '../core/api.js';
 
 export function renderBalance(balanceData) {
   const balanceModalContent = `
-    <div class="modal-info">
-      
-      <p><strong>Status:</strong> ${balanceData.message || 'Queried'}</p>
-    </div>
     <div class="modal-body">
       <div class="modal-info">
         <p><strong>Public Key:</strong></p>
         <p class="wallet-publickey-value tx-id">${balanceData.address}</p>
-        <p><strong>Current Balance:</strong> <span class="wallet-balance">${balanceData.balance}</span></p>
+        <p><strong>Balance:</strong> <span>${balanceData.balance}</span></p>
       </div>
-      <p>Additional Info:</p>
       <ul>
-        <li><strong>Query Date:</strong> ${new Date().toLocaleString()}</li>
+        <li><strong>Date:</strong> ${new Date().toLocaleString()}</li>
       </ul>
     </div>`;
   safeModal('Balance Wallet', balanceModalContent);
@@ -28,16 +23,14 @@ export function renderBalance(balanceData) {
 export function renderPublicKey(publicKey) {
   const publicKeyModalContent = `
     <div class="modal-info">
-      <p><strong>🔑 Current Public Key</strong></p>
+      <p><strong>Public Key</strong></p>
       <p><strong>Status:</strong> Active</p>
     </div>
     <div class="modal-body">
-      <h3>Key Information:</h3>
       <div class="modal-info">
         <p><strong>Public Key:</strong></p>
         <pre class="json-display">${JSON.stringify(publicKey.publicKey, null, 2)}</pre>
       </div>
-      <h3>Details:</h3>
       <ul>
         <li><strong>Format:</strong> JSON</li>
         <li><strong>Type:</strong> ECDSA Public Key</li>

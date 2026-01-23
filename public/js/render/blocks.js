@@ -14,27 +14,51 @@ export function showBlockTransactions(blockIndex) {
       return;
     }
     const txs = Array.isArray(block.data) ? block.data : [];
-    const content = `
-      <div class="modal-info">
-        <p><strong>💸 Transactions of Block #${blockIndex}</strong></p>
-        <p><strong>Hash:</strong> ${block.hash}</p>
-        <p><strong>Timestamp:</strong> ${new Date(block.timestamp).toLocaleString()}</p>
-        <p><strong>Total transactions:</strong> ${txs.length}</p>
-      </div>
-      <div class="modal-body">
-        ${txs.length === 0 ? '<p>No transactions in this block.</p>' : '<ul>' + txs.map((tx, i) => {
-            const txId = (tx && tx.id) ? tx.id : (typeof tx === 'string' ? tx : JSON.stringify(tx).substring(0,40));
-            return `<li class=\"tx-item\">
-              <div class=\"tx-header\">
-                <strong class=\"tx-label\">Tx:</strong>
-                <code class=\"tx-id\">${txId}</code>
-                <button class=\"dashboard-btn secondary tx-copy-btn\" type=\"button\" data-copy-txid=\"${txId}\">COPY TXID</button>
-              </div>
-              <pre class=\"json-display\">${typeof tx === 'string' ? tx : JSON.stringify(tx, null, 2)}</pre>
-            </li>`
+      const content = `
+        <div class="modal-info">
+          <p><strong>💸 Transactions of Block #${blockIndex}</strong></p>
+          <p><strong>Hash:</strong> ${block.hash}</p>
+          <p><strong>Timestamp:</strong> ${new Date(block.timestamp).toLocaleString()}</p>
+          <p><strong>Total transactions:</strong> ${txs.length}</p>
+        </div>
+        <div class="modal-body">
+          ${txs.length === 0 ? '<p>No transactions in this block.</p>' : '<ul>' + txs.map((tx, i) => {
+            if (typeof tx === 'string') {
+              return `<li class=\"tx-item\"><pre class=\"json-display\">${tx}</pre></li>`;
+            }
+            const txId = tx.id || '';
+            const inputs = Array.isArray(tx.inputs) ? tx.inputs : [];
+            const outputs = Array.isArray(tx.outputs) ? tx.outputs : [];
+            return `<li class=\"monitor-card transaction-modal-item\">\n\
+              <ul>\n\
+                <li>\n\
+                  <strong>Transacción #${i + 1}</strong><br>\n\
+                  <strong>ID:</strong> <span class=\"tx-id\">${txId}</span><br>\n\
+                  <strong>Inputs:</strong> ${inputs.length} | <strong>Outputs:</strong> ${outputs.length}<br>\n\
+                  <strong>Cantidad:</strong> ${tx.amount !== undefined ? tx.amount : ''}<br>\n\
+                  <details><summary>Ver detalles de Inputs</summary><ul>\n\
+                    ${inputs.map(input => `<li>\n\
+                      <strong>txId:</strong> <span class=\"tx-id\">${input.txId || ''}</span><br>\n\
+                      <strong>outputIndex:</strong> ${input.outputIndex !== undefined ? input.outputIndex : ''}<br>\n\
+                      <strong>Address:</strong> <span class=\"tx-id\">${input.address || ''}</span><br>\n\
+                      <strong>Amount:</strong> ${input.amount !== undefined ? input.amount : ''}<br>\n\
+                      <strong>Signature R:</strong> <span class=\"tx-id\">${input.signatureR || ''}</span><br>\n\
+                      <strong>Signature S:</strong> <span class=\"tx-id\">${input.signatureS || ''}</span><br>\n\
+                      <strong>Signature Recovery Param:</strong> ${input.signatureRecovery !== undefined ? input.signatureRecovery : ''}\n\
+                    </li>`).join('')}\n\
+                  </ul></details>\n\
+                  <details><summary>Ver detalles de Outputs</summary><ul>\n\
+                    ${outputs.map(output => `<li>\n\
+                      <strong>Amount:</strong> ${output.amount !== undefined ? output.amount : ''}<br>\n\
+                      <strong>Address:</strong> <span class=\"tx-id\">${output.address || ''}</span>\n\
+                    </li>`).join('')}\n\
+                  </ul></details>\n\
+                </li>\n\
+              </ul>\n\
+            </li>`;
           }).join('') + '</ul>'}
-      </div>
-    `;
+        </div>
+      `;
   // Uso unificado de safeModal
     safeModal(`💸Transactions - Blocks #${blockIndex}`, content);
   } catch (err) {
