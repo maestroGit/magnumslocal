@@ -102,33 +102,47 @@ function renderPage() {
 }
 
 function renderItem(item) {
+  // Debug: mostrar el objeto item y los timestamps recibidos
+  console.log('[HIST-DEBUG] renderItem item:', item);
+  console.log('[HIST-DEBUG] item.blockTimestamp:', item.blockTimestamp, 'item.timestamp:', item.timestamp);
+  // Usar blockTimestamp si existe, si no timestamp de la transacción
+  const ts = item.blockTimestamp ? new Date(item.blockTimestamp) : (item.timestamp ? new Date(item.timestamp) : null);
   const row = document.createElement('div');
   row.className = 'history-item';
-  // status badge
+  // status badge and type chip in a flex row
+  const labels = document.createElement('div');
+  labels.className = 'history-labels';
+  labels.style.display = 'flex';
+  labels.style.flexDirection = 'row';
+  labels.style.gap = '6px';
   const status = document.createElement('span');
   status.className = 'badge ' + (item.status === 'pending' ? 'pending' : 'mined');
-  status.textContent = item.status === 'pending' ? 'Pendiente' : 'Minada';
-  row.appendChild(status);
-  // type chip
+  status.textContent = item.status === 'pending' ? 'Pendiente' : 'Mine';
   const chip = document.createElement('span');
   chip.className = 'chip';
   chip.textContent = mapType(item.type);
-  row.appendChild(chip);
+  labels.appendChild(status);
+  labels.appendChild(chip);
+  row.appendChild(labels);
   // main content
   const main = document.createElement('div');
   main.className = 'history-main';
+  main.style.display = 'flex';
+  main.style.flexDirection = 'column';
+  main.style.alignItems = 'center';
+  main.style.justifyContent = 'center';
   const top = document.createElement('div');
-  top.innerHTML = `<span class="amount">${item.amount}</span> <span class="muted">unidades</span>`;
+  top.style.textAlign = 'center';
+  top.innerHTML = `<span class="amount">${item.amount}</span> <span class="muted">🪙</span>`;
   const meta = document.createElement('div');
   meta.className = 'history-meta';
-  const ts = new Date(item.timestamp || Date.now());
+  meta.style.textAlign = 'center';
+  // (definido arriba)
   const who = formatCounterparty(item);
   meta.innerHTML = `
-    <span>${ts.toLocaleString()}</span>
-    <span class="muted">•</span>
-    <span>${who}</span>
-    <span class="muted">•</span>
-    <span class="txid">${shortId(item.txId)}</span>
+  <span>${who}</span>
+  <span class="txid">${(item.txId)}</span>
+  <span>${ts ? ts.toLocaleString() : ''}</span>
   `;
   main.appendChild(top);
   main.appendChild(meta);
@@ -138,7 +152,7 @@ function renderItem(item) {
 
 function mapType(t) {
   switch (t) {
-    case 'recibido': return 'Recibido';
+    case 'recibido': return 'Received';
     case 'transferida': return 'Enviado';
     case 'quemada': return 'Quemada';
     case 'devuelta': return 'Devuelta';
@@ -148,10 +162,10 @@ function mapType(t) {
 
 function formatCounterparty(item) {
   if (item.type === 'recibido' && item.from && item.from.length) {
-    return 'de ' + shortId(item.from[0]);
+    return '📤' + shortId(item.from[0]);
   }
   if ((item.type === 'transferida' || item.type === 'devuelta' || item.type === 'quemada') && item.destino) {
-    return 'a ' + shortId(item.destino);
+    return '🚀' + shortId(item.destino);
   }
   if (item.to && item.to.length) return 'a ' + shortId(item.to[0]);
   return '';
@@ -160,7 +174,7 @@ function formatCounterparty(item) {
 function shortId(id) {
   if (!id) return '';
   const s = String(id);
-  return s.length > 12 ? s.slice(0, 6) + '…' + s.slice(-6) : s;
+  return s.length > 12 ? s.slice(0, 33) + '…' + s.slice(-15) : s;
 }
 
 btnRefresh?.addEventListener('click', () => loadHistory());

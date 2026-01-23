@@ -1,5 +1,3 @@
-
-
 import { fetchUTXOs } from './utxo-api.js';
 import scrypt from './js/vendor/scrypt-pbkdf2-shim.mjs';
 import * as secp from './vendor/secp256k1.mjs';
@@ -47,18 +45,27 @@ function renderUTXOList() {
     const cont = document.createElement('div');
     cont.className = 'utxo-row';
     cont.style = 'margin-bottom:6px;';
+    // Si el UTXO está gastado, lo marcamos visualmente
+    if (utxo.spent) {
+      cont.classList.add('utxo-spent');
+    }
     const radio = document.createElement('input');
     radio.type = 'radio';
     radio.name = 'utxoSelect';
     radio.value = i;
     radio.id = 'utxo_' + i;
     radio.className = 'utxo-radio';
+    radio.disabled = !!utxo.spent;
     radio.addEventListener('change', () => selectUTXO(i));
     cont.appendChild(radio);
     const label = document.createElement('label');
     label.htmlFor = radio.id;
     label.style = 'margin-left:8px;color:#fff;';
     label.textContent = `UTXO #${i+1}: ${utxo.amount} unidades`;
+    if (utxo.spent) {
+      label.style.color = '#888';
+      label.textContent += ' (gastado)';
+    }
     cont.appendChild(label);
     utxoListEl.appendChild(cont);
   });
@@ -92,11 +99,47 @@ function validateForm() {
 recipientInput.addEventListener('input', validateForm);
 
 
+// Utilidad para mostrar el modal visual y obtener la passphrase
+function getPassphraseModal() {
+  return new Promise((resolve, reject) => {
+    const modal = document.getElementById('passphraseModal');
+    const input = document.getElementById('modalPassphrase');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const cancelBtn = document.getElementById('modalCancel');
+    modal.style.display = 'flex';
+    input.value = '';
+    input.focus();
+    function cleanup() {
+      modal.style.display = 'none';
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      input.removeEventListener('keydown', onKeyDown);
+    }
+    function onConfirm() {
+      cleanup();
+      resolve(input.value);
+    }
+    function onCancel() {
+      cleanup();
+      resolve(null);
+    }
+    function onKeyDown(e) {
+      if (e.key === 'Enter') {
+        onConfirm();
+      } else if (e.key === 'Escape') {
+        onCancel();
+      }
+    }
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    input.addEventListener('keydown', onKeyDown);
+  });
+}
+
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
   const recipient = recipientInput.value.trim();
   const amount = amountInput.value.trim();
-
   if (!selectedUTXO) {
     statusEl.textContent = 'Selecciona un UTXO.';
     return;
@@ -109,7 +152,6 @@ form.addEventListener('submit', async function(e) {
     statusEl.textContent = 'Cantidad inválida.';
     return;
   }
-
 
   // Recuperar keystore desde sessionStorage (guardado tras importación)
   let keystore;
@@ -124,16 +166,12 @@ form.addEventListener('submit', async function(e) {
   // Bloqueo si la address del input no coincide con la del keystore
   if (selectedUTXO.address !== keystore.publicKey) {
     statusEl.textContent = '❌ El keystore importado NO corresponde a la address del input. No se puede firmar.';
-    console.error('[BLOQUEO][transfer-keystore.js] El keystore importado NO corresponde a la address del input.');
-    console.error('[BLOQUEO][transfer-keystore.js] selectedUTXO.address:', selectedUTXO.address);
-    console.error('[BLOQUEO][transfer-keystore.js] keystore.publicKey:', keystore.publicKey);
     alert('El keystore importado NO corresponde a la address del input.\n\nselectedUTXO.address: ' + selectedUTXO.address + '\nkeystore.publicKey: ' + keystore.publicKey + '\n\nImporta el keystore correcto para poder firmar este UTXO.');
     return;
   }
 
-
-  // Pedir passphrase al usuario
-  const passphrase = prompt('Introduce la passphrase de tu keystore para firmar la transacción:');
+  // Pedir passphrase al usuario con modal visual
+  const passphrase = await getPassphraseModal();
   if (!passphrase) {
     statusEl.textContent = 'Operación cancelada por el usuario.';
     return;
@@ -291,6 +329,8 @@ console.log('¿Coinciden?:', derivedPubKey === keystore.publicKey);
       }
       const data = await res.json();
       statusEl.textContent = 'Transacción enviada correctamente. ID: ' + (data.id || '(sin id)');
+      // Marcar UTXO como gastado tras transacción exitosa
+      markUTXOAsSpent(selectedUTXO.value);
     } catch (e) {
       statusEl.textContent = 'Error al firmar o enviar: ' + (e.message || e);
     }
@@ -308,4 +348,12 @@ async function sha256Bytes(input) {
   const data = typeof input === 'string' ? enc.encode(input) : input;
   const hashBuf = await crypto.subtle.digest('SHA-256', data);
   return new Uint8Array(hashBuf);
+}
+
+// Marcar UTXO como gastado tras transacción exitosa
+function markUTXOAsSpent(idx) {
+  if (utxos[idx]) {
+    utxos[idx].spent = true;
+    renderUTXOList();
+  }
 }

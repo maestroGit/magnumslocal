@@ -1,3 +1,87 @@
+.site-header {
+  width: 100vw;
+  background: #220F17;
+  box-shadow: 0 2px 12px rgba(247,147,26,0.12);
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+.site-header .container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 10px 18px !important;
+  box-sizing: border-box !important;
+}
+.logo, h1.logo {
+  font-weight: 700 !important;
+  letter-spacing: 0.6px !important;
+  font-size: 2.2rem !important;
+  line-height: 1 !important;
+  margin-top: 8px !important;
+  margin-bottom: 0 !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  height: 48px !important;
+  padding: 10px 0 0 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.logo-icon {
+  display: inline-block !important;
+  width: 64px !important;
+  height: 64px !important;
+  margin-right: 12px !important;
+  margin-top: 0 !important;
+  vertical-align: middle !important;
+  background-color: #220F17 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  border: none !important;
+  object-fit: contain !important;
+}
+.nav {
+  display: flex !important;
+  gap: 18px !important;
+  align-items: center !important;
+}
+.nav .btn, .nav .btn .metric-value {
+  color: #fff !important;
+  background: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  transition: background 0.18s;
+}
+.nav .btn.active, .nav .btn:hover {
+  background: #f7931a !important;
+  color: #220F17 !important;
+}
+.nav .btn .metric-value {
+  font-size: 1rem !important;
+  line-height: 1 !important;
+}
+.site-header .container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 10px 18px !important;
+  box-sizing: border-box !important;
+}
 .nav .btn,
 .nav .btn .metric-value {
   color: #fff !important;

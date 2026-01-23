@@ -68,8 +68,8 @@ export function showConfirmModal(message, onConfirm, onCancel = null, title = 'C
   const confirmContent = `
     <div class="modal-info"><p>${message}</p></div>
     <div class="modal-actions">
-      <button id="confirmBtn">Confirmar</button>
-      <button id="cancelBtn" class="cancel-btn">Cancelar</button>
+      <button id="confirmBtn">Confirm</button>
+      <button id="cancelBtn" class="cancel-btn">Cancel</button>
     </div>`;
   showModalForm(title, confirmContent);
   const confirmBtn = document.getElementById('confirmBtn');

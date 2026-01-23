@@ -987,7 +987,7 @@ app.get("/address-history/:address", (req, res) => {
     globalWallet && globalWallet.publicKey ? globalWallet.publicKey : null;
 
   // Recorrer todos los bloques y transacciones minadas
-  for (const block of bc.chain) {
+  for (const [blockIndex, block] of bc.chain.entries()) {
     for (const tx of block.data) {
       // Recibidos: outputs a la dirección
       tx.outputs.forEach((output, idx) => {
@@ -997,7 +997,9 @@ app.get("/address-history/:address", (req, res) => {
             type: "recibido",
             amount: output.amount,
             blockHash: block.hash,
-            timestamp: tx.timestamp,
+            blockTimestamp: block.timestamp,
+            blockIndex,
+            timestamp: tx.timestamp, // se mantiene para compatibilidad, pero frontend debe usar blockTimestamp
             outputIndex: idx,
             status: "mined",
             destino: address,
@@ -1030,7 +1032,9 @@ app.get("/address-history/:address", (req, res) => {
             type: tipoOperacion,
             amount: input.amount,
             blockHash: block.hash,
-            timestamp: tx.timestamp,
+            blockTimestamp: block.timestamp,
+            blockIndex,
+            timestamp: tx.timestamp, // se mantiene para compatibilidad
             inputIndex: idx,
             destino,
             to: tx.outputs.map((out) => out.address),
