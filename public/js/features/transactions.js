@@ -76,9 +76,9 @@ export const openTransactionModal = async () => {
   let utxoData;
   try {
     // Siempre obtener la clave pública activa del backend
-      const { getCurrentPublicKey } = await import('../core/walletUtils.js');
-      let address = await getCurrentPublicKey();
-      console.log('[COIN CONTROL] Clave pública activa obtenida de getCurrentPublicKey:', address);
+    const { getCurrentPublicKey } = await import('../core/walletUtils.js');
+    let address = await getCurrentPublicKey();
+    console.log('[COIN CONTROL] Clave pública activa obtenida de getCurrentPublicKey:', address);
     if (!address) {
       closeCurrentModal();
       showModal('No active wallet address. Please load a wallet first.', 'Coin Control');
@@ -90,7 +90,7 @@ export const openTransactionModal = async () => {
     const res = await fetch(`${base}/utxo-balance/${address}`);
     utxoData = await res.json();
     console.log('[COIN CONTROL] UTXO response:', utxoData);
-    window._debugUtxos = utxoData.utxos;
+    window._debugUtxos = utxoData.utxosDisponibles;
   } catch (err) {
     closeCurrentModal();
     console.error('[COIN CONTROL] Error fetching UTXOs:', err);
@@ -98,13 +98,13 @@ export const openTransactionModal = async () => {
     return;
   }
   closeCurrentModal();
-  if (!utxoData || !Array.isArray(utxoData.utxos) || utxoData.utxos.length === 0) {
+  if (!utxoData || !Array.isArray(utxoData.utxosDisponibles) || utxoData.utxosDisponibles.length === 0) {
     showModal('No UTXOs available for selection.', 'Coin Control');
     return;
   }
   // Filtrar UTXOs pendientes/gastados antes de renderizar
-  const utxosDisponibles = Array.isArray(utxoData.utxos)
-    ? utxoData.utxos.filter(u => !window.pendingSpent || !window.pendingSpent.has(`${u.txId}:${u.outputIndex}`))
+  const utxosDisponibles = Array.isArray(utxoData.utxosDisponibles)
+    ? utxoData.utxosDisponibles.filter(u => !window.pendingSpent || !window.pendingSpent.has(`${u.txId}:${u.outputIndex}`))
     : [];
 
   const transactionFormContent = `
@@ -128,6 +128,30 @@ export const openTransactionModal = async () => {
               </div>
             `;
           }).join('')}
+      </div>
+      <hr>
+      <div id="utxoPendientesList" class="utxo-pendientes-list">
+        <h4>Pending UTXOs</h4>
+          ${Array.isArray(utxoData.utxosPendientes) && utxoData.utxosPendientes.length > 0
+            ? utxoData.utxosPendientes.map((u, i) => {
+                let statusIcon = '⏳';
+                let statusText = 'Pending';
+                if (u.status === 'pending-spend') {
+                  statusIcon = '🔒';
+                  statusText = 'Pending Spend';
+                } else if (u.status === 'pending-mempool') {
+                  statusIcon = '🕒';
+                  statusText = 'Pending Mempool';
+                }
+                return `
+                  <div class="coincontrol-utxo-row pending-utxo">
+                    <span class="utxo-amount">${u.amount}</span>
+                    <span class="utxo-meta">(${u.txId.slice(0,12)}... #${u.outputIndex})</span>
+                    <span class="utxo-status">${statusIcon} ${statusText}</span>
+                  </div>
+                `;
+              }).join('')
+            : '<em>No pending UTXOs.</em>'}
       </div>
       <button type="submit">Transaction</button>
     </form>`;
