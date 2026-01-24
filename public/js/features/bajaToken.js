@@ -9,11 +9,11 @@ export function openBajaTransactionModal() {
     const walletAddress = await getCurrentPublicKey();
     const bajaFormContent = `
       <form id="bajaTransactionForm">
-        <h3>- 🚚 Complete the form to receive your wine</h3>
+        <h3>🚚 Complete & receive your Magnum</h3>
         <label for="transactionIdBaja">Transaction ID:</label>
         <input type="text" id="transactionIdBaja" name="transactionIdBaja" placeholder="Enter the transaction ID" required>
         <label for="propietarioBaja">Owner (read-only):</label>
-        <input type="text" id="propietarioBaja" name="propietarioBaja" value="${walletAddress}" readonly required style="background:#eee;">
+        <input type="text" id="propietarioBaja" name="propietarioBaja" value="${walletAddress}" readonly required style="background:#220F17;color:#fff;">
         <label for="motivoBaja">Reason:</label>
         <select id="motivoBaja" name="motivoBaja" required>
           <option value="burn">Retirar (burn)</option>
