@@ -972,21 +972,26 @@ app.get("/utxo-balance/:address", (req, res) => {
   const { address } = req.params;
   console.log("Consulta UTXO para:", address);
   let utxos = utxoManager.getUTXOs(address);
-  // Asegurar que cada UTXO tenga la propiedad address
   utxos = utxos.map(utxo => ({ ...utxo, address }));
 
-  // Inputs de la mempool
+  // Inputs y outputs de la mempool
   const mempoolInputs = tp.transactions.flatMap(tx => tx.inputs || []);
+  const mempoolOutputs = tp.transactions.flatMap(tx =>
+    (tx.outputs || []).map((output, idx) => ({ ...output, txId: tx.id, outputIndex: idx, status: 'pending-mempool' }))
+  );
 
-  // UTXOs pendientes (referenciados en la mempool)
-  const utxosPendientes = utxos.filter(utxo =>
+  // UTXOs pendientes por estar referenciados como input en la mempool
+  const utxosPendientesSpend = utxos.filter(utxo =>
     mempoolInputs.some(input =>
       input.txId === utxo.txId &&
       input.outputIndex === utxo.outputIndex &&
       input.address === utxo.address &&
       input.amount === utxo.amount
     )
-  );
+  ).map(utxo => ({ ...utxo, status: 'pending-spend' }));
+
+  // Outputs de la mempool a favor de la dirección
+  const utxosPendientesMempool = mempoolOutputs.filter(output => output.address === address);
 
   // UTXOs realmente disponibles
   const utxosDisponibles = utxos.filter(utxo =>
@@ -997,6 +1002,9 @@ app.get("/utxo-balance/:address", (req, res) => {
       input.amount === utxo.amount
     )
   );
+
+  // Unificar ambos tipos de pendientes
+  const utxosPendientes = [...utxosPendientesSpend, ...utxosPendientesMempool];
 
   const balance = utxosDisponibles.reduce((sum, utxo) => sum + utxo.amount, 0);
   res.json({ address, balance, utxosDisponibles, utxosPendientes });
