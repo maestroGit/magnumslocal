@@ -24,14 +24,14 @@ export async function handleUTXOCheckClick() {
                   <div class='utxo-card-meta'>txId: ${u.txId} • outputIndex: ${u.outputIndex}</div>
                 </div>
                 <div class='utxo-card-actions'>
-                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}'>Copy</button>
+                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}' style="width:38px;height:90px;display:flex;align-items:center;justify-content:center;padding:0;"><img src="images/Icono-Magnum.png" alt="Copy" style="height:76px;width:auto;display:block;"></button>
                 </div>
               </div>`).join('')}
           </div>
         </div>
         <p><strong>Consulta:</strong> ${new Date().toLocaleString()}</p>
       </div>`;
-    showModal(utxoHtml, 'UTXO Set');
+    showModal(utxoHtml, 'UNOPENED Set');
     setTimeout(() => {
       const container = document.getElementById('utxoListContainer');
       if (container && !container.dataset.bound) {

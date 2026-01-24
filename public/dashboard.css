@@ -1,3 +1,31 @@
+/* Cuatro botones: dos filas de dos en desktop, columna en mobile */
+.card-actions.four-btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    justify-items: stretch;
+    align-items: stretch;
+}
+.card-actions.four-btn-grid .dashboard-btn {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+}
+@media (max-width: 600px) {
+    .card-actions.four-btn-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .card-actions.four-btn-grid .dashboard-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+}
 .card-actions:has(.dashboard-btn):not(:has(.dashboard-btn ~ .dashboard-btn)) {
     justify-content: center !important;
 }
