@@ -15,15 +15,15 @@ const pubKey = sessionStorage.getItem('importedPubKey');
 let keystore = null;
 try {
   keystore = JSON.parse(sessionStorage.getItem('importedKeystore'));
-} catch (e) {}
+} catch (e) {console.error(e)}
 
 if (!pubKey || !keystore) {
   if (form) form.style.display = 'none';
   if (statusEl) {
     statusEl.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span>No hay wallet importada. Vuelve a importar tu keystore.</span>
-      <a class="keystore-btn primary" href="import-keystore.html">Importar</a>
+      <span>No wallet detected. Import your keystore to continue.</span>
+      <a class="keystore-btn primary" href="import-keystore.html">Import</a>
     </div>`;
   }
 } else {

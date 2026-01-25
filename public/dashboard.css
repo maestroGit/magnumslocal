@@ -310,7 +310,7 @@ button:hover {
 .card-actions:has(.dashboard-btn):not(:has(.dashboard-btn ~ .dashboard-btn)) .dashboard-btn {
     margin: 0 auto;
 }
-}
+
 .two-row-actions .dashboard-btn {
     flex: 1 1 140px;
     min-width: 140px;

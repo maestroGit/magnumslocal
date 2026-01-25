@@ -11,13 +11,23 @@ let utxos = [];
 let selectedUTXO = null;
 let selectedUTXOIndex = null;
 
-// Recuperar publicKey de sessionStorage (guardada tras importación)
+// Recuperar publicKey/keystore (guardados tras importación)
 const pubKey = sessionStorage.getItem('importedPubKey');
-if (!pubKey) {
-  statusEl.textContent = 'No hay wallet importada. Vuelve a importar tu keystore.';
-  form.style.display = 'none';
+let keystore = null;
+try {
+  keystore = JSON.parse(sessionStorage.getItem('importedKeystore'));
+} catch (e) {console.error(e)}
+
+if (!pubKey || !keystore) {
+  if (form) form.style.display = 'none';
+  if (statusEl) {
+    statusEl.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span>No wallet detected. Import your keystore to continue</span>
+      <a class="keystore-btn primary" href="import-keystore.html">Import</a>
+    </div>`;
+  }
 } else {
-  // Mostrar UTXOs al cargar
   loadUTXOs(pubKey);
 }
 
