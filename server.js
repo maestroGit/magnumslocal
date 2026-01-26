@@ -714,19 +714,51 @@ app.use(express.json()); // Middleware moderno para parsear JSON
 // Nueva ruta GET para obtener los datos de una transacción por su ID
 // Nueva ruta POST para baja de token (transferencia a burn o bodega)
 app.post("/baja-token", async (req, res) => {
-  const {
-    transactionId,
-    ownerPublicKey,
-    motivo,
-    utxoTxId,
-    utxoOutputIndex,
-    keystore,
-    passphrase,
-  } = req.body;
+  // Estructura esperada: { signedTransaction, origin, type }
+  let transactionId, ownerPublicKey, origin, type, utxoTxId, utxoOutputIndex, keystore, passphrase;
+  // Si viene signedTransaction, extraer datos de ahí
+  if (req.body.signedTransaction) {
+    const tx = req.body.signedTransaction;
+    transactionId = tx.id;
+    // Tomar el primer input como referencia de propietario y UTXO
+    if (tx.inputs && tx.inputs.length > 0) {
+      ownerPublicKey = tx.inputs[0].address;
+      utxoTxId = tx.inputs[0].txId;
+      utxoOutputIndex = tx.inputs[0].outputIndex;
+    }
+    origin = req.body.origin || "burn";
+    type = req.body.type || "quemada";
+    // No se requiere keystore/passphrase porque la tx ya viene firmada
+    keystore = undefined;
+    passphrase = undefined;
+  } else {
+    // Payload legacy: extraer como antes
+    ({
+      transactionId,
+      ownerPublicKey,
+      origin,
+      type,
+      utxoTxId,
+      utxoOutputIndex,
+      keystore,
+      passphrase,
+    } = req.body);
+    if (!origin) origin = "burn";
+    if (!type) type = "quemada";
+  }
+  // Validar que type sea "quemada" para quemadas
+  if (type !== "quemada") {
+    return res.status(400).json({
+      success: false,
+      error: "El campo 'type' debe ser 'quemada' para bajas de tipo burn.",
+      type
+    });
+  }
   console.log("[BURN] /baja-token llamada con:", {
     transactionId,
     ownerPublicKey,
-    motivo,
+    origin,
+    type,
     utxoTxId,
     utxoOutputIndex,
   });
@@ -783,15 +815,15 @@ app.post("/baja-token", async (req, res) => {
 
   // Determinar dirección destino (burn o bodega)
   let destino = null;
-  if (motivo === "burn" || motivo === "baja-definitiva") {
+  if (origin === "burn" || origin === "baja-definitiva") {
     destino = "0x0000000000000000000000000000000000000000"; // Dirección burn estándar
-  } else if (motivo === "bodega" || motivo === "baja-temporal") {
+  } else if (origin === "bodega" || origin === "baja-temporal") {
     destino = process.env.BODEGA_ADDRESS || "BODEGA_DEFAULT_ADDRESS";
   } else {
     return res.status(400).json({
       success: false,
-      error: "Motivo de baja no válido",
-      motivo,
+      error: "Origin de baja no válido",
+      origin,
     });
   }
 
@@ -915,7 +947,8 @@ app.post("/baja-token", async (req, res) => {
       message: "Transacción de baja creada y difundida exitosamente",
       transactionId: bajaTransaction.id,
       timestamp: bajaTransaction.timestamp,
-      motivo,
+      origin,
+      type,
       destino,
       owner: ownerPublicKey,
       amount: Array.isArray(utxoToBurn)
@@ -1047,9 +1080,9 @@ app.get("/address-history/:address", (req, res) => {
           let destino = null;
           tx.outputs.forEach((output, oidx) => {
             if (
-              output.address === "0x0000000000000000000000000000000000000000"
+              output.address && output.address.startsWith("0x0000000000000000000000000000000000000000")
             ) {
-              tipoOperacion = "quemada";
+              tipoOperacion = "opened";
               destino = output.address;
             } else if (WALLET_GLOBAL && output.address === WALLET_GLOBAL) {
               tipoOperacion = "devuelta";
@@ -1098,8 +1131,8 @@ app.get("/address-history/:address", (req, res) => {
         let tipoOperacion = "transferida";
         let destino = null;
         tx.outputs.forEach((output, oidx) => {
-          if (output.address === "0x0000000000000000000000000000000000000000") {
-            tipoOperacion = "quemada";
+          if (output.address && output.address.startsWith("0x0000000000000000000000000000000000000000")) {
+            tipoOperacion = "opened";
             destino = output.address;
           } else if (output.address === WALLET_GLOBAL) {
             tipoOperacion = "devuelta";

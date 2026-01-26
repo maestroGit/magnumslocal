@@ -2,10 +2,30 @@ import { fetchUTXOs } from './utxo-api.js';
 import scrypt from './js/vendor/scrypt-pbkdf2-shim.mjs';
 import * as secp from './vendor/secp256k1.mjs';
 
+
+// Motivos y sufijos centralizados
+const BURN_MOTIVES = {
+  burn: { label: 'Burn (Genérico)', suffix: 'BURN' },
+  pierola: { label: 'Fernández de Piérola', suffix: 'PIEROLA' },
+  traslascuestas: { label: 'Traslascuestas', suffix: 'TRASLASCUESTAS' },
+  chateaubordeaux: { label: 'Château Bordeaux', suffix: 'CHATEAUBORDEAUX' },
+};
+
 const statusEl = document.getElementById('burnStatus');
 const form = document.getElementById('burnForm');
 const passInput = document.getElementById('burnPassphrase');
 const reasonSelect = document.getElementById('burnReason');
+
+// Poblar el select de motivos de forma robusta
+if (reasonSelect) {
+  reasonSelect.innerHTML = '';
+  Object.entries(BURN_MOTIVES).forEach(([value, { label }]) => {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label;
+    reasonSelect.appendChild(opt);
+  });
+}
 
 let utxos = [];
 let selectedUTXO = null;
@@ -194,8 +214,9 @@ form.addEventListener('submit', async function (e) {
         address: selectedUTXO.address,
         amount: Number(selectedUTXO.amount)
       }];
-      //const burnAddress = '0x0000000000000000000000000000000000000000';
-      const burnAddress = '0x0000000000000000000000000000000000000000' + motivo.toUpperCase();
+      // Usar sufijo robusto desde BURN_MOTIVES
+      const motiveObj = BURN_MOTIVES[motivo] || { suffix: motivo.toUpperCase() };
+      const burnAddress = '0x0000000000000000000000000000000000000000' + motiveObj.suffix;
       const outputs = [{ amount: Number(selectedUTXO.amount), address: burnAddress }];
 
       const outputsCanonical = JSON.stringify(outputs);
@@ -222,7 +243,7 @@ form.addEventListener('submit', async function (e) {
       const res = await fetch(base + '/transaction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signedTransaction: txObj, motivo }) // el valor del motivo de baja (motivo: "burn" o "bodega") se envía al backend junto con la transacción en la petición.
+        body: JSON.stringify({ signedTransaction: txObj, origin: motivo, type: 'quemada' }) // Se envía type: 'quemada' y origin (nombre bodega) para categorizar en backend.
       });
       if (!res.ok) {
         statusEl.textContent = 'Error al enviar la transacción: ' + res.status;

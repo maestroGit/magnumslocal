@@ -60,6 +60,7 @@ function getFilters() {
       recibido: !!fTypeRecibido?.checked,
       transferida: !!fTypeEnviado?.checked,
       quemada: !!fTypeQuemada?.checked,
+      opened: !!fTypeQuemada?.checked, // 'opened' es sinónimo de 'quemada' para el filtro
       devuelta: !!fTypeDevuelta?.checked,
     },
     query: (fSearch?.value || '').trim().toLowerCase(),
@@ -74,7 +75,18 @@ function applyFiltersAndRender() {
     if (!(st === 'pending' ? f.status.pending : f.status.mined)) return false;
     // type mapping: show 'Enviado' UI for 'transferida'
     const tt = (it.type || '').toLowerCase();
-    if (!f.type[tt]) return false;
+    // Filtro dinámico para quemadas: si el filtro 'Opened' está activo, incluir cualquier transacción con output a dirección que empiece por '0x000'
+    if (f.type.quemada) {
+      // Si la transacción tiene outputs y alguno es burn
+      if (Array.isArray(it.outputs) && it.outputs.some(o => typeof o.address === 'string' && o.address.startsWith('0x000'))) {
+        // Se considera quemada, no filtrar por type
+      } else if (!f.type[tt]) {
+        return false;
+      }
+    } else {
+      // Si el filtro de quemada está desactivado, filtrar por type normal
+      if (!f.type[tt]) return false;
+    }
     // search by txId substring
     if (f.query) {
       const tx = String(it.txId || '').toLowerCase();
@@ -154,7 +166,9 @@ function mapType(t) {
   switch (t) {
     case 'recibido': return 'Received';
     case 'transferida': return 'Enviado';
-    case 'quemada': return 'Quemada';
+    case 'quemada':
+    case 'opened':
+      return 'Opened';
     case 'devuelta': return 'Devuelta';
     default: return t || 'Desconocido';
   }
@@ -163,6 +177,13 @@ function mapType(t) {
 function formatCounterparty(item) {
   if (item.type === 'recibido' && item.from && item.from.length) {
     return '📤' + shortId(item.from[0]);
+  }
+  // Mostrar destino burn aunque el type no sea 'quemada' si hay output a 0x000
+  if (Array.isArray(item.outputs)) {
+    const burnOutput = item.outputs.find(o => typeof o.address === 'string' && o.address.startsWith('0x000'));
+    if (burnOutput) {
+      return '🚀' + shortId(burnOutput.address);
+    }
   }
   if ((item.type === 'transferida' || item.type === 'devuelta' || item.type === 'quemada') && item.destino) {
     return '🚀' + shortId(item.destino);
