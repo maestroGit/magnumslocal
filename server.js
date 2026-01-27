@@ -2058,9 +2058,36 @@ const getLocalExternalIP = () => {
 const localIP = getLocalExternalIP();
 
 // Ruta para obtener información del sistema ampliada
+// ...existing code...
 app.get("/system-info", async (req, res) => {
   try {
-    const systemInfo = (await SystemMonitor.getSystemInfo?.()) || {}; // soporte async y fallback
+    const SystemMonitor = (await import("./src/monitor/fileSystemMonitor.js")).default;
+    const hostname = os.hostname();
+    const platform = os.platform();
+    const arch = os.arch();
+    const nodeVersion = process.version;
+    const cpus = os.cpus();
+    const cpuCount = cpus.length;
+    const freeMem = os.freemem();
+    const totalMem = os.totalmem();
+    const interfaces = os.networkInterfaces();
+    // Flatten IPs from interfaces
+    const ips = Object.values(interfaces)
+      .flat()
+      .filter(net => net && net.family === "IPv4" && !net.internal)
+      .map(net => net.address);
+
+    // LOGS DETALLADOS DE VALORES DEL SISTEMA
+    console.log("[SYSTEM-INFO] hostname:", hostname);
+    console.log("[SYSTEM-INFO] platform:", platform);
+    console.log("[SYSTEM-INFO] arch:", arch);
+    console.log("[SYSTEM-INFO] nodeVersion:", nodeVersion);
+    console.log("[SYSTEM-INFO] cpus:", cpus);
+    console.log("[SYSTEM-INFO] cpuCount:", cpuCount);
+    console.log("[SYSTEM-INFO] freeMem:", freeMem);
+    console.log("[SYSTEM-INFO] totalMem:", totalMem);
+    console.log("[SYSTEM-INFO] interfaces:", interfaces);
+    console.log("[SYSTEM-INFO] ips:", ips);
 
     // Extraemos peers con info httpUrl desde el servidor P2P
     const peersHttp = (p2pServer.peers || []).map((peer) => ({
@@ -2068,6 +2095,11 @@ app.get("/system-info", async (req, res) => {
       httpUrl: peer.httpUrl,
       lastSeen: peer.lastSeen,
     }));
+
+    // Obtener uso de espacio en storage/data/
+    const storageDir = path.join(__dirname, "storage", "data");
+    const blockchainStorageBytes = await SystemMonitor.getDirectorySize(storageDir);
+    console.log("[SYSTEM-INFO] blockchainStorageBytes:", blockchainStorageBytes);
 
     const blockchainInfo = {
       server: {
@@ -2077,6 +2109,8 @@ app.get("/system-info", async (req, res) => {
         status: "running",
         uptime: process.uptime(),
         startTime: new Date(Date.now() - process.uptime() * 1000).toISOString(),
+        blockchainStorageBytes,
+        blockchainStorageMB: (blockchainStorageBytes / (1024 * 1024)).toFixed(2),
       },
       network: {
         p2pConnections: p2pServer.sockets.length,
@@ -2085,20 +2119,33 @@ app.get("/system-info", async (req, res) => {
           readyState: socket.readyState,
           url: socket.url || "N/A",
         })),
-        peersHttp, // <-- ¡Aquí el listado de peers con httpUrl!
+        peersHttp,
         networkStatus:
           p2pServer.sockets.length > 0 ? "connected" : "standalone",
-        pendingTransactions: tp.transactions.length, // Valor real de transacciones pendientes
+        pendingTransactions: tp.transactions.length,
       },
     };
 
+    const systemInfo = {
+      host: hostname,
+      ips,
+      interfaces,
+      platform,
+      architecture: arch,
+      nodeVersion,
+      freeMemory: freeMem,
+      totalMemory: totalMem,
+      cpuCores: cpuCount,
+    };
+
     const completeInfo = {
-      ...systemInfo,
+      system: systemInfo,
       blockchain: blockchainInfo,
       timestamp: new Date().toISOString(),
       version: "1.0.0",
     };
 
+    console.log("[SYSTEM-INFO] completeInfo:", completeInfo);
     res.json(completeInfo);
   } catch (error) {
     console.error("Error fetching system information:", error);

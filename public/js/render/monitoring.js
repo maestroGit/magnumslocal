@@ -36,6 +36,7 @@ export async function renderMonitoring() {
               <li><strong>URL:</strong> <a href="${systemInfo.blockchain?.server?.httpUrl || '#'}" target="_blank" class="monitor-link">${systemInfo.blockchain?.server?.httpUrl || 'N/A'}</a></li>
               <li><strong>Uptime:</strong> ${formatUptime(systemInfo.blockchain?.server?.uptime || 0)}</li>
               <li><strong>Started:</strong> ${formatDate(systemInfo.blockchain?.server?.startTime)}</li>
+                <li><strong>Blockchain Storage:</strong> ${systemInfo.blockchain?.server?.blockchainStorageBytes || 'N/A'} bytes (${systemInfo.blockchain?.server?.blockchainStorageMB || 'N/A'} MB)</li>
             </ul>
           </div>
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
@@ -49,15 +50,38 @@ export async function renderMonitoring() {
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
             <h3 class="monitor-title">🖥️ System</h3>
             <ul class="monitor-list">
-              <li><strong>Host:</strong> ${systemInfo.hostName || 'N/A'}</li>
-              <li><strong>IPs:</strong> ${(systemInfo.network?.ips?.length ? systemInfo.network.ips.map(i => `${i.interface}: ${i.address}`).join(' | ') : 'N/A')}</li>
+              <li><strong>Host:</strong> ${systemInfo.system?.host || 'N/A'}</li>
+              <li><strong>IPs:</strong> ${(systemInfo.system?.ips?.length ? systemInfo.system.ips.join(', ') : 'N/A')}</li>
               <li><strong>Interfaces:</strong></li>
-              <li class="monitor-sublist">${(systemInfo.network?.interfaces ? '<ul class="monitor-subitems">' + systemInfo.network.interfaces.map(it => `<li><strong>${it.interface}</strong> ${it.family} ${it.address} ${it.internal ? '(internal)' : ''}</li>`).join('') + '</ul>' : 'N/A')}</li>
-              <li><strong>Platform:</strong> ${systemInfo.platform || 'N/A'}</li>
-              <li><strong>Architecture:</strong> ${systemInfo.arch || 'N/A'}</li>
-              <li><strong>Node.js:</strong> ${systemInfo.nodeVersion || 'N/A'}</li>
-              <li><strong>Free Memory:</strong> ${systemInfo.freeMemory ? Math.round(systemInfo.freeMemory/1024/1024) + ' MB' : 'N/A'}</li>
-              <li><strong>CPU cores:</strong> ${systemInfo.cpus || 'N/A'}</li>
+              <li class="monitor-sublist">${
+                systemInfo.system?.interfaces
+                  ? Object.entries(systemInfo.system.interfaces)
+                      .map(([iface, addrs]) => `
+                        <details style="margin-bottom:4px">
+                          <summary><strong>${iface}</strong></summary>
+                          <ul style="margin-left:12px">
+                            ${addrs.map(addr => `
+                              <li>
+                                <strong>Address:</strong> ${addr.address}<br>
+                                <strong>Family:</strong> ${addr.family}<br>
+                                <strong>MAC:</strong> ${addr.mac}<br>
+                                <strong>Internal:</strong> ${addr.internal ? 'Yes' : 'No'}<br>
+                                <strong>Netmask:</strong> ${addr.netmask}<br>
+                                <strong>CIDR:</strong> ${addr.cidr}<br>
+                                ${addr.scopeid !== undefined ? `<strong>ScopeId:</strong> ${addr.scopeid}<br>` : ''}
+                              </li>
+                            `).join('')}
+                          </ul>
+                        </details>
+                      `).join('')
+                  : 'N/A'
+              }</li>
+              <li><strong>Platform:</strong> ${systemInfo.system?.platform || 'N/A'}</li>
+              <li><strong>Architecture:</strong> ${systemInfo.system?.architecture || 'N/A'}</li>
+              <li><strong>Node.js:</strong> ${systemInfo.system?.nodeVersion || 'N/A'}</li>
+              <li><strong>Free Memory:</strong> ${typeof systemInfo.system?.freeMemory === 'number' ? (systemInfo.system.freeMemory / (1024*1024)).toFixed(2) + ' MB' : 'N/A'}</li>
+              <li><strong>Total Memory:</strong> ${typeof systemInfo.system?.totalMemory === 'number' ? (systemInfo.system.totalMemory / (1024*1024)).toFixed(2) + ' MB' : 'N/A'}</li>
+              <li><strong>CPU cores:</strong> ${systemInfo.system?.cpuCores || 'N/A'}</li>
               <li><strong>Version:</strong> ${systemInfo.version || '1.0.0'}</li>
             </ul>
           </div>

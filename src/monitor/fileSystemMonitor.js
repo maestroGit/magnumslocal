@@ -4,6 +4,28 @@ import fs from 'fs';
 import path from 'path';
 
 class FileSystemMonitor {
+  /**
+   * Calcula el tamaño total (en bytes) de todos los archivos en un directorio.
+   * @param {string} directoryPath
+   * @returns {Promise<number>} tamaño total en bytes
+   */
+  static async getDirectorySize(directoryPath) {
+    try {
+      const files = await fs.promises.readdir(directoryPath);
+      let totalSize = 0;
+      for (const file of files) {
+        const filePath = path.join(directoryPath, file);
+        const stat = await fs.promises.stat(filePath);
+        if (stat.isFile()) {
+          totalSize += stat.size;
+        }
+      }
+      return totalSize;
+    } catch (err) {
+      console.error(`Error calculating directory size for ${directoryPath}:`, err);
+      return 0;
+    }
+  }
   static async listFilesInDirectory(directoryPath) {
     try {
       // Verificar si se tiene acceso al directorio
