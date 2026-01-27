@@ -250,9 +250,35 @@ global.utxoManager = utxoManager;
 const bc = new Blockchain();
 bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
 // Sincronizar el UTXOManager con la cadena al arrancar
-if (bc && bc.chain) {
-  bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
+// Refuerza la sincronización del UTXOManager con la blockchain al arrancar
+
+function syncUTXOManagerWithBlockchain() {
+  console.log('[SYNC][DEBUG] syncUTXOManagerWithBlockchain llamada');
+  if (bc && bc.chain) {
+    utxoManager.utxoSet = {};
+    console.log('[SYNC][DEBUG] utxoManager.utxoSet limpiado. Keys:', Object.keys(utxoManager.utxoSet).length);
+    console.log(`[SYNC][REF] bc.chain tiene ${bc.chain.length} bloques`);
+    if (bc.chain.length === 0) {
+      console.warn('[SYNC][REF] bc.chain está vacío.');
+    } else {
+      bc.chain.forEach((block, idx) => {
+        console.log(`[SYNC][REF] Bloque #${idx}:`, JSON.stringify(block, null, 2));
+        console.log(`[SYNC][CALL] Llamando updateWithBlock para bloque #${idx} (hash: ${block.hash || 'sin hash'}) con ${(block.data && block.data.length) || 0} transacciones.`);
+        utxoManager.updateWithBlock(block);
+        // Contar total de UTXOs después de cada bloque
+        const totalUtxos = Object.values(utxoManager.utxoSet).reduce((acc, arr) => acc + arr.length, 0);
+        console.log(`[SYNC][RETURN] updateWithBlock finalizado para bloque #${idx}. Total UTXOs ahora:`, totalUtxos);
+      });
+    }
+    // Mostrar todos los UTXOs después de sincronizar
+    const allUtxos = Object.entries(utxoManager.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
+    console.log('[SYNC][DEBUG] utxoManager.utxoSet después de sincronizar:', JSON.stringify(allUtxos, null, 2));
+    console.log('[SYNC] UTXOManager sincronizado con la blockchain. Total UTXOs:', allUtxos.length);
+  } else {
+    console.error('[SYNC][ERROR] bc o bc.chain no definidos en syncUTXOManagerWithBlockchain');
+  }
 }
+syncUTXOManagerWithBlockchain();
 
 // Función para descifrar la clave privada desde el keystore
 
@@ -611,6 +637,8 @@ if (fs.existsSync(walletPath)) {
         miner = new Miner(bc, tp, global.wallet, p2pServer);
         console.log("[INIT] Miner actualizado con wallet global descifrada");
       }
+      // Refuerza la sincronización del UTXOManager tras cargar la wallet global
+      syncUTXOManagerWithBlockchain();
     } catch (e) {
       console.error("[INIT] Error cargando wallet global al arrancar:", e);
     }
@@ -628,6 +656,8 @@ if (fs.existsSync(walletPath)) {
         miner = new Miner(bc, tp, global.wallet, p2pServer);
         console.log("[INIT] Miner actualizado con wallet global descifrada");
       }
+      // Refuerza la sincronización del UTXOManager tras crear la wallet global
+      syncUTXOManagerWithBlockchain();
     } catch (e) {
       console.error("[INIT] Error generando wallet global por defecto:", e);
     }
@@ -1003,8 +1033,41 @@ app.get("/utxo-balance/global", (req, res) => {
 // ✅ Primero define las rutas dinámicas
 app.get("/utxo-balance/:address", (req, res) => {
   const { address } = req.params;
-  console.log("Consulta UTXO para:", address);
+  console.log("[UTXO-BALANCE][:address] Consulta UTXO para:", address);
   let utxos = utxoManager.getUTXOs(address);
+  console.log("[UTXO-BALANCE][:address] utxoManager.getUTXOs:", JSON.stringify(utxos, null, 2));
+  // Comparar con el set de UTXOs directo de la blockchain
+  const utxosFromChain = bc.utxoSet.filter(utxo => utxo.address === address);
+  console.log("[UTXO-BALANCE][:address] bc.utxoSet.filter:", JSON.stringify(utxosFromChain, null, 2));
+  // Mostrar diferencias si existen
+  const utxoManagerSet = new Set(utxos.map(u => `${u.txId}:${u.outputIndex}:${u.amount}`));
+  const chainSet = new Set(utxosFromChain.map(u => `${u.txId}:${u.outputIndex}:${u.amount}`));
+  const onlyInManager = [...utxoManagerSet].filter(x => !chainSet.has(x));
+  const onlyInChain = [...chainSet].filter(x => !utxoManagerSet.has(x));
+  if (onlyInManager.length > 0) {
+    console.warn("[UTXO-BALANCE][:address] UTXOs solo en utxoManager:", onlyInManager);
+  }
+  if (onlyInChain.length > 0) {
+    console.warn("[UTXO-BALANCE][:address] UTXOs solo en bc.utxoSet:", onlyInChain);
+  }
+  // LOGS DETALLADOS DE DEPURACIÓN DE SINCRONIZACIÓN
+  if (utxos.length === 0 && utxosFromChain.length > 0) {
+    console.error("[SYNC-ERROR] utxoManager.getUTXOs está vacío pero bc.utxoSet sí tiene UTXOs para esta address.");
+    console.error("[SYNC-ERROR] utxoManager.getUTXOs:", JSON.stringify(utxos, null, 2));
+    console.error("[SYNC-ERROR] bc.utxoSet:", JSON.stringify(utxosFromChain, null, 2));
+    console.error("[SYNC-ERROR] ¿syncUTXOManagerWithBlockchain() se está llamando correctamente?");
+    // Mostrar el utxoSet global completo
+    const allUtxos = Object.entries(utxoManager.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
+    console.error("[SYNC-ERROR] utxoManager.utxoSet global:", JSON.stringify(allUtxos, null, 2));
+  }
+  if (utxos.length > 0 && utxosFromChain.length === 0) {
+    console.error("[SYNC-ERROR] utxoManager.getUTXOs tiene UTXOs pero bc.utxoSet está vacío para esta address.");
+    console.error("[SYNC-ERROR] utxoManager.getUTXOs:", JSON.stringify(utxos, null, 2));
+    console.error("[SYNC-ERROR] bc.utxoSet:", JSON.stringify(utxosFromChain, null, 2));
+    const allUtxos = Object.entries(utxoManager.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
+    console.error("[SYNC-ERROR] utxoManager.utxoSet global:", JSON.stringify(allUtxos, null, 2));
+  }
+  // ...existing code...
   utxos = utxos.map(utxo => ({ ...utxo, address }));
 
   // Inputs y outputs de la mempool
@@ -1174,6 +1237,40 @@ app.post("/admin/rebuild-utxo", (req, res) => {
 });
 
 // ...existing code...
+
+// Hook para sincronizar el UTXOManager tras minar un bloque
+if (miner && typeof miner.mine === 'function') {
+  const originalMine = miner.mine.bind(miner);
+  miner.mine = (...args) => {
+    const result = originalMine(...args);
+    // Si el bloque fue minado y añadido a la cadena, sincroniza el UTXOManager
+    if (result && result.block) {
+      utxoManager.updateWithBlock(result.block);
+      // Contar total de UTXOs después de minar
+      const totalUtxos = Object.values(utxoManager.utxoSet).reduce((acc, arr) => acc + arr.length, 0);
+      console.log('[SYNC] UTXOManager actualizado tras minar un bloque. Total UTXOs:', totalUtxos);
+    } else {
+      // Refuerza la sincronización completa si no hay bloque explícito
+      syncUTXOManagerWithBlockchain();
+    }
+    return result;
+  };
+}
+
+// --- Hook para sincronizar UTXOManager tras reemplazar la blockchain ---
+// Parchea el método replaceChain del Blockchain para llamar a syncUTXOManagerWithBlockchain después de reemplazar la cadena
+if (bc && typeof bc.replaceChain === 'function') {
+  const originalReplaceChain = bc.replaceChain.bind(bc);
+  bc.replaceChain = (...args) => {
+    const result = originalReplaceChain(...args);
+    // Espera brevemente para asegurar que bc.chain esté actualizado
+    setTimeout(() => {
+      console.log('[SYNC][PATCH] syncUTXOManagerWithBlockchain llamado tras replaceChain (con retardo)');
+      syncUTXOManagerWithBlockchain();
+    }, 100);
+    return result;
+  };
+}
 
 // --- MANEJADOR DE ERRORES GLOBAL AL FINAL ---
 app.use((err, req, res, next) => {

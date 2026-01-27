@@ -14,6 +14,7 @@ class UTXOManager {
   constructor() {
     // Mapa que asocia cada dirección con sus salidas no gastadas (UTXOs)
     this.utxoSet = {};
+    console.log('[UTXO-DEBUG][INIT] UTXOManager inicializado. utxoSet:', JSON.stringify(this.utxoSet));
   }
 
   /**
@@ -22,6 +23,7 @@ class UTXOManager {
    * Elimina las salidas gastadas y añade las nuevas salidas generadas.
    */
   updateWithBlock(block) {
+    console.log('[UTXO-DEBUG][BLOCK] updateWithBlock llamado para bloque:', block && block.hash ? block.hash : '[sin hash]');
     const transactions = Array.isArray(block?.data)
       ? block.data
       : Array.isArray(block?.data?.transactions)
@@ -71,6 +73,9 @@ class UTXOManager {
         });
       }
     });
+    // Log final del estado de utxoSet tras procesar el bloque
+    const resumen = Object.entries(this.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
+    console.log('[UTXO-DEBUG][BLOCK-END] utxoSet tras procesar bloque:', JSON.stringify(resumen, null, 2));
   }
 
   /**
