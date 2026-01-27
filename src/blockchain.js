@@ -5,20 +5,49 @@
 //  y los que solo consultan o validan su integridad.
 
 import { Block } from "./block.js";
+import path from "path";
+import { writeBlockToFile, readBlockSeq } from "../storage/blockFile.js";
 // Si no tienes utxomanager.js, puedes eliminar esta línea o dejarla para futuro
 // import { UTXOManager } from "./utxomanager.js"; // ✅ Importamos el gestor de salidas no gastadas (UTXO)
 
 class Blockchain {
-  constructor() {
-    // Inicializamos la cadena con el bloque génesis
-    this.chain = [Block.getGenesisBlock()];
-    console.log("Blockchain initialized:", this.chain);
-
-    // ✅ Inicializamos el UTXO set como array vacío
+  constructor(options = {}) {
+    // Ruta por defecto para archivo binario de bloques
+    this.blockFilePath = options.blockFilePath || path.resolve("storage", "data", "blk00000.dat");
+    this.chain = [];
     this.utxoSet = [];
+    this._initialized = false;
+  }
 
-    // ✅ Actualizamos el UTXO Set con el bloque génesis (aunque normalmente no tiene transacciones)
-    this.updateUTXOSet(this.chain[0]);
+  /**
+   * Inicializa la blockchain: carga desde archivo binario o crea génesis si no existe.
+   */
+  async initialize() {
+    // Si ya está inicializada, no repetir
+    if (this._initialized) return;
+    this.chain = [];
+    this.utxoSet = [];
+    let loaded = false;
+    try {
+      await readBlockSeq(this.blockFilePath, (block) => {
+        this.chain.push(block);
+        this.updateUTXOSet(block);
+        loaded = true;
+      });
+    } catch (err) {
+      // Si el archivo no existe, crear génesis
+      if (err.code !== 'ENOENT') throw err;
+    }
+    if (!loaded) {
+      const genesis = Block.getGenesisBlock();
+      this.chain = [genesis];
+      this.utxoSet = [];
+      this.updateUTXOSet(genesis);
+      // Guardar génesis en disco
+      await writeBlockToFile(this.blockFilePath, genesis);
+    }
+    this._initialized = true;
+    console.log("Blockchain initialized (persisted):", this.chain.length, "blocks");
   }
 
   // Nos devuelve el último bloque de la cadena
@@ -26,36 +55,31 @@ class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
-  // Añade un nuevo bloque a la cadena y actualiza el UTXO Set
-  addBlock(data) {
+  // Añade un nuevo bloque a la cadena, actualiza UTXO y lo persiste en disco
+  async addBlock(data) {
+    await this.initialize();
     console.log("Añadiendo nuevo bloque a la cadena...");
     const newBlock = Block.mineBlock(this.getPreviousBlock(), data);
     this.chain.push(newBlock);
-
-    // ✅ Actualizamos el UTXO Set con las transacciones del nuevo bloque
     this.updateUTXOSet(newBlock);
-
+    await writeBlockToFile(this.blockFilePath, newBlock);
     return newBlock;
   }
 
   // Actualiza el UTXOset clásico (modelo UTXO correcto con txId y outputIndex)
   updateUTXOSet(block) {
-    // Asegúrate de tener un array para el UTXOset en tu blockchain, por ejemplo: this.utxoSet = []
     if (!this.utxoSet) this.utxoSet = [];
-
+    const txs = Array.isArray(block?.data) ? block.data : [];
     // 1. Elimina los UTXOs gastados por las transacciones del bloque
-    block.data.forEach(transaction => {
-      // Para cada input (excepto las transacciones de recompensa, que no tienen inputs)
+    txs.forEach(transaction => {
       if (transaction.inputs && Array.isArray(transaction.inputs)) {
         transaction.inputs.forEach(input => {
-          // Log antes de eliminar
           const utxosEliminados = this.utxoSet.filter(
             utxo => utxo.txId === input.txId && utxo.outputIndex === input.outputIndex
           );
           if (utxosEliminados.length > 0) {
             console.log(`[UTXO ELIMINADO]`, utxosEliminados);
           }
-          // Elimina el UTXO gastado usando txId y outputIndex
           this.utxoSet = this.utxoSet.filter(
             utxo =>
               !(
@@ -66,29 +90,24 @@ class Blockchain {
         });
       }
     });
-
     // 2. Añade los nuevos outputs de cada transacción como nuevos UTXOs
-    block.data.forEach(transaction => {
-      transaction.outputs.forEach((output, idx) => {
-        // Evitar duplicados: comprobar si ya existe este txId+outputIndex
-        const exists = this.utxoSet.some(
-          (u) => u.txId === transaction.id && u.outputIndex === idx
-        );
-        if (!exists) {
-          this.utxoSet.push({
-            txId: transaction.id,
-            outputIndex: idx, // <-- Añade el índice del output
-            amount: output.amount,
-            address: output.address,
-          });
-        } else {
-          // Para depuración: opcional, eliminar o comentar en producción
-          // console.debug(`UTXO already exists for ${transaction.id} #${idx}`);
-        }
-      });
+    txs.forEach(transaction => {
+      if (Array.isArray(transaction.outputs)) {
+        transaction.outputs.forEach((output, idx) => {
+          const exists = this.utxoSet.some(
+            (u) => u.txId === transaction.id && u.outputIndex === idx
+          );
+          if (!exists) {
+            this.utxoSet.push({
+              txId: transaction.id,
+              outputIndex: idx,
+              amount: output.amount,
+              address: output.address,
+            });
+          }
+        });
+      }
     });
-
-    // Opcional: log para depuración
     console.log("UTXOset actualizado:", this.utxoSet);
   }
 
@@ -130,8 +149,9 @@ class Blockchain {
     return true;
   }
 
-  // Reemplaza la cadena actual por una nueva si es más larga y válida, y reconstruye el UTXO Set
-  replaceChain(newChain) {
+  // Reemplaza la cadena actual por una nueva si es más larga y válida, y reconstruye el UTXO Set y el archivo binario
+  async replaceChain(newChain) {
+    await this.initialize();
     console.log("Received chain length:", newChain.length);
     console.log("Current chain length:", this.chain.length);
     if (newChain.length <= this.chain.length) {
@@ -144,12 +164,15 @@ class Blockchain {
     }
     console.log("Replacing the current chain with the new chain.");
     this.chain = newChain;
-
-    // ✅ Reconstruimos el UTXO Set desde cero usando la nueva cadena
     this.utxoSet = [];
     this.chain.forEach((block) => this.updateUTXOSet(block));
-
-    console.log("Chain replaced successfully.");
+    // Sobrescribe el archivo binario con la nueva cadena
+    const fs = await import('fs');
+    await fs.promises.writeFile(this.blockFilePath, Buffer.alloc(0)); // Truncar
+    for (const block of this.chain) {
+      await writeBlockToFile(this.blockFilePath, block);
+    }
+    console.log("Chain replaced and persisted successfully.");
   }
 }
 
