@@ -68,7 +68,6 @@
     box-sizing: border-box;
     place-content: start center; /* start vertically, centered horizontally */
     justify-items: stretch;
-    align-items: start;
 }
 
 .dashboard-card {
@@ -98,7 +97,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 1px;
 }
 
 .card-header h2 {
@@ -139,7 +138,7 @@
 /* Responsive grid for card actions with multiple buttons */
 .card-actions.two-row-actions.two-btn-actions {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 12px;
     flex-wrap: unset;
 }

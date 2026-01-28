@@ -3,7 +3,7 @@
     margin-top: 10px;
 }
 .utxo-list-container {
-    max-height: 260px;
+    max-height: 360px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -39,7 +39,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 13px;
+    font-size: 10px;
 }
 .utxo-card-amount {
     font-weight: 700;

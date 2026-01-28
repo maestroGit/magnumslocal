@@ -60,7 +60,7 @@ export function showBlockTransactions(blockIndex) {
         </div>
       `;
   // Uso unificado de safeModal
-    safeModal(`Transfers - Block #${blockIndex}`, content);
+    safeModal(`Block #${blockIndex}`, content);
   } catch (err) {
     console.error('showBlockTransactions error', err);
     alert('Error showing transfers: ' + err.message);

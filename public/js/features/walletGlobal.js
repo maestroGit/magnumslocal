@@ -6,14 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prompt de passphrase en modal reutilizando el contenedor de formulario (loteModal)
         function promptPassphrase(actionLabel = 'continuar') {
           return new Promise((resolve) => {
-            const title = 'Wallet Global';
+            const title = 'Wallet';
             const body = `
               <div class="modal-info">
-                <p>Introduce passphrase for ${actionLabel}:</p>
-                <input type="password" id="passphraseModalInput" placeholder="Passphrase" autocomplete="new-password" />
+                <p>Choose passphrase for ${actionLabel}:</p>
+                <input type="password" id="passphraseModalInput" placeholder="Choose Passphrase" autocomplete="new-password" />
               </div>
               <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;">
-                <button id="passphraseConfirm" class="dashboard-btn primary">Confirmar</button>
+                <button id="passphraseConfirm" class="dashboard-btn primary">Confir</button>
               </div>`;
             showModalForm(title, body);
             const input = document.getElementById('passphraseModalInput');
@@ -28,12 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prompt combinado: selección de fichero JSON + passphrase (para Descifrar/Subir)
         function promptFileAndPassphrase(actionLabel = 'continuar') {
           return new Promise((resolve) => {
-            const title = 'Wallet Global';
+            const title = 'Wallet';
             const body = `
               <div class="modal-info">
-                <p>Select the wallet file and passphrase for ${actionLabel}:</p>
+                <p>Select and enter passphrase to ${actionLabel}:</p>
                 <input type="file" id="walletFileModalInput" accept="application/json" />
-                <input type="password" id="passphraseModalInput" placeholder="Passphrase" autocomplete="new-password" />
+                <input type="password" id="passphraseModalInput" placeholder="Enter Passphrase" autocomplete="new-password" />
               </div>
               <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;">
                 <button id="filePassConfirm" class="dashboard-btn primary">Confirm</button>
@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (okBtn) okBtn.onclick = () => {
               const f = fileInput && fileInput.files && fileInput.files[0];
               const p = passInput ? passInput.value : '';
-              if (!f) { showModal('Select a wallet file.', 'Wallet Global'); return; }
-              if (!p) { showModal('Enter a passphrase.', 'Wallet Global'); return; }
+              if (!f) { showModal('Select a wallet file.', 'Wallet'); return; }
+              if (!p) { showModal('Enter a passphrase.', 'Wallet'); return; }
               const reader = new FileReader();
               reader.onload = (evt) => {
                 try {
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   try { closeCurrentModal(); } catch(_) {}
                   resolve({ walletJson: json, passphrase: p });
                 } catch (err) {
-                  showModal('Invalid file: ' + err.message, 'Wallet Global');
+                  showModal('Invalid file: ' + err.message, 'Wallet');
                 }
               };
               reader.readAsText(f);
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       generateBtn.addEventListener('click', async () => {
         const pass = await promptPassphrase('generate a new wallet');
         if (pass === null) return; // canceled
-        if (!pass) return showModal('Enter a passphrase.', 'Wallet Global');
+        if (!pass) return showModal('Enter a passphrase.', 'Wallet');
         try {
           const res = await fetch('/wallet/generate', {
             method: 'POST',
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          showModal('New wallet generated and downloaded.', 'Wallet Global');
+          showModal('New wallet generated and downloaded.', 'Wallet');
         // Toast visual para confirmación
         function showWalletToast(msg) {
           let toast = document.getElementById('wallet-toast');
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tag = walletJson.tag;
       }
       if (!encryptedPrivateKey || !salt || !iv || !tag) {
-        return showModal('The file does not appear to be a valid encrypted wallet.', 'Wallet Global');
+        return showModal('The file does not appear to be a valid encrypted wallet.', 'Wallet');
       }
       try {
         const res = await fetch('/wallet/decrypt', {
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span style='color:#b00;font-weight:bold;'>⚠️ Attention:</span> The private key is secret. Do not share it.<br>
           <button id='show-privkey-btn' style='margin:8px 0 0 0;padding:4px 12px;font-size:1em;'>Show private key</button>
           <span id='privkey-value' style='display:none;word-break:break-all;background:#f8f8f8;color:#222;padding:6px 10px;border-radius:6px;margin-left:8px;'>${data.privateKey}</span>
-        `, 'Wallet Global');
+        `, 'Wallet');
         setTimeout(() => {
           const btn = document.getElementById('show-privkey-btn');
           const privSpan = document.getElementById('privkey-value');
@@ -186,14 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }, 100);
       } catch (err) {
-        showModal('Error: ' + err.message, 'Wallet Global');
+        showModal('Error: ' + err.message, 'Wallet');
       }
     });
   }
 
   if (uploadBtn) {
     uploadBtn.addEventListener('click', async () => {
-      const res = await promptFileAndPassphrase('load wallet into backend');
+      const res = await promptFileAndPassphrase('load your wallet');
       if (!res) return; // cancelado
       const { walletJson: loadedWalletJson, passphrase: pass } = res;
       // Solo aceptar formato keystore actual
@@ -249,10 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Actualizar el header con la nueva clave pública global
         await updateGlobalWalletPubKeyHeader();
-        showModal('Global wallet loaded into backend.<br>Active public key:<br><span style="word-break:break-all">' + pubKey + '</span>', 'Global Wallet');
+        showModal('Wallet loaded into backend.<br>Active public key:<br><span style="word-break:break-all">' + pubKey + '</span>', 'Global Wallet');
         console.log('[GLOBAL-MODAL-DEBUG] Final public key shown in modal:', pubKey);
       } catch (err) {
-        showModal('Error: ' + err.message, 'Global Wallet');
+        showModal('Error: ' + err.message, 'Wallet');
         try { console.error('[WALLET-DEBUG] Backend error:', err); } catch(e) {}
         showModal('Backend error:<br>' + (err && err.message ? err.message : err), 'Global Wallet Debug');
       }

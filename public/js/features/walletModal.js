@@ -11,9 +11,6 @@ export async function handleUTXOCheckClick() {
     }
     const utxoHtml = `
       <div class="utxo-result-modal">
-        <p><strong>Address:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
-        <p><strong>Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
-        <p><strong>Available:</strong> ${data.utxos.length}</p>
         <div class="utxo-list-section">
           <div id="utxoListContainer" class="utxo-list-container">
             ${data.utxos.map(u => `
@@ -24,11 +21,14 @@ export async function handleUTXOCheckClick() {
                   <div class='utxo-card-meta'>txId: ${u.txId} • outputIndex: ${u.outputIndex}</div>
                 </div>
                 <div class='utxo-card-actions'>
-                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}' style="width:38px;height:90px;display:flex;align-items:center;justify-content:center;padding:0;"><img src="images/Icono-Magnum.png" alt="Copy" style="height:76px;width:auto;display:block;"></button>
+                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}' style="width:38px;height:90px;display:flex;align-items:center;justify-content:center;padding:0;"><img src="images/Icono-Magnum.png" alt="Magnum" style="height:76px;width:auto;display:block;"></button>
                 </div>
               </div>`).join('')}
           </div>
         </div>
+        <p><strong>Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
+        <p><strong>Available:</strong> ${data.utxos.length}</p>
+        <p><strong>Address:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
         <p><strong>Consult:</strong> ${new Date().toLocaleString()}</p>
       </div>`;
     showModal(utxoHtml, 'UNOPENED Set');

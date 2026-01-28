@@ -24,9 +24,7 @@ export async function renderMonitoring() {
 
     const monitoringModalContent = `
       <div class="modal-info" style="max-height:60vh;overflow-y:auto;padding-right:8px;box-sizing:border-box;">
-        <p><strong>🖥️ Monitoring</strong></p>
-        <p><strong>Status:</strong> <span class="status-online">● Online</span></p>
-        <p><strong>Last Updated:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Updated:</strong> ${new Date().toLocaleString()}</p>
         <div class="modal-body">
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
             <h3 class="monitor-title">🌐 Server</h3>
