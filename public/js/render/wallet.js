@@ -22,10 +22,6 @@ export function renderBalance(balanceData) {
 
 export function renderPublicKey(publicKey) {
   const publicKeyModalContent = `
-    <div class="modal-info">
-      <p><strong>Public Key</strong></p>
-      <p><strong>Status:</strong> Active</p>
-    </div>
     <div class="modal-body">
       <div class="modal-info">
         <p><strong>Public Key:</strong></p>

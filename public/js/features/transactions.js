@@ -38,7 +38,7 @@ export const submitTransaction = async (transactionData) => {
           const transactionResultContent = `
             <div class="modal-success">
               <div class="success-icon">✅</div>
-              <h3>¡Transacction Completed!</h3>
+              <h3>¡Transfer Completed!</h3>
               <p><strong>ID:</strong> <code>${response.transaction.id || 'N/A'}</code></p>
               <p><strong>Situation:</strong> <span class="status-success">Confirmed</span></p>
             </div>
@@ -52,19 +52,19 @@ export const submitTransaction = async (transactionData) => {
                 <p><strong>💰 Cantidad:</strong> ${response.transaction.amount}</p>
               </div>
             </div>`;
-          safeModal('Transaction ✅Successful', transactionResultContent);
+          safeModal('Transfer ✅Successful', transactionResultContent);
         }
-        showToast('✅ Transaction completed', 'success');
+        showToast('✅ Transfer completed', 'success');
       } else {
-        showModal('⚠️ Transaction processed, but no valid data was received', 'Alert');
+        showModal('⚠️ Transfer processed, but no valid data was received', 'Alert');
         showToast('⚠️ Alert: incomplete response', 'warning');
       }
     }, 1500);
   } catch (error) {
     setTimeout(() => {
       closeCurrentModal();
-      console.error('[TX][MODULE] Error sending transaction', error);
-      showModal(`❌ Error sending transaction: ${error.message}`, 'Network Error');
+      console.error('[TX][MODULE] Error sending transfer', error);
+      showModal(`❌ Error sending transfer: ${error.message}`, 'Network Error');
       showToast('❌ Connection error', 'error');
     }, 800);
   }
@@ -72,7 +72,7 @@ export const submitTransaction = async (transactionData) => {
 
 // Render coin control transaction modal (fetch UTXOs & build form)
 export const openTransactionModal = async () => {
-  showProgressModal('Loading Magnums...', 'Coin Control', ['Fetching Magnums...']);
+  showProgressModal('Loading Magnums...', 'Magnum Control', ['Fetching Magnums...']);
   let utxoData;
   try {
     // Siempre obtener la clave pública activa del backend
@@ -99,7 +99,7 @@ export const openTransactionModal = async () => {
   }
   closeCurrentModal();
   if (!utxoData || !Array.isArray(utxoData.utxosDisponibles) || utxoData.utxosDisponibles.length === 0) {
-    showModal('No UTXOs available for selection.', 'Coin Control');
+    showModal('No UNOPENED available for selection.', 'Coin Control');
     return;
   }
   // Filtrar UTXOs pendientes/gastados antes de renderizar
@@ -109,8 +109,8 @@ export const openTransactionModal = async () => {
 
   const transactionFormContent = `
     <form id="transactionForm">
-      <label for="recipientInput"> Beneficiary address:</label>
-      <input type="text" id="recipientInput" name="recipient" placeholder="Insert beneficiary public key" required>
+      <label for="recipientInput"> WineLover address:</label>
+      <input type="text" id="recipientInput" name="recipient" placeholder="Insert WineLover public key" required>
       <label for="amountInput">Import:</label>
       <input type="number" id="amountInput" name="amount" step="0.01" min="0.01" placeholder="0.00" required>
       <label for="passphraseInput">Passphrase for signing:</label>
@@ -153,9 +153,9 @@ export const openTransactionModal = async () => {
               }).join('')
             : '<em>No pending UTXOs.</em>'}
       </div>
-      <button type="submit">Transaction</button>
+      <button type="submit">Transfer</button>
     </form>`;
-  safeModal('TRANSACTION', transactionFormContent);
+  safeModal('TRANSFER', transactionFormContent);
 
   const form = document.getElementById('transactionForm');
   if (!form) return;
@@ -164,9 +164,9 @@ export const openTransactionModal = async () => {
     const recipient = document.getElementById('recipientInput').value.trim();
     const amount = parseFloat(document.getElementById('amountInput').value);
     const passphrase = document.getElementById('passphraseInput').value;
-    if (!recipient) return showModal('Please, insert a valid public key for the beneficiary.', 'Validation Error');
+    if (!recipient) return showModal('Please, insert a valid public key for the beneficiary', 'Validation Error');
     if (amount <= 0) return showModal('The amount must be greater than 0.', 'Validation Error');
-    if (!passphrase) return showModal('The passphrase is required to sign the transaction.', 'Validation Error');
+    if (!passphrase) return showModal('The passphrase is required to sign the transfer', 'Validation Error');
 
     const selectedUTXOs = Array.from(document.querySelectorAll('.utxo-checkbox:checked')).map(cb => ({
       txId: cb.dataset.txid,
@@ -174,10 +174,10 @@ export const openTransactionModal = async () => {
       amount: parseFloat(cb.dataset.amount),
       address: cb.dataset.address
     }));
-    if (selectedUTXOs.length === 0) return showModal('Select at least one UTXO for the transaction.', 'Coin Control');
+    if (selectedUTXOs.length === 0) return showModal('Select at least one UNOPENED for the transfer', 'Coin Control');
 
     const transactionData = { recipient, amount, passphrase, inputs: selectedUTXOs, mode: 'bodega' };
-    showConfirmModal(`Are you sure you want to send ${amount} to:<br><code>${recipient}</code> using ${selectedUTXOs.length} UTXOs?`, () => submitTransaction(transactionData), null, 'Confirm Transaction');
+    showConfirmModal(`Are you sure you want to transfer ${amount} to:<br><code>${recipient}</code> using ${selectedUTXOs.length} UTXOs?`, () => submitTransaction(transactionData), null, 'Confirm Transaction');
   });
 };
 

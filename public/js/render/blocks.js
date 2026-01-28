@@ -16,13 +16,13 @@ export function showBlockTransactions(blockIndex) {
     const txs = Array.isArray(block.data) ? block.data : [];
       const content = `
         <div class="modal-info">
-          <p><strong>💸 Transactions of Block #${blockIndex}</strong></p>
+          <p><strong>Block #${blockIndex}</strong></p>
           <p><strong>Hash:</strong> ${block.hash}</p>
           <p><strong>Timestamp:</strong> ${new Date(block.timestamp).toLocaleString()}</p>
-          <p><strong>Total transactions:</strong> ${txs.length}</p>
+          <p><strong>Total transfers:</strong> ${txs.length}</p>
         </div>
         <div class="modal-body">
-          ${txs.length === 0 ? '<p>No transactions in this block.</p>' : '<ul>' + txs.map((tx, i) => {
+          ${txs.length === 0 ? '<p>No transfers in this block.</p>' : '<ul>' + txs.map((tx, i) => {
             if (typeof tx === 'string') {
               return `<li class=\"tx-item\"><pre class=\"json-display\">${tx}</pre></li>`;
             }
@@ -32,11 +32,11 @@ export function showBlockTransactions(blockIndex) {
             return `<li class=\"monitor-card transaction-modal-item\">\n\
               <ul>\n\
                 <li>\n\
-                  <strong>Transacción #${i + 1}</strong><br>\n\
+                  <strong>Transfer #${i + 1}</strong><br>\n\
                   <strong>ID:</strong> <span class=\"tx-id\">${txId}</span><br>\n\
                   <strong>Inputs:</strong> ${inputs.length} | <strong>Outputs:</strong> ${outputs.length}<br>\n\
-                  <strong>Cantidad:</strong> ${tx.amount !== undefined ? tx.amount : ''}<br>\n\
-                  <details><summary>Ver detalles de Inputs</summary><ul>\n\
+                  <strong>Amount:</strong> ${tx.amount !== undefined ? tx.amount : ''}<br>\n\
+                  <details><summary>View Input Details</summary><ul>\n\
                     ${inputs.map(input => `<li>\n\
                       <strong>txId:</strong> <span class=\"tx-id\">${input.txId || ''}</span><br>\n\
                       <strong>outputIndex:</strong> ${input.outputIndex !== undefined ? input.outputIndex : ''}<br>\n\
@@ -47,7 +47,7 @@ export function showBlockTransactions(blockIndex) {
                       <strong>Signature Recovery Param:</strong> ${input.signatureRecovery !== undefined ? input.signatureRecovery : ''}\n\
                     </li>`).join('')}\n\
                   </ul></details>\n\
-                  <details><summary>Ver detalles de Outputs</summary><ul>\n\
+                  <details><summary>View Output Details</summary><ul>\n\
                     ${outputs.map(output => `<li>\n\
                       <strong>Amount:</strong> ${output.amount !== undefined ? output.amount : ''}<br>\n\
                       <strong>Address:</strong> <span class=\"tx-id\">${output.address || ''}</span>\n\
@@ -60,7 +60,7 @@ export function showBlockTransactions(blockIndex) {
         </div>
       `;
   // Uso unificado de safeModal
-    safeModal(`💸Transactions - Blocks #${blockIndex}`, content);
+    safeModal(`Transfers - Block #${blockIndex}`, content);
   } catch (err) {
     console.error('showBlockTransactions error', err);
     alert('Error showing transactions: ' + err.message);
@@ -96,7 +96,6 @@ export function renderBlocks(blocks, options = {}) {
 
   const blocksModalContent = `
     <div class="modal-info">
-      <p><strong>✅ Blocks loaded</strong></p>
       <p><strong>Total blocks:</strong> ${blocks.length}</p>
       <p><strong>Last block:</strong> ${
         blocks.length > 0 ? new Date(blocks[blocks.length - 1].timestamp).toLocaleString() : 'N/A'

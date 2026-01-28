@@ -108,7 +108,7 @@ export function showProgressModal(message, title = 'Procesando', steps = []) {
         ${steps.map((s,i)=>`<div class="progress-step" id="step-${i}"><span class="step-icon">⏳</span><span class="step-text">${s}</span></div>`).join('')}
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <p class="progress-message">Esto puede tomar unos segundos...</p>
+      <p class="progress-message">This takes a few seconds...</p>
     </div>`;
   modalMessage.innerHTML = progressContent;
   modal.classList.remove('hidden');

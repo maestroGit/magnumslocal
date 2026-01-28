@@ -72,7 +72,7 @@ export function showWalletModal() {
   const walletContent = `
     <div style="margin:15px 0;">
       <label for="addressInputModal" style="display:block;margin-bottom:5px;font-weight:bold;">Address:</label>
-      <input type="text" id="addressInputModal" placeholder="Introduce public key..." style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
+      <input type="text" id="addressInputModal" placeholder="Insert public key..." style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:15px;" />
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button id="submitPublicKeyModal" style="flex:1;min-width:150px;">Balance</button>
       </div>

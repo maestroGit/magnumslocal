@@ -19,9 +19,9 @@ export function copyTxId(id) {
   if (!id) return;
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(id)
-      .then(() => alert('Transaction ID copiado'))
-      .catch(() => alert('No se pudo copiar'));
+      .then(() => alert('Transfer ID copied to clipboard'))
+      .catch(() => alert('Could not copy'));
   } else {
-    alert('Portapapeles no disponible');
+    alert('Clipboard not available');
   }
 }

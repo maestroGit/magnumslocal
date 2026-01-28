@@ -124,3 +124,13 @@ Resumen:
 En producción (Seenode): Tu frontend debe usar la URL del backend desplegado (no localhost).
 En local: Tu frontend puede seguir usando localhost:3000, pero debes permitirlo en la política CSP de tu HTML.
 La meta etiqueta CSP en view.html ha sido actualizada automáticamente. Ahora permite conexiones tanto a localhost:3000 como a cualquier subdominio de apps.run-on-seenode.com, cubriendo desarrollo y producción. No necesitas hacer nada más.
+
+---
+
+**NOTA IMPORTANTE SOBRE PERMISOS DE ARCHIVOS EN DEPLOY**
+
+- Asegúrate de que los archivos críticos (por ejemplo, `storage/data/blk00000.dat`) tengan permisos de lectura y escritura para el usuario o proceso que ejecuta el backend.
+- En Linux, puedes usar `chmod 666` o ajustar el propietario con `chown`.
+- En Windows, usa `icacls blk00000.dat /grant Todos:M` o el grupo adecuado según el idioma del sistema.
+- Si los permisos no son correctos, el backend puede fallar al leer o escribir la blockchain, aunque el archivo exista.
+- Verifica siempre los permisos tras copiar o restaurar archivos en el servidor de producción.

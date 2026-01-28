@@ -12,14 +12,14 @@ export function renderTransactionsPool(transactionsPool) {
   }
 
   if (!Array.isArray(transactionsPool) || transactionsPool.length === 0) {
-    transactionsContainer.innerHTML = '<p>No hay datos en mempool</p>';
+    transactionsContainer.innerHTML = '<p>No data in mempool</p>';
     const emptyPoolContent = `
       <div class="modal-info">
         <p><strong>ℹ️ MemPool empty</strong></p>
-        <p>No pending transactions in the memory pool.</p>
+        <p>No pending transfers in the memory pool.</p>
       </div>
       <div class="modal-body">
-        <p>All transactions have been processed.</p>
+        <p>All transfers have been processed.</p>
       </div>`;
   safeModal('MemPool', emptyPoolContent);
     return;
@@ -73,12 +73,12 @@ export function renderTransactionsPool(transactionsPool) {
 
   const mempoolModalContent = `
     <div class="modal-info">
-      <p><strong>📊 MemPool - Pending Transactions</strong></p>
-      <p><strong>Total de transacciones:</strong> ${transactionsPool.length}</p>
-      <p><strong>Volumen total:</strong> ${Number.isFinite(Number(totalAmount)) ? Number(totalAmount).toFixed(2) : 'N/A'}</p>
+      <p><strong>📊 MemPool - Pending Transfers</strong></p>
+      <p><strong>Total transfers:</strong> ${transactionsPool.length}</p>
+      <p><strong>Total volume:</strong> ${Number.isFinite(Number(totalAmount)) ? Number(totalAmount).toFixed(2) : 'N/A'}</p>
     </div>
     <div class="modal-body">
-      <h3>Detalles de Transacciones:</h3>
+      <h3>Transfer Details:</h3>
       ${transactionsPool.map((tx, index) => {
         const inputCount = tx.inputs ? tx.inputs.length : 0;
         const outputCount = tx.outputs ? tx.outputs.length : 0;
@@ -109,19 +109,19 @@ export function renderTransactionsPool(transactionsPool) {
           <div class="monitor-card transaction-modal-item">
             <ul>
               <li>
-                <strong>Transacción #${index + 1}</strong><br>
+                <strong>Transfer #${index + 1}</strong><br>
                 <strong>ID:</strong> <span class="tx-id">${tx.id}</span><br>
                 <strong>Inputs:</strong> ${inputCount} | <strong>Outputs:</strong> ${outputCount}<br>
-                <strong>Cantidad:</strong> ${txAmountDisplay}<br>
-                <details><summary>Ver detalles de Inputs</summary>${inputsDetail}</details>
-                <details><summary>Ver detalles de Outputs</summary>${outputsDetail}</details>
+                <strong>Amount:</strong> ${txAmountDisplay}<br>
+                <details><summary>View Input Details</summary>${inputsDetail}</details>
+                <details><summary>View Output Details</summary>${outputsDetail}</details>
               </li>
             </ul>
           </div>`;
       }).join('')}
     </div>`;
 
-  safeModal('MemPool - Transactions Loaded', mempoolModalContent);
+  safeModal('MemPool - Transfers Loaded', mempoolModalContent);
 
-  showToast && showToast(`MemPool listo: ${transactionsPool.length} transacciones`, 'success');
+  showToast && showToast(`MemPool ready: ${transactionsPool.length} transfers`, 'success');
 }

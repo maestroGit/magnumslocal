@@ -64,10 +64,10 @@ export function initDomEvents() {
           const emptyMsg = `
             <div class="modal-info">
               <p><strong>ℹ️ Empty MemPool</strong></p>
-              <p>There are no pending transactions. Mining will not start.</p>
+              <p>There are no pending transfers. Mining will not start.</p>
             </div>
             <div class="modal-body">
-              <p>Create a transaction (e.g., "Register" or "Consumed" bottle)  and try again.</p>
+              <p>Create a transfer (e.g., "Register" or "Consumed" bottle)  and try again.</p>
             </div>`;
           if (typeof window.safeModal === 'function') {
             window.safeModal('Mining blocked', emptyMsg);
@@ -79,7 +79,7 @@ export function initDomEvents() {
         }
 
         // 2) There are transactions: proceed to mine
-        showToast && showToast(`⛏️ Mine ${pool.length} transaction(s)…`, 'info');
+        showToast && showToast(`⛏️ Mine ${pool.length} transfer(s)…`, 'info');
         const res = await fetchData('/mine', { method: 'POST' });
         if (res?.error) { showModal && showModal(`Error ⛏️mine: ${res.error}`, 'Error ⛏️mine'); return; }
         // El backend /mine devuelve JSON del bloque, pero para asegurar datos completos refrescamos /blocks
@@ -98,7 +98,7 @@ export function initDomEvents() {
               <div style="font-size:2em;margin-bottom:10px;">⛏️✔️</div>
               <p><strong>Block:</strong> ${lastBlock?.hash ? String(lastBlock.hash).slice(0,20)+'\u001a' : 'N/A'}</p>
               <p><strong>Timestamp:</strong> ${lastBlock?.timestamp ? new Date(lastBlock.timestamp).toLocaleString() : 'N/A'}</p>
-              <p><strong>Transactions included:</strong> ${txCount}</p>
+              <p><strong>Transfer included:</strong> ${txCount}</p>
             </div>
             <div class="modal-actions">
               ${txCount > 0 ? `<button class="dashboard-btn secondary show-block-txs-btn" data-block-index="LAST">BLOCK</button>` : '<em>No se incluyeron transacciones en este bloque.</em>'}

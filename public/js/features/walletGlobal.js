@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = 'Wallet Global';
             const body = `
               <div class="modal-info">
-                <p>Select the wallet file (JSON) and passphrase for ${actionLabel}:</p>
+                <p>Select the wallet file and passphrase for ${actionLabel}:</p>
                 <input type="file" id="walletFileModalInput" accept="application/json" />
                 <input type="password" id="passphraseModalInput" placeholder="Passphrase" autocomplete="new-password" />
               </div>
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (okBtn) okBtn.onclick = () => {
               const f = fileInput && fileInput.files && fileInput.files[0];
               const p = passInput ? passInput.value : '';
-              if (!f) { showModal('Select a wallet JSON file.', 'Wallet Global'); return; }
+              if (!f) { showModal('Select a wallet file.', 'Wallet Global'); return; }
               if (!p) { showModal('Enter a passphrase.', 'Wallet Global'); return; }
               const reader = new FileReader();
               reader.onload = (evt) => {

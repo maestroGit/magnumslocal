@@ -248,6 +248,12 @@ import { UTXOManager } from "./src/utxomanager.js";
 const utxoManager = new UTXOManager();
 global.utxoManager = utxoManager;
 const bc = new Blockchain();
+// Log the result of Blockchain.initialize()
+bc.initialize().then((result) => {
+  console.log('[INIT][Blockchain] Resultado de bc.initialize():', result);
+}).catch((err) => {
+  console.error('[INIT][Blockchain] Error en bc.initialize():', err);
+});
 bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
 // Sincronizar el UTXOManager con la cadena al arrancar
 // Refuerza la sincronización del UTXOManager con la blockchain al arrancar
