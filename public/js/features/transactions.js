@@ -131,7 +131,7 @@ export const openTransactionModal = async () => {
       </div>
       <hr>
       <div id="utxoPendientesList" class="utxo-pendientes-list">
-        <h4>Pending UTXOs</h4>
+        <h4>Processing:</h4>
           ${Array.isArray(utxoData.utxosPendientes) && utxoData.utxosPendientes.length > 0
             ? utxoData.utxosPendientes.map((u, i) => {
                 let statusIcon = '⏳';
@@ -151,7 +151,7 @@ export const openTransactionModal = async () => {
                   </div>
                 `;
               }).join('')
-            : '<em>No pending UTXOs.</em>'}
+            : '<em>Nothing pending</em>'}
       </div>
       <button type="submit">Transfer</button>
     </form>`;

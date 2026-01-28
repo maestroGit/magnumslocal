@@ -9,7 +9,7 @@ export async function renderMonitoring() {
     showToast && showToast('Fetching system info...', 'info');
     const systemInfo = await fetchData('/system-info');
     if (systemInfo.error) {
-      showModal && showModal(`Error al obtener información del sistema: ${systemInfo.error}`, 'System Error');
+      showModal && showModal(`Error fetching system info: ${systemInfo.error}`, 'System Error');
       showToast && showToast('Error fetching system info', 'error');
       return;
     }
@@ -24,7 +24,7 @@ export async function renderMonitoring() {
 
     const monitoringModalContent = `
       <div class="modal-info" style="max-height:60vh;overflow-y:auto;padding-right:8px;box-sizing:border-box;">
-        <p><strong>🖥️ System Monitor</strong></p>
+        <p><strong>🖥️ Monitoring</strong></p>
         <p><strong>Status:</strong> <span class="status-online">● Online</span></p>
         <p><strong>Last Updated:</strong> ${new Date().toLocaleString()}</p>
         <div class="modal-body">
@@ -88,7 +88,7 @@ export async function renderMonitoring() {
         </div>
       </div>`;
 
-  safeModal('Monitor del Sistema', monitoringModalContent);
+  safeModal('System', monitoringModalContent);
 
     showToast && showToast('System information loaded', 'success');
   } catch (error) {

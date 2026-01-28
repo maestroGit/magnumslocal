@@ -71,7 +71,7 @@ export async function verifyQRProof(qrData) {
 
     if (response.status === 'no_blockchain_proof') {
       const raw = typeof loteData === 'object' ? JSON.stringify(loteData, null, 2) : String(loteData);
-      const msg = `⚠️ QR sin prueba blockchain (versión antigua)\n\nPayload:\n${raw}`;
+      const msg = `⚠️ QR NO check blockchain (versión antigua)\n\nPayload:\n${raw}`;
       if (typeof showModal === 'function') {
         showModal(`<pre style="white-space:pre-wrap">${msg}</pre>`, '⚠️ Sin prueba blockchain');
       } else {
@@ -122,25 +122,25 @@ export async function verifyQRProof(qrData) {
       const verifiedAtRaw = details.verifiedAt || verificationDetails?.verifiedAt || null;
       const verifiedAtDisplay = verifiedAtRaw ? new Date(verifiedAtRaw).toLocaleString() : verifiedAt;
 
-      const successText = `✅ **Autenticidad Verificada**\n\n` +
-            `🍷 **Lote:** ${loteIdDisplay}\n` +
-            `👤 **Propietario:** ${ownerShort}\n` +
-            `🔗 **Transacción:** ${detailTxId}\n` +
-            `⏰ **Verificado:** ${verifiedAtDisplay}\n\n` +
+      const successText = `✅ **Authenticity Verified**\n\n` +
+            `🍷 **Batch:** ${loteIdDisplay}\n` +
+            `👤 **Owner:** ${ownerShort}\n` +
+            `🔗 **Transfer:** ${detailTxId}\n` +
+            `⏰ **Verified:** ${verifiedAtDisplay}\n\n` +
             `Estado: ${respStatus} — ${respMessage}`;
 
       const successContentHtml = `
         <div class="modal-info">
           <table class="modal-table" style="width:100%; border-collapse:collapse;">
-            <tr><td style="width:28%; padding:6px; font-weight:600;">Estado</td><td style="padding:6px;">${respStatus} <small style="color:#666;">${respMessage}</small></td></tr>
-            <tr><td style="padding:6px; font-weight:600;">Transaction ID</td><td style="padding:6px;"><code id="txid-inline">${detailTxId}</code></td></tr>
-            <tr><td style="padding:6px; font-weight:600;">En mempool</td><td style="padding:6px;">${inMempool}</td></tr>
-            <tr><td style="padding:6px; font-weight:600;">Transacción existe</td><td style="padding:6px;">${txExists}</td></tr>
+            <tr><td style="width:28%; padding:6px; font-weight:600;">Status</td><td style="padding:6px;">${respStatus} <small style="color:#666;">${respMessage}</small></td></tr>
+            <tr><td style="padding:6px; font-weight:600;">Trans ID</td><td style="padding:6px;"><code id="txid-inline">${detailTxId}</code></td></tr>
+            <tr><td style="padding:6px; font-weight:600;">In Mempool</td><td style="padding:6px;">${inMempool}</td></tr>
+            <tr><td style="padding:6px; font-weight:600;">Transfer Exists</td><td style="padding:6px;">${txExists}</td></tr>
             <tr><td style="padding:6px; font-weight:600;">Owner Public Key</td><td style="padding:6px; word-break:break-all;">${ownerPub}</td></tr>
-            <tr><td style="padding:6px; font-weight:600;">Verificado en</td><td style="padding:6px;">${verifiedAtDisplay}</td></tr>
+            <tr><td style="padding:6px; font-weight:600;">Verified At</td><td style="padding:6px;">${verifiedAtDisplay}</td></tr>
           </table>
           <div style=\"margin-top:12px; display:flex; gap:8px; justify-content:flex-end;\"> 
-            <button class=\"dashboard-btn primary copy-txid-btn\" data-copy-txid=\"${detailTxId}\">Copiar TXID</button>
+            <button class=\"dashboard-btn primary copy-txid-btn\" data-copy-txid=\"${detailTxId}\">Copy TXID</button>
           </div>
           <hr style="margin-top:12px;" />
           <pre style="white-space:pre-wrap; margin:0">${successText}</pre>

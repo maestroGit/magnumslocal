@@ -65,9 +65,6 @@ export function initDomEvents() {
             <div class="modal-info">
               <p><strong>ℹ️ Empty MemPool</strong></p>
               <p>There are no pending transfers. Mining will not start.</p>
-            </div>
-            <div class="modal-body">
-              <p>Create a transfer (e.g., "Register" or "Consumed" bottle)  and try again.</p>
             </div>`;
           if (typeof window.safeModal === 'function') {
             window.safeModal('Mining blocked', emptyMsg);

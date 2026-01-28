@@ -17,9 +17,6 @@ export function renderTransactionsPool(transactionsPool) {
       <div class="modal-info">
         <p><strong>ℹ️ MemPool empty</strong></p>
         <p>No pending transfers in the memory pool.</p>
-      </div>
-      <div class="modal-body">
-        <p>All transfers have been processed.</p>
       </div>`;
   safeModal('MemPool', emptyPoolContent);
     return;

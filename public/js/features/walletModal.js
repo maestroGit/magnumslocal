@@ -29,7 +29,7 @@ export async function handleUTXOCheckClick() {
               </div>`).join('')}
           </div>
         </div>
-        <p><strong>Consulta:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Consult:</strong> ${new Date().toLocaleString()}</p>
       </div>`;
     showModal(utxoHtml, 'UNOPENED Set');
     setTimeout(() => {
@@ -41,10 +41,10 @@ export async function handleUTXOCheckClick() {
         container.dataset.bound = '1';
       }
     }, 50);
-    showToast(`UTXO Set consult: ${data.utxos.length} UTXOs`, 'success');
+    showToast(`UNOPENED Set consult: ${data.utxos.length} UTXOs`, 'success');
   } catch (err) {
     console.error('[walletModal] UTXO fetch error', err);
-    showModal('Error consult UTXO Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
+    showModal('Error consult UNOPENED Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
     showToast('Error connected', 'error');
   }
 }

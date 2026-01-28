@@ -63,7 +63,7 @@ export function showBlockTransactions(blockIndex) {
     safeModal(`Transfers - Block #${blockIndex}`, content);
   } catch (err) {
     console.error('showBlockTransactions error', err);
-    alert('Error showing transactions: ' + err.message);
+    alert('Error showing transfers: ' + err.message);
   }
 }
 
@@ -96,8 +96,8 @@ export function renderBlocks(blocks, options = {}) {
 
   const blocksModalContent = `
     <div class="modal-info">
-      <p><strong>Total blocks:</strong> ${blocks.length}</p>
-      <p><strong>Last block:</strong> ${
+      <p><strong>Total Blocks:</strong> ${blocks.length}</p>
+      <p><strong>Last Block:</strong> ${
         blocks.length > 0 ? new Date(blocks[blocks.length - 1].timestamp).toLocaleString() : 'N/A'
       }</p>
     </div>
@@ -108,7 +108,7 @@ export function renderBlocks(blocks, options = {}) {
             <strong>Block #${index}</strong><br>
             Hash: ${String(block.hash).substring(0,20)}...<br>
             Timestamp: ${new Date(block.timestamp).toLocaleString()}<br>
-            Transactions: ${Array.isArray(block.data) ? block.data.length : 0}
+            Transfers: ${Array.isArray(block.data) ? block.data.length : 0}
             <div class=\"tx-actions\">
               <button class=\"dashboard-btn secondary show-block-txs-btn\" type=\"button\" data-block-index=\"${index}\">Block</button>
             </div>
