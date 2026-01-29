@@ -20,6 +20,9 @@ export function initDomEvents() {
         const blocks = await fetchData('/blocks');
         if (blocks?.error) { showModal && showModal(`Error loading Blocks: ${blocks.error}`, 'Error'); return; }
         renderBlocks(blocks);
+        // Mostrar el contenedor de bloques si está oculto
+        const blocksContainer = document.getElementById('blocksContainer');
+        if (blocksContainer) blocksContainer.classList.remove('hidden');
       } catch (e) {
         console.error('[events] error fetching /blocks', e);
         showModal && showModal('Failed to load blocks.', 'Connection Error');

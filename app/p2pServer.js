@@ -213,35 +213,44 @@ class P2PServer {
           break;
         }
         case MESSAGE_TYPES.chain: {
-          // Guarda y registra la cadena de bloques completa recibida
-          console.log("⛓️  Recibida nueva cadena");
-          this.blockchain.replaceChain(data.chain);
+          (async () => {
+            // Guarda y registra la cadena de bloques completa recibida
+            console.log("[P2P][CHAIN] ⛓️  Recibida nueva cadena desde peer. Longitud:", Array.isArray(data.chain) ? data.chain.length : 'N/A');
+            console.log("[P2P][CHAIN] Estado mempool antes de replaceChain:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
 
-          // --- Limpiar la mempool de transacciones ya incluidas en la nueva cadena (robusto, estilo Bitcoin Core) ---
-          if (this.transactionsPool && Array.isArray(this.transactionsPool.transactions)) {
-            // Obtener todos los IDs de transacciones incluidas en la nueva cadena
-            const includedTxIds = new Set();
-            data.chain.forEach(block => {
-              if (Array.isArray(block.data)) {
-                block.data.forEach(tx => includedTxIds.add(tx.id));
-              }
-            });
-            const before = this.transactionsPool.transactions.length;
-            this.transactionsPool.transactions = this.transactionsPool.transactions.filter(tx => !includedTxIds.has(tx.id));
-            const after = this.transactionsPool.transactions.length;
-            console.log(`[SYNC][REPLACE_CHAIN] Mempool limpiada tras replaceChain: antes=${before}, después=${after}`);
-          }
+            // Log antes de reemplazar la cadena
+            const prevChainLength = this.blockchain.chain.length;
+            await this.blockchain.replaceChain(data.chain);
+            console.log(`[P2P][CHAIN] replaceChain ejecutado. Longitud anterior: ${prevChainLength}, nueva: ${this.blockchain.chain.length}`);
 
-          // --- Sincronizar utxoManager con la nueva cadena ---
-          if (typeof global.utxoManager !== 'undefined' && global.utxoManager) {
-            global.utxoManager.utxoSet = {};
-            this.blockchain.chain.forEach((block) => global.utxoManager.updateWithBlock(block));
-            console.log("[SYNC] utxoManager sincronizado tras replaceChain");
-          }
-          console.log(
-            "⛓️  Cadena local actual:",
-            JSON.stringify(this.blockchain.chain, null, 2)
-          );
+            // --- Limpiar la mempool de transacciones ya incluidas en la nueva cadena (robusto, estilo Bitcoin Core) ---
+            if (this.transactionsPool && Array.isArray(this.transactionsPool.transactions)) {
+              // Obtener todos los IDs de transacciones incluidas en la nueva cadena
+              const includedTxIds = new Set();
+              data.chain.forEach(block => {
+                if (Array.isArray(block.data)) {
+                  block.data.forEach(tx => includedTxIds.add(tx.id));
+                }
+              });
+              const before = this.transactionsPool.transactions.length;
+              const beforeIds = this.transactionsPool.transactions.map(tx => tx.id);
+              this.transactionsPool.transactions = this.transactionsPool.transactions.filter(tx => !includedTxIds.has(tx.id));
+              const after = this.transactionsPool.transactions.length;
+              const afterIds = this.transactionsPool.transactions.map(tx => tx.id);
+              console.log(`[P2P][CHAIN][SYNC][REPLACE_CHAIN] Mempool limpiada tras replaceChain: antes=${before} (${beforeIds}), después=${after} (${afterIds})`);
+            }
+
+            // --- Sincronizar utxoManager con la nueva cadena ---
+            if (typeof global.utxoManager !== 'undefined' && global.utxoManager) {
+              global.utxoManager.utxoSet = {};
+              this.blockchain.chain.forEach((block) => global.utxoManager.updateWithBlock(block));
+              console.log("[P2P][CHAIN][SYNC] utxoManager sincronizado tras replaceChain");
+            }
+            console.log(
+              "[P2P][CHAIN] Cadena local actual:",
+              JSON.stringify(this.blockchain.chain, null, 2)
+            );
+          })();
           break;
         }
         case MESSAGE_TYPES.transaction: {
