@@ -74,12 +74,12 @@ function renderUTXOList() {
   }
   utxoListEl.innerHTML = '';
   if (!utxosDisponibles.length && !utxosPendientes.length) {
-    utxoListEl.innerHTML = '<div style="color:#f7931a;margin-bottom:8px;">No hay UTXOs disponibles.</div>';
+    utxoListEl.innerHTML = '<div style="color:#f7931a;margin-bottom:8px;">No UNOPENED disponibles</div>';
     form.querySelector('button[type="submit"]').disabled = true;
     return;
   }
   // Renderizar UTXOs disponibles
-  utxosDisponibles.forEach((utxo, i) => {
+    utxosDisponibles.forEach((utxo, i) => {
     const cont = document.createElement('div');
     cont.className = 'utxo-row';
     cont.style = 'margin-bottom:6px;';
@@ -94,7 +94,7 @@ function renderUTXOList() {
     const label = document.createElement('label');
     label.htmlFor = radio.id;
     label.style = 'margin-left:8px;color:#fff;';
-    label.textContent = `UTXO #${i + 1}: ${utxo.amount} 💰 `;
+      label.innerHTML = `<img src="images/Icono-Magnum.png" alt="Magnum" style="height:3em;vertical-align:middle;margin-right:10px;">UNOPENED #${i + 1}: ${utxo.amount}  💰`;
     cont.appendChild(label);
     utxoListEl.appendChild(cont);
   });
@@ -114,7 +114,7 @@ function renderUTXOList() {
     const label = document.createElement('label');
     label.htmlFor = radio.id;
     label.style = 'margin-left:8px;color:#f3b26f;';
-    label.textContent = `UTXO: ${utxo.amount} 💰  (pending mining)`;
+      label.innerHTML = `UNOPENED: ${utxo.amount} <img src="images/Icono-Magnum.png" alt="Magnum" style="height:3em;vertical-align:baseline;margin-left:8px;margin-right:10px;"> 💰  (pending mining)`;
     cont.appendChild(label);
     utxoListEl.appendChild(cont);
   });
@@ -149,7 +149,7 @@ passInput.addEventListener('input', validateForm);
 form.addEventListener('submit', async function (e) {
   e.preventDefault();
   if (!selectedUTXO) {
-    statusEl.textContent = 'Selecciona un UTXO.';
+    statusEl.textContent = 'Selecciona un UNOP.';
     return;
   }
   if (!keystore || !keystore.publicKey) {

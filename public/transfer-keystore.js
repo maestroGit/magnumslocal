@@ -82,7 +82,7 @@ function renderUTXOList() {
     const label = document.createElement('label');
     label.htmlFor = radio.id;
     label.style = 'margin-left:8px;color:#fff;';
-    label.textContent = `UTXO #${i+1}: ${utxo.amount} 💰 `;
+    label.innerHTML = `<img src="images/Icono-Magnum.png" alt="Magnum" style="height:3em;vertical-align:middle;margin-right:10px;">UNOPENED #${i + 1}: ${utxo.amount}  💰`;
     cont.appendChild(label);
     utxoListEl.appendChild(cont);
   });
