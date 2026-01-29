@@ -43,13 +43,15 @@ export function bufferToBlock(buf) {
 export async function writeBlockToFile(filePath, block) {
   const MAX_SIZE = 128 * 1024 * 1024; // 128MB
   let currentPath = filePath;
+  // Asegura que el directorio existe antes de abrir el archivo
+  const dir = path.dirname(filePath);
+  await fs.promises.mkdir(dir, { recursive: true });
   let fd = await fs.promises.open(currentPath, 'a');
   let { size: offset } = await fd.stat();
   // Si el archivo supera el tamaño máximo, rotar
   if (offset >= MAX_SIZE) {
     await fd.close();
     // Extraer número de archivo actual
-    const dir = path.dirname(filePath);
     const base = path.basename(filePath);
     const match = base.match(/blk(\d{5})\.dat/);
     let num = match ? parseInt(match[1], 10) : 0;

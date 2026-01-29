@@ -62,6 +62,10 @@ class Miner {
       // Solo limpiar la mempool si el bloque fue minado correctamente
       if (block) {
         this.transactionsPool.clear();
+        // Notifica a todos los peers que limpien su mempool
+        if (this.p2pServer.broadcastClearTransactions) {
+          this.p2pServer.broadcastClearTransactions();
+        }
         console.log("🌐 Pool de transacciones limpiado y sincronizado con la red");
       } else {
         console.warn("[MINER] No se minó ningún bloque. La mempool NO se limpia.");

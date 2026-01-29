@@ -215,13 +215,20 @@ class P2PServer {
         case MESSAGE_TYPES.chain: {
           (async () => {
             // Guarda y registra la cadena de bloques completa recibida
-            console.log("[P2P][CHAIN] ⛓️  Recibida nueva cadena desde peer. Longitud:", Array.isArray(data.chain) ? data.chain.length : 'N/A');
+            const receivedLength = Array.isArray(data.chain) ? data.chain.length : 'N/A';
+            console.log(`[P2P][CHAIN] ⛓️  Recibida nueva cadena desde peer. Longitud: ${receivedLength}`);
+            if (receivedLength > 1) {
+              console.log(`[P2P][TRACE] ¡Cadena recibida con más de 1 bloque! Hash último bloque: ${data.chain[receivedLength-1]?.hash}`);
+            }
             console.log("[P2P][CHAIN] Estado mempool antes de replaceChain:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
 
             // Log antes de reemplazar la cadena
             const prevChainLength = this.blockchain.chain.length;
             await this.blockchain.replaceChain(data.chain);
             console.log(`[P2P][CHAIN] replaceChain ejecutado. Longitud anterior: ${prevChainLength}, nueva: ${this.blockchain.chain.length}`);
+            if (prevChainLength !== receivedLength) {
+              console.log(`[P2P][TRACE] replaceChain intentado con cadena de longitud ${receivedLength}. Resultado: ${this.blockchain.chain.length}`);
+            }
 
             // --- Limpiar la mempool de transacciones ya incluidas en la nueva cadena (robusto, estilo Bitcoin Core) ---
             if (this.transactionsPool && Array.isArray(this.transactionsPool.transactions)) {
@@ -309,8 +316,14 @@ class P2PServer {
     this.sockets.forEach((socket) => this.sendTransaction(socket, transaction));
   };
 
-  // broadcastClearTransactions Ese endpoint NO existe en tu código actual.
-  // Si quisieras implementarlo para tener un comando de emergencia, 
+  // Ordena a todos los peers limpiar el pool de transacciones
+  broadcastClearTransactions = () => {
+    this.sockets.forEach((socket) =>
+      socket.send(
+        JSON.stringify({ type: MESSAGE_TYPES.clear_transactions })
+      )
+    );
+  };
   // tendrías que agregarlo manualmente en server.js, por ejemplo después de los otros endpoints admin.
   // Sería como un comando administrativo de emergencia que ordena a todos los peers limpiar el pool de transacciones
   // ❌ Pero nadie lo llama (no hay endpoint ni código que lo use)
