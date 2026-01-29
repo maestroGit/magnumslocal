@@ -59,8 +59,13 @@ class Miner {
       // 🔄 Sincroniza la cadena en el servidor P2P
       this.p2pServer.syncChains();
 
-      // 🧹 Limpia el pool de transacciones
-      this.transactionsPool.clear();
+      // Solo limpiar la mempool si el bloque fue minado correctamente
+      if (block) {
+        this.transactionsPool.clear();
+        console.log("🌐 Pool de transacciones limpiado y sincronizado con la red");
+      } else {
+        console.warn("[MINER] No se minó ningún bloque. La mempool NO se limpia.");
+      }
 
       // 📢 Notifica a todos los nodos sobre la sincronización (ya incluido en syncChains)
       let logAddress = address || this.wallet.publicKey;
@@ -71,7 +76,6 @@ class Miner {
           logAddress = burnInput.address;
         }
       }
-      console.log("🌐 Pool de transacciones limpiado y sincronizado con la red");
       console.log(`⛏️ Minando bloque para dirección: ${logAddress}`);
       // ✅ Devuelve el bloque minado
       return block;

@@ -1964,9 +1964,16 @@ app.post("/hardware-address", (req, res, next) => {
  */
 app.post("/mine", (req, res) => {
   try {
+    // Guard: tp y tp.transactions deben existir y ser array
+    if (!tp || !Array.isArray(tp.transactions)) {
+      return res.status(500).json({
+        success: false,
+        error: "TransactionPool (tp) no está inicializada o no es válida.",
+        details: "tp o tp.transactions es undefined. Revisa la inicialización del TransactionPool."
+      });
+    }
     // Guard: no minar si la mempool está vacía
-    const pending =
-      tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0;
+    const pending = tp.transactions.length;
     if (pending === 0) {
       return res.status(409).json({
         success: false,
@@ -2029,11 +2036,11 @@ app.post("/mine", (req, res) => {
         success: false,
         message: "No se pudo minar el bloque",
         info: "Minería cancelada o sin transacciones válidas",
-        mempoolSize: tp.transactions.length,
+        mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0,
       });
     }
     console.log(`✅ Nuevo bloque minado: ${block.hash}`);
-    console.log(`📦 Transacciones incluidas: ${block.data.length}`);
+    console.log(`📦 Transacciones incluidas: ${Array.isArray(block.data) ? block.data.length : 0}`);
     // Sincronizar con otros nodos
     p2pServer.syncChains();
     // Actualizar el UTXOManager con el nuevo bloque minado
@@ -2046,11 +2053,11 @@ app.post("/mine", (req, res) => {
       block: {
         hash: block.hash,
         timestamp: block.timestamp,
-        transactionsCount: block.data.length,
+        transactionsCount: Array.isArray(block.data) ? block.data.length : 0,
         difficulty: block.difficulty,
         processTime: block.processTime,
       },
-      mempoolSize: tp.transactions.length, // Después del minado normal, debería ser 0
+      mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0, // Después del minado normal, debería ser 0
     });
   } catch (error) {
     console.error("Error mining block:", error);
