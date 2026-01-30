@@ -75,11 +75,13 @@ class P2PServer {
       });
     }
 
+    console.log("[P2P][DEBUG] Llamando a connectToPeers() con peersEnv:", this.peersEnv);
     this.connectToPeers();
   };
 
   // Conecta este nodo a cada peer definido en la configuración
   connectToPeers = () => {
+    console.log("[P2P][DEBUG] connectToPeers() ejecutado. peersEnv:", this.peersEnv);
     if (this.peersEnv.length === 0) {
       console.log("🔗 Sin peers configurados - Nodo Genesis.");
       return;
@@ -88,29 +90,29 @@ class P2PServer {
     this.peersEnv.forEach((peerUrl) => {
       const cleanPeer = peerUrl.trim();
       if (!cleanPeer) {
-        console.warn(`⚠️ Peer vacío ignorado: "${peerUrl}"`);
+        console.warn(`[P2P][DEBUG] Peer vacío ignorado: "${peerUrl}"`);
         return;
       }
-      console.log(`🔗 Intentando conectar a peer: ${cleanPeer}`);
+      console.log(`[P2P][DEBUG] Intentando conectar a peer: ${cleanPeer}`);
 
       try {
         const socket = new WebSocket(cleanPeer);
 
         socket.on("open", () => {
-          console.log(`✅ Conectado exitosamente a peer: ${cleanPeer}`);
+          console.log(`[P2P][DEBUG] ✅ Conectado exitosamente a peer: ${cleanPeer}`);
           this.connectSocket(socket);
         });
 
         // Log detallado en caso de error en el socket cliente
         socket.on("error", (error) => {
-          console.error("[ERROR][Cliente] Socket error al conectar a peer:", {
+          console.error("[P2P][DEBUG][ERROR][Cliente] Socket error al conectar a peer:", {
             peer: cleanPeer,
             message: error.message,
             stack: error.stack,
             socketReadyState: socket.readyState
           });
           console.log(
-            `🔄 Reintentando conexión a ${cleanPeer} en 5 segundos...`
+            `[P2P][DEBUG] 🔄 Reintentando conexión a ${cleanPeer} en 5 segundos...`
           );
           setTimeout(() => {
             this.connectToPeers();
@@ -119,7 +121,7 @@ class P2PServer {
 
         // Log detallado en caso de cierre de la conexión desde el cliente
         socket.on("close", (code, reason) => {
-          console.warn("[CLOSE][Cliente] Socket cerrado por el peer:", {
+          console.warn("[P2P][DEBUG][CLOSE][Cliente] Socket cerrado por el peer:", {
             peer: cleanPeer,
             code,
             reason: reason ? reason.toString() : undefined,
@@ -128,7 +130,7 @@ class P2PServer {
         });
       } catch (error) {
         console.warn(
-          `❌ Error creando WebSocket para ${cleanPeer}: ${error.message}`
+          `[P2P][DEBUG] ❌ Error creando WebSocket para ${cleanPeer}: ${error.message}`
         );
       }
     });
@@ -176,6 +178,7 @@ class P2PServer {
   // Maneja los mensajes entrantes desde un socket WebSocket
   messageHandler = (socket) => {
     socket.on("message", (message) => {
+      console.log("[P2P][DEBUG] Mensaje recibido en socket:", message);
       let data;
       try {
         data = JSON.parse(message);
@@ -194,6 +197,11 @@ class P2PServer {
             console.warn("⚠️ Handshake inválido:", data);
             break;
           }
+          // Log [whoami] antes de mostrar el handshake recibido
+          const HTTP_PORT = process.env.HTTP_PORT || 3001;
+          const NODE_ID = process.env.NODE_ID || "node_" + Math.round(Math.random() * 10000);
+          const httpUrl = `http://${getLocalExternalIP()}:${HTTP_PORT}`;
+          console.log(`[whoami] nodeId: ${NODE_ID} - ${httpUrl}`);
           const already = this.peers.find((p) => p.socket === socket);
           if (!already) {
             this.peers.push({
@@ -213,21 +221,42 @@ class P2PServer {
           break;
         }
         case MESSAGE_TYPES.chain: {
+          console.log("[DEBUG][HANDLER] Entrando en handler clear_transactions");
           (async () => {
             // Guarda y registra la cadena de bloques completa recibida
             const receivedLength = Array.isArray(data.chain) ? data.chain.length : 'N/A';
-            console.log(`[P2P][CHAIN] ⛓️  Recibida nueva cadena desde peer. Longitud: ${receivedLength}`);
+            console.log(`[P2P][CHAIN][RECEIVED] ⛓️  Recibida nueva cadena desde peer. Longitud: ${receivedLength}`);
             if (receivedLength > 1) {
-              console.log(`[P2P][TRACE] ¡Cadena recibida con más de 1 bloque! Hash último bloque: ${data.chain[receivedLength-1]?.hash}`);
+              console.log(`[P2P][CHAIN][RECEIVED] ¡Cadena recibida con más de 1 bloque! Hash último bloque: ${data.chain[receivedLength-1]?.hash}`);
             }
-            console.log("[P2P][CHAIN] Estado mempool antes de replaceChain:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
+            console.log("[P2P][CHAIN][RECEIVED] Estado mempool antes de replaceChain:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
+
+            // Rebroadcast: propaga la cadena a todos los peers excepto el origen
+            this.sockets.forEach((peerSocket) => {
+              if (peerSocket !== socket && peerSocket.readyState === 1) {
+                peerSocket.send(JSON.stringify({
+                  type: MESSAGE_TYPES.chain,
+                  chain: data.chain
+                }));
+                console.log("[REBROADCAST][CHAIN] Cadena reenviada a un peer");
+              }
+            });
 
             // Log antes de reemplazar la cadena
             const prevChainLength = this.blockchain.chain.length;
-            await this.blockchain.replaceChain(data.chain);
-            console.log(`[P2P][CHAIN] replaceChain ejecutado. Longitud anterior: ${prevChainLength}, nueva: ${this.blockchain.chain.length}`);
+            const prevChainHash = this.blockchain.chain[this.blockchain.chain.length-1]?.hash;
+            console.log(`[P2P][CHAIN][RECEIVED] replaceChain llamado. Longitud anterior: ${prevChainLength}, hash último bloque local: ${prevChainHash}`);
+            const result = await this.blockchain.replaceChain(data.chain);
+            const newChainLength = this.blockchain.chain.length;
+            const newChainHash = this.blockchain.chain[this.blockchain.chain.length-1]?.hash;
+            console.log(`[P2P][CHAIN][RESULT] replaceChain ejecutado. Longitud nueva: ${newChainLength}, hash último bloque local: ${newChainHash}`);
             if (prevChainLength !== receivedLength) {
-              console.log(`[P2P][TRACE] replaceChain intentado con cadena de longitud ${receivedLength}. Resultado: ${this.blockchain.chain.length}`);
+              console.log(`[P2P][CHAIN][TRACE] replaceChain intentado con cadena de longitud ${receivedLength}. Resultado: ${newChainLength}`);
+            }
+            if (result === false) {
+              console.warn('[P2P][CHAIN][REJECTED] La cadena recibida fue rechazada o no se pudo persistir en disco. El frontend no se actualizará.');
+            } else {
+              console.log('[P2P][CHAIN][ACCEPTED] La cadena recibida fue aceptada, reemplazada y persistida en disco. El frontend puede actualizarse.');
             }
 
             // --- Limpiar la mempool de transacciones ya incluidas en la nueva cadena (robusto, estilo Bitcoin Core) ---
@@ -254,7 +283,7 @@ class P2PServer {
               console.log("[P2P][CHAIN][SYNC] utxoManager sincronizado tras replaceChain");
             }
             console.log(
-              "[P2P][CHAIN] Cadena local actual:",
+              "[P2P][CHAIN][FINAL] Cadena local actual:",
               JSON.stringify(this.blockchain.chain, null, 2)
             );
           })();
@@ -271,13 +300,35 @@ class P2PServer {
           break;
         }
         case MESSAGE_TYPES.clear_transactions: {
-          // Log antes de limpiar la mempool
-          console.log("[SYNC][P2P] CLEAR_TRANSACTIONS recibido. Mempool antes de limpiar:",
-            Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
-          this.transactionsPool.clear();
-          // Log después de limpiar la mempool
-          console.log("[SYNC][P2P] Mempool después de limpiar:",
-            Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
+          (async () => {
+            // Log antes de limpiar la mempool
+            console.log("[SYNC][P2P] CLEAR_TRANSACTIONS recibido. Mempool antes de limpiar:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
+            // Log cadena en memoria antes de limpiar
+            console.log("[SYNC][P2P][CHAIN][MEMORIA][ANTES] Cadena en memoria:", JSON.stringify(this.blockchain.chain, null, 2));
+            // Log cadena en disco antes de limpiar
+            try {
+              const { readBlockSeq } = await import('../storage/blockFile.js');
+              const blocksEnDisco = [];
+              await readBlockSeq(this.blockchain.blockFilePath, (block) => blocksEnDisco.push(block));
+              console.log("[SYNC][P2P][CHAIN][DISCO][ANTES] Cadena en disco:", JSON.stringify(blocksEnDisco, null, 2));
+            } catch (err) {
+              console.error("[SYNC][P2P][CHAIN][DISCO][ANTES] Error leyendo cadena en disco:", err);
+            }
+            this.transactionsPool.clear();
+            // Log después de limpiar la mempool
+            console.log("[SYNC][P2P] Mempool después de limpiar:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
+            // Log cadena en memoria después de limpiar
+            console.log("[SYNC][P2P][CHAIN][MEMORIA][DESPUES] Cadena en memoria:", JSON.stringify(this.blockchain.chain, null, 2));
+            // Log cadena en disco después de limpiar
+            try {
+              const { readBlockSeq } = await import('../storage/blockFile.js');
+              const blocksEnDisco = [];
+              await readBlockSeq(this.blockchain.blockFilePath, (block) => blocksEnDisco.push(block));
+              console.log("[SYNC][P2P][CHAIN][DISCO][DESPUES] Cadena en disco:", JSON.stringify(blocksEnDisco, null, 2));
+            } catch (err) {
+              console.error("[SYNC][P2P][CHAIN][DISCO][DESPUES] Error leyendo cadena en disco:", err);
+            }
+          })();
           break;
         }
         default:

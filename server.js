@@ -1,3 +1,38 @@
+// ...existing code...
+
+// --- ENDPOINT PARA VER LOGS DEL PROCESO EN EL NAVEGADOR ---
+// (Debe ir después de la inicialización de 'app')
+// Hook de logs y endpoint /logs
+const LOG_HISTORY_SIZE = 500;
+const logHistory = [];
+const origConsoleLog = console.log;
+const origConsoleWarn = console.warn;
+const origConsoleError = console.error;
+function pushLog(type, args) {
+  const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a))).join(' ');
+  const entry = { ts: new Date().toISOString(), type, msg };
+  logHistory.push(entry);
+  if (logHistory.length > LOG_HISTORY_SIZE) logHistory.shift();
+}
+console.log = function(...args) { pushLog('log', args); origConsoleLog.apply(console, args); };
+console.warn = function(...args) { pushLog('warn', args); origConsoleWarn.apply(console, args); };
+console.error = function(...args) { pushLog('error', args); origConsoleError.apply(console, args); };
+
+// Este endpoint debe ir tras la inicialización de 'app'
+setImmediate(() => {
+  if (typeof app !== 'undefined') {
+    app.get('/logs', (req, res) => {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.write('<html><head><title>Logs magnumslocal</title><style>body{font-family:monospace;background:#222;color:#eee;} .log{margin-bottom:2px;} .log-warn{color:#ff0;} .log-error{color:#f66;} .log-log{color:#8f8;} .ts{color:#888;}</style></head><body>');
+      res.write('<h2>Logs recientes (magnumslocal)</h2>');
+      logHistory.forEach(l => {
+        res.write(`<div class="log log-${l.type}"><span class="ts">[${l.ts}]</span> <span>${l.type.toUpperCase()}</span>: <span>${l.msg.replace(/\n/g,'<br>')}</span></div>`);
+      });
+      res.write('</body></html>');
+      res.end();
+    });
+  }
+});
 // ¡IMPORTANTE! Cargar dotenv ANTES de cualquier otro import
 import dotenv from "dotenv";
 dotenv.config();
@@ -1963,110 +1998,13 @@ app.post("/hardware-address", (req, res, next) => {
  *   - El frontend puede después consultar GET /blocks para obtener el bloque completo y renderizarlo.
  */
 app.post("/mine", (req, res) => {
-  try {
-    // Guard: tp y tp.transactions deben existir y ser array
-    if (!tp || !Array.isArray(tp.transactions)) {
-      return res.status(500).json({
-        success: false,
-        error: "TransactionPool (tp) no está inicializada o no es válida.",
-        details: "tp o tp.transactions es undefined. Revisa la inicialización del TransactionPool."
-      });
-    }
-    // Guard: no minar si la mempool está vacía
-    const pending = tp.transactions.length;
-    if (pending === 0) {
-      return res.status(409).json({
-        success: false,
-        error:
-          "No hay transacciones pendientes en la mempool. Minado cancelado.",
-        mempoolSize: 0,
-      });
-    }
-    console.log("🔄 Iniciando proceso de minado...");
-    console.log(`📋 Transacciones en mempool: ${tp.transactions.length}`);
-    // Mostrar todas las transacciones en la mempool (si las hay)
-    if (tp.transactions.length > 0) {
-      console.log("[MINER] Transacciones en mempool:");
-      tp.transactions.forEach((tx, idx) => {
-        console.log(`[MINER] tx #${idx}:`, JSON.stringify(tx, null, 2));
-      });
-    }
-    // Antes de minar, mostrar el estado de la wallet global
-    console.log("[MINER] Estado de global.wallet:", global.wallet);
-    if (!global.wallet) {
-      console.error("[MINER] Error: global.wallet no está inicializada");
-      return res.status(500).json({
-        success: false,
-        error: "global.wallet no está inicializada. No se puede minar.",
-        details: "Asegúrate de que la wallet esté cargada antes de minar.",
-      });
-    }
-    if (!global.wallet.keyPair) {
-      console.error(
-        "[MINER] Error: global.wallet.keyPair no está inicializada"
-      );
-      return res.status(500).json({
-        success: false,
-        error: "global.wallet.keyPair no está inicializada. No se puede minar.",
-        details: "Asegúrate de que la wallet tenga keyPair antes de minar.",
-      });
-    }
-    // Usar el miner para procesar transacciones pendientes
-    let block;
+  (async () => {
     try {
-      block = miner.mine();
-    } catch (err) {
-      console.error("[MINER] Error interno en miner.mine():", err);
-      return res.status(500).json({
-        success: false,
-        error: "Error interno en miner.mine()",
-        details: err.message,
-      });
+      // ...existing code...
+    } catch (error) {
+      // ...existing code...
     }
-    // Mostrar las transacciones que se intentan minar
-    if (block && block.data && block.data.length > 0) {
-      console.log("[MINER] Transacciones minadas en el bloque:");
-      block.data.forEach((tx, idx) => {
-        console.log(`[MINER] tx #${idx}:`, JSON.stringify(tx, null, 2));
-      });
-    }
-    // ✅ Verificar que el bloque se minó correctamente (incluye coinbase cuando mempool vacío)
-    if (!block) {
-      return res.json({
-        success: false,
-        message: "No se pudo minar el bloque",
-        info: "Minería cancelada o sin transacciones válidas",
-        mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0,
-      });
-    }
-    console.log(`✅ Nuevo bloque minado: ${block.hash}`);
-    console.log(`📦 Transacciones incluidas: ${Array.isArray(block.data) ? block.data.length : 0}`);
-    // Sincronizar con otros nodos
-    p2pServer.syncChains();
-    // Actualizar el UTXOManager con el nuevo bloque minado
-    if (block) {
-      utxoManager.updateWithBlock(block);
-    }
-    res.json({
-      success: true,
-      message: "Bloque minado exitosamente",
-      block: {
-        hash: block.hash,
-        timestamp: block.timestamp,
-        transactionsCount: Array.isArray(block.data) ? block.data.length : 0,
-        difficulty: block.difficulty,
-        processTime: block.processTime,
-      },
-      mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0, // Después del minado normal, debería ser 0
-    });
-  } catch (error) {
-    console.error("Error mining block:", error);
-    res.status(500).json({
-      success: false,
-      error: "Error mining block",
-      details: error.message,
-    });
-  }
+  })();
 });
 
 // Ruta para minar las transacciones
@@ -2945,3 +2883,4 @@ process.on('SIGINT', async () => {
   await p2pServer.closeUPnP();
   process.exit(0);
 });
+// <--- FIN DEL ARCHIVO, cierre de módulo principal

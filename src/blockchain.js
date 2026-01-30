@@ -152,27 +152,38 @@ class Blockchain {
   // Reemplaza la cadena actual por una nueva si es más larga y válida, y reconstruye el UTXO Set y el archivo binario
   async replaceChain(newChain) {
     await this.initialize();
-    console.log("Received chain length:", newChain.length);
-    console.log("Current chain length:", this.chain.length);
+    console.log("[REPLACECHAIN][DEBUG] Received chain length:", newChain.length);
+    console.log("[REPLACECHAIN][DEBUG] Current chain length:", this.chain.length);
     if (newChain.length <= this.chain.length) {
-      console.log("Received chain is not longer than the current chain.");
-      return;
+      console.log("[REPLACECHAIN][INFO] Received chain is not longer than the current chain.");
+      return false;
     }
     if (!this.isValidChain(newChain)) {
-      console.log("The received chain is not valid.");
-      return;
+      console.log("[REPLACECHAIN][WARN] The received chain is not valid.");
+      return false;
     }
-    console.log("Replacing the current chain with the new chain.");
+    console.log("[REPLACECHAIN][INFO] Replacing the current chain with the new chain (memoria)");
     this.chain = newChain;
     this.utxoSet = [];
-    this.chain.forEach((block) => this.updateUTXOSet(block));
+    this.chain.forEach((block, idx) => {
+      console.log(`[REPLACECHAIN][UTXO] Actualizando UTXO con bloque #${idx} (hash: ${block.hash})`);
+      this.updateUTXOSet(block);
+    });
     // Sobrescribe el archivo binario con la nueva cadena
-    const fs = await import('fs');
-    await fs.promises.writeFile(this.blockFilePath, Buffer.alloc(0)); // Truncar
-    for (const block of this.chain) {
-      await writeBlockToFile(this.blockFilePath, block);
+    try {
+      const fs = await import('fs');
+      console.log('[REPLACECHAIN][DISK] Truncando archivo de bloques:', this.blockFilePath);
+      await fs.promises.writeFile(this.blockFilePath, Buffer.alloc(0)); // Truncar
+      for (const [idx, block] of this.chain.entries()) {
+        await writeBlockToFile(this.blockFilePath, block);
+        console.log(`[REPLACECHAIN][DISK] Bloque #${idx} persistido. Hash: ${block.hash}`);
+      }
+      console.log("[REPLACECHAIN][SUCCESS] Chain replaced and persisted successfully. Memoria y disco alineados.");
+      return true;
+    } catch (err) {
+      console.error('[REPLACECHAIN][ERROR] Error al persistir la cadena en disco:', err);
+      return false;
     }
-    console.log("Chain replaced and persisted successfully.");
   }
 }
 

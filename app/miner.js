@@ -24,7 +24,7 @@ class Miner {
    *
    * Esto permite flexibilidad: puedes minar localmente o desde el frontend especificando la dirección.
    */
-  mine(address) {
+  async mine(address) {
     try {
       // 🔍 Al minar un bloque utilizamos transacciones válidas; si no hay, permitimos bloque solo con recompensa
       const validTransactions = this.transactionsPool.validTransactions();
@@ -55,15 +55,22 @@ class Miner {
       }
 
       // 🧱 Crea un bloque con las transacciones válidas
-      const block = this.blockchain.addBlock(txs);
+      console.log('[MINER][DEBUG] Llamando a addBlock (persistencia y memoria)');
+      const block = await this.blockchain.addBlock(txs);
+      console.log('[MINER][DEBUG] Bloque minado y añadido. Hash:', block && block.hash);
+
       // 🔄 Sincroniza la cadena en el servidor P2P
-      this.p2pServer.syncChains();
+      if (this.p2pServer && typeof this.p2pServer.syncChains === 'function') {
+        console.log('[MINER][DEBUG] Sincronizando cadenas vía P2P...');
+        this.p2pServer.syncChains();
+      }
 
       // Solo limpiar la mempool si el bloque fue minado correctamente
       if (block) {
         this.transactionsPool.clear();
         // Notifica a todos los peers que limpien su mempool
-        if (this.p2pServer.broadcastClearTransactions) {
+        console.log("[P2P][SEND] Propagando cadena a peers tras minado. Longitud:", this.blockchain.chain.length);
+        if (this.p2pServer && typeof this.p2pServer.broadcastClearTransactions === 'function') {
           this.p2pServer.broadcastClearTransactions();
         }
         console.log("🌐 Pool de transacciones limpiado y sincronizado con la red");
@@ -72,7 +79,7 @@ class Miner {
       }
 
       // 📢 Notifica a todos los nodos sobre la sincronización (ya incluido en syncChains)
-      let logAddress = address || this.wallet.publicKey;
+      let logAddress = address || (this.wallet && this.wallet.publicKey);
       if (onlyBurnTx) {
         // Mostrar el publicKey del input de la transacción de burn
         const burnInput = txs[0].inputs && txs[0].inputs[0];
