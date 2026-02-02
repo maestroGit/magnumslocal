@@ -31,13 +31,15 @@ syncUTXOManagerWithBlockchain();
 
 **Problema:** Aunque define la función `syncUTXOManagerWithBlockchain()` y la llama al final, hay una llamada inicial a `bc.chain.forEach()` **sin esperar a que `bc.initialize()` complete**.
 
-#### ❌ magnumsmaster (CORRECTO - con mejora)
+#### ✅ magnumsmaster (CORREGIDO - matching magnumslocal + más robusto)
 ```javascript
-// Líneas 327-340
+// Líneas 324-338 (DESPUÉS DEL FIX)
 bc.initialize().then((result) => {
   console.log('[INIT][Blockchain] Resultado de bc.initialize():', result);
   console.log('[INIT][Blockchain] bc.chain tiene', bc.chain.length, 'bloques después de initialize()');
-  // ✅ AQUÍ se sincroniza DESPUÉS de que bc.initialize() termine
+  // ✅ PRIMERO: Sincronizar utxoManager con los bloques cargados (como hace magnumslocal)
+  bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
+  // ✅ LUEGO: Full sync para asegurar coherencia
   syncUTXOManagerWithBlockchain();
 }).catch((err) => {
   console.error('[INIT][Blockchain] Error en bc.initialize():', err);
@@ -46,10 +48,12 @@ bc.initialize().then((result) => {
 });
 ```
 
-**Ventaja:** 
+**Ventajas (después del fix):** 
 - La sincronización se realiza **dentro del callback `.then()`**, asegurando que `bc.chain` está completamente cargado
 - Incluye manejo de errores con fallback
-- Evita la carrera (race condition) de 55ms que se documentó en UTXO-BALANCE.md
+- Ahora también incluye **`bc.chain.forEach()` para sincronización rápida** (como magnumslocal)
+- Luego hace **full rebuild** con `syncUTXOManagerWithBlockchain()` para máxima seguridad
+- Esto es el "lo mejor de ambos mundos": timing ordenado + doble sincronización
 
 ---
 
@@ -114,7 +118,9 @@ bc.initialize() (async)
 
 | Característica | magnumslocal | magnumsmaster |
 |---|---|---|
-| **Inicialización ordenada** | ❌ Potencial race condition | ✅ Correcto |
+| **Inicialización ordenada** | ❌ Potencial race condition | ✅ Correcto (FIJO) |
+| **Sincronización rápida (forEach)** | ✅ Presente | ✅ Presente (AGREGADO) |
+| **Sincronización completa** | ✅ Presente | ✅ Presente |
 | **UTXOManager.syncWithBlockchain()** | ✅ Definido | ✅ Definido |
 | **Endpoints /utxo-balance/global** | ✅ Idéntico | ✅ Idéntico |
 | **Endpoints /utxo-balance/:address** | ✅ Idéntico | ✅ Idéntico |
@@ -125,32 +131,31 @@ bc.initialize() (async)
 
 ## 🎯 Recomendaciones
 
-### Para magnumslocal (mejora sugerida)
+### ✅ FIX Aplicado a magnumsmaster (Commit: 9df6aff)
 
-Cambiar la inicialización de:
-```javascript
-bc.initialize().then((result) => { ... }).catch(...);
-bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
-syncUTXOManagerWithBlockchain();
-```
+Se agregó la línea faltante `bc.chain.forEach((block) => utxoManager.updateWithBlock(block))` dentro del callback de `bc.initialize().then()`.
 
-A:
-```javascript
+**Cambio:**
+```diff
 bc.initialize().then((result) => {
   console.log('[INIT][Blockchain] Resultado de bc.initialize():', result);
-  // ✅ Sincronizar DENTRO del callback
++ bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
   syncUTXOManagerWithBlockchain();
-}).catch((err) => {
-  console.error('[INIT][Blockchain] Error en bc.initialize():', err);
-  // Fallback: sincronizar incluso con error
-  syncUTXOManagerWithBlockchain();
-});
+}).catch(...);
 ```
 
-### Estado Actual
+**Impacto:**
+- ✅ Sincronización dual: forEach rápido + full rebuild
+- ✅ Timing correcto: ejecuta DENTRO del callback (no race condition)
+- ✅ Redundancia defensiva: dos capas de sincronización
+- ✅ Alinea magnumsmaster con el patrón que funciona en magnumslocal
 
-✅ **magnumsmaster** implementa correctamente la sincronización ordenada
-✅ **magnumslocal** necesita ajuste menor para evitar race conditions
+### Estado Actual (POST-FIX)
+
+✅ **magnumsmaster** implementa la sincronización más robusta: forEach + full rebuild dentro del callback
+✅ **magnumslocal** tiene forEach + full rebuild pero sin esperar el callback (minor issue)
+
+**Resultado esperado:** Los endpoints de UTXO en magnumsmaster deben devolver UTXOs correctos en "Opened" e "History"
 
 ---
 
