@@ -1,4 +1,4 @@
-# 🍷 Large Magnum Master - Blockchain Wine System
+# MagnumLocal - Blockchain Wine System
 
 > **Sistema blockchain completo para trazabilidad de vinos con red P2P, minado distribuido, gestión UTXO avanzada y soporte UPnP automático.** 
 

@@ -17,7 +17,7 @@ export function renderBalance(balanceData) {
         <li><strong>Date:</strong> ${new Date().toLocaleString()}</li>
       </ul>
     </div>`;
-  safeModal('Balance Wallet', balanceModalContent);
+  safeModal('Balance', balanceModalContent);
 }
 
 export function renderPublicKey(publicKey) {

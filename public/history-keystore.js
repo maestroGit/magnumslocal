@@ -24,7 +24,7 @@ if (!pubKey) {
   if (statusEl) {
     statusEl.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span>No wallet imported. Please import your keystore again.</span>
+      <span>No wallet detected. Import to continue</span>
       <a class="keystore-btn primary" href="import-keystore.html">Import</a>
     </div>`;
   }
@@ -36,7 +36,7 @@ if (!pubKey) {
 
 async function loadHistory() {
   try {
-    statusEl.textContent = 'Cargando historial...';
+    statusEl.textContent = 'Loading history...';
     btnRefresh.disabled = true;
     const hist = await fetchAddressHistory(pubKey);
     allHistory = Array.isArray(hist) ? hist : [];
@@ -44,7 +44,7 @@ async function loadHistory() {
     applyFiltersAndRender();
     statusEl.textContent = '';
   } catch (e) {
-    statusEl.textContent = 'Error cargando historial: ' + (e.message || e);
+    statusEl.textContent = 'Error loading history: ' + (e.message || e);
   } finally {
     btnRefresh.disabled = false;
   }
@@ -107,7 +107,7 @@ function renderPage() {
     const empty = document.createElement('div');
     empty.className = 'muted';
     empty.style.margin = '12px 0';
-    empty.textContent = 'No hay transacciones para los filtros actuales.';
+    empty.textContent = 'No transfers for the current filters.';
     listEl.appendChild(empty);
   }
   btnLoadMore.disabled = end >= filtered.length;
@@ -121,41 +121,66 @@ function renderItem(item) {
   const ts = item.blockTimestamp ? new Date(item.blockTimestamp) : (item.timestamp ? new Date(item.timestamp) : null);
   const row = document.createElement('div');
   row.className = 'history-item';
+  row.style.boxSizing = 'border-box';
+  
   // status badge and type chip in a flex row
   const labels = document.createElement('div');
   labels.className = 'history-labels';
-  labels.style.display = 'flex';
-  labels.style.flexDirection = 'row';
-  labels.style.gap = '6px';
   const status = document.createElement('span');
   status.className = 'badge ' + (item.status === 'pending' ? 'pending' : 'mined');
   status.textContent = item.status === 'pending' ? 'Pendiente' : 'Mine';
   const chip = document.createElement('span');
   chip.className = 'chip';
+  // Agregar clase específica según el tipo de transacción para diferenciación visual
+  const typeClass = (item.type || '').toLowerCase();
+  if (['recibido', 'received'].includes(typeClass)) chip.classList.add('received');
+  else if (['transferida', 'transfer', 'enviado'].includes(typeClass)) chip.classList.add('transfer');
+  else if (['quemada', 'opened'].includes(typeClass)) chip.classList.add('opened');
+  else if (['devuelta', 'returned'].includes(typeClass)) chip.classList.add('devuelta');
   chip.textContent = mapType(item.type);
   labels.appendChild(status);
   labels.appendChild(chip);
   row.appendChild(labels);
-  // main content
+  
+  // main content - COMPACT
   const main = document.createElement('div');
   main.className = 'history-main';
-  main.style.display = 'flex';
-  main.style.flexDirection = 'column';
-  main.style.alignItems = 'center';
-  main.style.justifyContent = 'center';
   const top = document.createElement('div');
   top.style.textAlign = 'center';
-  top.innerHTML = `<span class="amount">${item.amount}</span> <span class="muted">🪙</span>`;
+  top.style.minWidth = '0';
+  const amountSpan = document.createElement('span');
+  amountSpan.className = 'amount';
+  amountSpan.textContent = item.amount;
+  const mojiSpan = document.createElement('span');
+  mojiSpan.className = 'muted';
+  mojiSpan.textContent = '💰';
+  top.appendChild(amountSpan);
+  top.appendChild(mojiSpan);
+  
   const meta = document.createElement('div');
   meta.className = 'history-meta';
-  meta.style.textAlign = 'center';
-  // (definido arriba)
+  meta.style.overflow = 'hidden';
   const who = formatCounterparty(item);
-  meta.innerHTML = `
-  <span>${who}</span>
-  <span class="txid">${(item.txId)}</span>
-  <span>${ts ? ts.toLocaleString() : ''}</span>
-  `;
+  
+  const whoSpan = document.createElement('span');
+  whoSpan.className = 'who'; // Agregar clase para aplicar estilo consistente
+  whoSpan.style.wordBreak = 'break-all';
+  whoSpan.style.lineHeight = '1.2';
+  whoSpan.textContent = who;
+  
+  const txidSpan = document.createElement('span');
+  txidSpan.className = 'txid';
+  txidSpan.style.wordBreak = 'break-all';
+  txidSpan.style.lineHeight = '1.2';
+  txidSpan.textContent = item.txId || '';
+  
+  const dateSpan = document.createElement('span');
+  dateSpan.style.lineHeight = '1.2';
+  dateSpan.textContent = ts ? ts.toLocaleString() : '';
+  
+  meta.appendChild(whoSpan);
+  meta.appendChild(txidSpan);
+  meta.appendChild(dateSpan);
   main.appendChild(top);
   main.appendChild(meta);
   row.appendChild(main);
@@ -188,7 +213,7 @@ function formatCounterparty(item) {
   if ((item.type === 'transferida' || item.type === 'devuelta' || item.type === 'quemada') && item.destino) {
     return '🚀' + shortId(item.destino);
   }
-  if (item.to && item.to.length) return 'a ' + shortId(item.to[0]);
+  if (item.to && item.to.length) return '🍾' + shortId(item.to[0]);
   return '';
 }
 

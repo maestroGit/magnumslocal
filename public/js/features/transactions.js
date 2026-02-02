@@ -44,12 +44,12 @@ export const submitTransaction = async (transactionData) => {
             </div>
             <div class="modal-details">
               <details>
-                <summary>📋 View complete details</summary>
+                <summary>Details</summary>
                 <pre class="json-display">${JSON.stringify(response.transaction, null, 2)}</pre>
               </details>
               <div style="margin-top: 15px;">
-                <p><strong>📅 Fecha:</strong> ${new Date(response.transaction.timestamp).toLocaleString()}</p>
-                <p><strong>💰 Cantidad:</strong> ${response.transaction.amount}</p>
+                <p><strong>📅 Date:</strong> ${new Date(response.transaction.timestamp).toLocaleString()}</p>
+                <p><strong>💰 Amount:</strong> ${response.transaction.amount}</p>
               </div>
             </div>`;
           safeModal('Transfer ✅Successful', transactionResultContent);

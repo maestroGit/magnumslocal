@@ -43,34 +43,7 @@ class Block {
   }
 
 
-  // Método estático no es necesario instanciar la clase para usarlo
-  // Bloque génesis que lo creamos para iniciar la cadena de bloques manuealmente
-  // static getGenesisBlock() {
-  //   static getGenesisBlock() {
-  //     // constantes para las propieda que permacen inmutables en el bloque génesis
-  //   const GENESIS_TIMESTAMP = 1738879340000; // inicio procesamiento en tiempo. Math.floor(new Date().getTime() / 1000) * 1000, // timestampDate.now(),
-  //   const GENESIS_PREVIOUS_HASH = "0000000000000000000000000000000000000000000000000000000000000000";
-  //   //"Genesis".repeat(10);
-  //   const GENESIS_HASH = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"; // BTC HASH GENESIS "8".repeat(64); previus hash
-  //   const genesisData = [];
-  //   const genesisBody = Buffer.from(JSON.stringify(genesisData)).toString(
-  //     "hex"
-  //   );
-  //   const GENESIS_NONCE = 0; // En el contexto del bloque génesis, el this.nonce no tiene que ser único como en el proceso de minería normal. El bloque génesis es un bloque especial creado manualmente para iniciar la cadena de bloques, y por lo tanto, su nonce se puede fijar a un valor predeterminado (generalmente 0).
-  //   const GENESIS_DIFFICULTY = 0;
-  //   const GENESIS_PROCESS_TIME = 0;
 
-  //   return new this(
-  //     GENESIS_TIMESTAMP, // timestamp fijo para el bloque génesis //Math.floor(new Date().getTime() / 1000) * 1000, // timestamp
-  //     GENESIS_PREVIOUS_HASH, // previous hash
-  //     GENESIS_HASH, // hash
-  //     genesisData, // data
-  //     genesisBody,
-  //     GENESIS_NONCE, // nonce inicializado a 0 para el bloque génesis
-  //     GENESIS_DIFFICULTY, // difficulty
-  //     GENESIS_PROCESS_TIME // process time
-  //   );
-  // }
 
 
 // Método estático: no requiere instanciar la clase para obtener el bloque génesis
@@ -85,6 +58,9 @@ static getGenesisBlock() {
   const GENESIS_HASH = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
 
   // 📦 Clave pública FIJA para el bloque génesis (consenso entre nodos)
+  // Si cada nodo genera el bloque génesis usando la publicKey de su propio wallet_default.json, el contenido del bloque génesis será diferente en cada nodo (diferente dirección de destino en el output).
+  // Como el bloque génesis es el primer bloque de la cadena, cualquier diferencia (aunque sea solo la publicKey) hace que el hash del bloque génesis sea distinto.
+  // Cuando un nodo recibe una cadena de otro nodo, compara el bloque génesis con el suyo. Si no son idénticos, rechaza la cadena por no coincidir el bloque génesis.
   const recipientPublicKey = "04b2201e73f77a7fb6a1bbd401cb1ab128bb5128d69ee5f33c5e6657e4609c4ffb17d2abc868e3d3073f2c64d0e14d943e878b9c58d008fc37c441af8db5f45adb";
 
   // 📦 Datos del bloque génesis: aquí puedes incluir asignaciones iniciales de saldo

@@ -14,7 +14,7 @@
 .utxo-balance {
     color: #f7931a;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 20px;
 }
 .utxo-result-modal {
     text-align: left;
@@ -23,7 +23,7 @@
 .utxo-card {
     padding: 10px;
     border-radius: 8px;
-    background: #28A745;
+    background: #6B0F0F;
     color: #fff;
     display: flex;
     justify-content: space-between;

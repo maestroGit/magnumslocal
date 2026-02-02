@@ -1,12 +1,12 @@
 // UTXO Set lookup for Winery card (single definition at end)
 export async function handleUTXOCheckClick() {
-  showToast('Consult UTXO Set (wallet global)...', 'info');
+  showToast('Consult UNOPENED (wallet global)...', 'info');
   try {
     const res = await fetch(`${apiBaseUrl}/utxo-balance/global`);
     const data = await res.json();
     if (data.error) {
-      showModal(`Error: ${data.error}`, 'Error UTXO');
-      showToast('Error consult UTXO', 'error');
+      showModal(`Error: ${data.error}`, 'Error UNOPENED');
+      showToast('Error consult UNOPENED', 'error');
       return;
     }
     const utxoHtml = `
@@ -17,21 +17,21 @@ export async function handleUTXOCheckClick() {
               <div class='utxo-card'>
                 <div class='utxo-card-details'>
                   <div class='utxo-card-address'>Address: ${u.address}</div>
-                  <div class='utxo-card-amount'>Amount: ${u.amount}</div>
+                  <div class='utxo-card-amount'>💰 ${u.amount}</div>
                   <div class='utxo-card-meta'>txId: ${u.txId} • outputIndex: ${u.outputIndex}</div>
                 </div>
                 <div class='utxo-card-actions'>
-                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}' style="width:38px;height:90px;display:flex;align-items:center;justify-content:center;padding:0;"><img src="images/Icono-Magnum.png" alt="Magnum" style="height:76px;width:auto;display:block;"></button>
+                  <button class='dashboard-btn secondary utxo-copy-btn' data-txid='${u.txId}' style="width:38px;height:90px;display:flex;align-items:center;justify-content:center;padding:0;"><img src="images/Icono-Magnum.png" alt="Magnum" style="height:96px;width:auto;display:block;"></button>
                 </div>
               </div>`).join('')}
           </div>
         </div>
         <p><strong>Balance:</strong> <span class="utxo-balance">${data.balance}</span></p>
-        <p><strong>Available:</strong> ${data.utxos.length}</p>
+        <p><strong>Available:</strong> <span class="utxo-balance">${data.utxos.length}</span></p>
         <p><strong>Address:</strong><br/><span style="word-break:break-all;font-family:monospace;">${data.address}</span></p>
         <p><strong>Consult:</strong> ${new Date().toLocaleString()}</p>
       </div>`;
-    showModal(utxoHtml, 'UNOPENED Set');
+    showModal(utxoHtml, 'UNOPENED');
     setTimeout(() => {
       const container = document.getElementById('utxoListContainer');
       if (container && !container.dataset.bound) {
@@ -41,10 +41,10 @@ export async function handleUTXOCheckClick() {
         container.dataset.bound = '1';
       }
     }, 50);
-    showToast(`UNOPENED Set consult: ${data.utxos.length} UTXOs`, 'success');
+    showToast(`UNOPENED consult: ${data.utxos.length} Magnums`, 'success');
   } catch (err) {
     console.error('[walletModal] UTXO fetch error', err);
-    showModal('Error consult UNOPENED Set:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
+    showModal('Error consult UNOPENED:<br><pre>' + (err?.message || err) + '</pre>', 'Error de Conexión');
     showToast('Error connected', 'error');
   }
 }

@@ -5,7 +5,7 @@ import * as secp from './vendor/secp256k1.mjs';
 
 // Motivos y sufijos centralizados
 const BURN_MOTIVES = {
-  burn: { label: 'Burn (Genérico)', suffix: 'BURN' },
+  burn: { label: 'Select Cellar', suffix: 'BURN' },
   pierola: { label: 'Fernández de Piérola', suffix: 'PIEROLA' },
   traslascuestas: { label: 'Traslascuestas', suffix: 'TRASLASCUESTAS' },
   chateaubordeaux: { label: 'Château Bordeaux', suffix: 'CHATEAUBORDEAUX' },
@@ -13,8 +13,11 @@ const BURN_MOTIVES = {
 
 const statusEl = document.getElementById('burnStatus');
 const form = document.getElementById('burnForm');
-const passInput = document.getElementById('burnPassphrase');
 const reasonSelect = document.getElementById('burnReason');
+const passphraseModal = document.getElementById('passphraseModal');
+const modalPassphrase = document.getElementById('modalPassphrase');
+const modalConfirm = document.getElementById('modalConfirm');
+const modalCancel = document.getElementById('modalCancel');
 
 // Poblar el select de motivos de forma robusta
 if (reasonSelect) {
@@ -42,7 +45,7 @@ if (!pubKey || !keystore) {
   if (statusEl) {
     statusEl.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <span>No wallet detected. Import your keystore to continue.</span>
+      <span>No wallet detected. Import to continue</span>
       <a class="keystore-btn primary" href="import-keystore.html">Import</a>
     </div>`;
   }
@@ -51,7 +54,7 @@ if (!pubKey || !keystore) {
 }
 
 async function loadUTXOs(address) {
-  statusEl.textContent = 'Enjoy your Magnum moment...';
+  statusEl.textContent = 'Ready to enjoy your Magnum Moment...';
   const data = await fetchUTXOs(address);
   if (Array.isArray(data.utxosDisponibles) && Array.isArray(data.utxosPendientes)) {
     utxosDisponibles = data.utxosDisponibles;
@@ -74,7 +77,7 @@ function renderUTXOList() {
   }
   utxoListEl.innerHTML = '';
   if (!utxosDisponibles.length && !utxosPendientes.length) {
-    utxoListEl.innerHTML = '<div style="color:#f7931a;margin-bottom:8px;">No UNOPENED disponibles</div>';
+    utxoListEl.innerHTML = '<div style="color:#f7931a;margin-bottom:8px;">No UNOPENED available</div>';
     form.querySelector('button[type="submit"]').disabled = true;
     return;
   }
@@ -127,7 +130,6 @@ function selectUTXO(idx) {
 }
 
 function validateForm() {
-  const passOk = passInput.value && passInput.value.length > 0;
   const utxoOk = !!selectedUTXO;
   // If selected UTXO is pending (any set), block action
   let selectedPending = false;
@@ -139,12 +141,11 @@ function validateForm() {
       selectedPending = a.includes(key) || b.includes(key);
     }
   } catch (_) {}
-  form.querySelector('button[type="submit"]').disabled = !(passOk && utxoOk) || selectedPending;
+  form.querySelector('button[type="submit"]').disabled = !utxoOk || selectedPending;
 }
 
   let utxosDisponibles = [];
   let utxosPendientes = [];
-passInput.addEventListener('input', validateForm);
 
 form.addEventListener('submit', async function (e) {
   e.preventDefault();
@@ -162,7 +163,21 @@ form.addEventListener('submit', async function (e) {
     return;
   }
 
-  const passphrase = passInput.value;
+  // Mostrar modal de passphrase
+  passphraseModal.style.display = 'flex';
+  modalPassphrase.value = '';
+  modalPassphrase.focus();
+});
+
+// Manejar el modal de passphrase
+modalConfirm.addEventListener('click', async function () {
+  const passphrase = modalPassphrase.value;
+  if (!passphrase) {
+    alert('Por favor introduce la passphrase');
+    return;
+  }
+
+  passphraseModal.style.display = 'none';
   const motivo = (reasonSelect && reasonSelect.value) || 'burn';
 
   // Derivar y descifrar en cliente (como Transfer)
@@ -251,7 +266,7 @@ form.addEventListener('submit', async function (e) {
         return;
       }
       const data = await res.json();
-      statusEl.innerHTML = `✅ Transacción de burn enviada. ID: <span style=\"color:#f7931a;\">${data.transactionId || txId}</span>`;
+      statusEl.innerHTML = `✅ Transacción de burn enviada. ID: <span style="color:#f7931a;">${data.transactionId || txId}</span>`;
       // Mark this UTXO as pending locally and re-render
       try {
         const key = `${selectedUTXO.txId}:${Number(selectedUTXO.outputIndex)}`;
@@ -269,6 +284,11 @@ form.addEventListener('submit', async function (e) {
       form.querySelector('button[type="submit"]').disabled = false;
     }
   });
+});
+
+modalCancel.addEventListener('click', function () {
+  passphraseModal.style.display = 'none';
+  modalPassphrase.value = '';
 });
 
 // Utilidad para hexToBuf
