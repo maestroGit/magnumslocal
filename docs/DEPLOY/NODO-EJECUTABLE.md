@@ -10,7 +10,6 @@ es la prueba de que pkg está intentando transpilar tu archivo como si fuera Com
 Y el segundo warning:
 Failed to make bytecode node18-x64 for file C:\snapshot\magnumslocal\server.js
 
-
 significa:
 👉 pkg no puede generar bytecode porque tu archivo usa sintaxis ESM que pkg no sabe empaquetar.
 Esto es un problema conocido de pkg desde hace años.

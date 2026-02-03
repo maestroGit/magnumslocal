@@ -19,7 +19,6 @@ De este modo:
 El bloque génesis será igual en todos los nodos.
 Cada nodo podrá tener su propia wallet para minar y firmar.
 No será necesario compartir la wallet global entre nodos.
-¿Quieres que te ayude a modificar el código para fijar los datos del bloque génesis?
 
 Para fijar el bloque génesis y asegurar compatibilidad entre nodos, necesitas definir en el código los siguientes datos del relay (o del primer nodo que creó la red):
 
@@ -77,8 +76,6 @@ No es el enfoque habitual en blockchains públicas.
 Recomendación:
 Para producción y máxima robustez, lo más seguro y estándar es hardcodear los datos del bloque génesis en el código de magnumslocal. Así, todos los nodos serán compatibles y no dependerán de la red para arrancar.
 
-¿Quieres que te ayude a preparar el código para hardcodear el bloque génesis?
-Rama
 
 
 ## Pasos estándar para desplegar un nuevo nodo en la red

@@ -1,4 +1,46 @@
-// ...existing code...
+// ¡IMPORTANTE! Cargar dotenv ANTES de cualquier otro import
+import dotenv from "dotenv";
+dotenv.config();
+console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
+console.log("[DEBUG] NODE_ENV:", process.env.NODE_ENV);
+import express from "express";
+import http from "http";
+import { fileURLToPath } from "url";
+import path from "path";
+import helmet from "helmet";
+import { check, validationResult } from "express-validator";
+import rateLimit from "express-rate-limit";
+import cors from "cors";
+import fs from "fs";
+import multer from "multer";
+// Este archivo contiene varios endpoints y funcionalidades que permiten interactuar con una blockchain a través de HTTP
+// las llaves {} son necesarias cuando el módulo exporta múltiples valores y deseas importar uno o varios de esos valores específicos.
+// Si el módulo exporta un solo valor por defecto, no se utilizan las llaves.
+import os from "os";
+import { Blockchain } from "./src/blockchain.js"; // Clase Blockchain que gestiona la cadena de bloques
+import { P2PServer } from "./app/p2pServer.js"; // Servidor P2P para comunicación entre nodos
+import { Wallet } from "./wallet/wallet.js"; // Clase Wallet que gestiona claves y firma
+import { Transaction } from "./wallet/transactions.js"; // Clase Transaction para crear transacciones
+import { TransactionsPool } from "./wallet/transactionsPool.js"; // Clase TransactionsPool para gestionar la mempool
+import { Miner } from "./app/miner.js"; // Clase Miner para minar bloques
+import { INITIAL_BALANCE } from "./config/constantConfig.js"; // Valor inicial deseado para la wallet
+import FileSystemMonitor from "./src/monitor/fileSystemMonitor.js"; // Monitor de sistema de ficheros
+import SystemMonitor from "./src/monitor/systemMonitor.js"; // Monitor de sistema
+import { BlockchainClient } from "./app/blockchainClient.js"; // Cliente para interactuar con otras blockchains
+import { Lote } from "./wallet/lote.js"; // Importar la clase Lote
+import crypto from "crypto";
+import { encryptWallet, decryptWallet } from "./app/walletCrypto.js";
+import { UTXOManager } from "./src/utxomanager.js";
+
+
+
+const isProduction = process.env.NODE_ENV === "production";
+const app = express();
+app.set("trust proxy", isProduction ? 1 : false); // Solo activar trust proxy en producción
+const HTTP_PORT = process.env.HTTP_PORT || 6001;
+const server = http.createServer(app);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // --- ENDPOINT PARA VER LOGS DEL PROCESO EN EL NAVEGADOR ---
 // (Debe ir después de la inicialización de 'app')
@@ -33,31 +75,6 @@ setImmediate(() => {
     });
   }
 });
-// ¡IMPORTANTE! Cargar dotenv ANTES de cualquier otro import
-import dotenv from "dotenv";
-dotenv.config();
-console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
-console.log("[DEBUG] NODE_ENV:", process.env.NODE_ENV);
-import express from "express";
-import http from "http";
-import { fileURLToPath } from "url";
-import path from "path";
-import helmet from "helmet";
-import { check, validationResult } from "express-validator";
-import rateLimit from "express-rate-limit";
-import cors from "cors";
-import fs from "fs";
-import multer from "multer";
-
-const isProduction = process.env.NODE_ENV === "production";
-const app = express();
-app.set("trust proxy", isProduction ? 1 : false); // Solo activar trust proxy en producción
-const HTTP_PORT = process.env.HTTP_PORT || 6001;
-const server = http.createServer(app);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// ...existing code...
-
 // --- IMPORTS Y CONFIGURACIÓN INICIAL ---
 console.log("[BOOT] Iniciando imports...");
 // ...existing code...
@@ -256,30 +273,8 @@ app.post(
     }
   }
 );
-import os from "os";
-// API (Interfaz de Programación de Aplicaciones).
-// Este archivo contiene varios endpoints y funcionalidades que permiten interactuar con una blockchain a través de HTTP
-// las llaves {} son necesarias cuando el módulo exporta múltiples valores y deseas importar uno o varios de esos valores específicos.
-// Si el módulo exporta un solo valor por defecto, no se utilizan las llaves.
-// Endpoint para historial completo de una dirección
 
 
-
-
-import { Blockchain } from "./src/blockchain.js"; // Clase Blockchain que gestiona la cadena de bloques
-import { P2PServer } from "./app/p2pServer.js"; // Servidor P2P para comunicación entre nodos
-import { Wallet } from "./wallet/wallet.js"; // Clase Wallet que gestiona claves y firma
-import { Transaction } from "./wallet/transactions.js"; // Clase Transaction para crear transacciones
-import { TransactionsPool } from "./wallet/transactionsPool.js"; // Clase TransactionsPool para gestionar la mempool
-import { Miner } from "./app/miner.js"; // Clase Miner para minar bloques
-import { INITIAL_BALANCE } from "./config/constantConfig.js"; // Valor inicial deseado para la wallet
-import FileSystemMonitor from "./src/monitor/fileSystemMonitor.js"; // Monitor de sistema de ficheros
-import SystemMonitor from "./src/monitor/systemMonitor.js"; // Monitor de sistema
-import { BlockchainClient } from "./app/blockchainClient.js"; // Cliente para interactuar con otras blockchains
-import { Lote } from "./wallet/lote.js"; // Importar la clase Lote
-import crypto from "crypto";
-import { encryptWallet, decryptWallet } from "./app/walletCrypto.js";
-import { UTXOManager } from "./src/utxomanager.js";
 const utxoManager = new UTXOManager();
 global.utxoManager = utxoManager;
 const bc = new Blockchain();
@@ -1998,13 +1993,110 @@ app.post("/hardware-address", (req, res, next) => {
  *   - El frontend puede después consultar GET /blocks para obtener el bloque completo y renderizarlo.
  */
 app.post("/mine", (req, res) => {
-  (async () => {
-    try {
-      // ...existing code...
-    } catch (error) {
-      // ...existing code...
+  try {
+    // Guard: tp y tp.transactions deben existir y ser array
+    if (!tp || !Array.isArray(tp.transactions)) {
+      return res.status(500).json({
+        success: false,
+        error: "TransactionPool (tp) no está inicializada o no es válida.",
+        details: "tp o tp.transactions es undefined. Revisa la inicialización del TransactionPool."
+      });
     }
-  })();
+    // Guard: no minar si la mempool está vacía
+    const pending = tp.transactions.length;
+    if (pending === 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          "No hay transacciones pendientes en la mempool. Minado cancelado.",
+        mempoolSize: 0,
+      });
+    }
+    console.log("🔄 Iniciando proceso de minado...");
+    console.log(`📋 Transacciones en mempool: ${tp.transactions.length}`);
+    // Mostrar todas las transacciones en la mempool (si las hay)
+    if (tp.transactions.length > 0) {
+      console.log("[MINER] Transacciones en mempool:");
+      tp.transactions.forEach((tx, idx) => {
+        console.log(`[MINER] tx #${idx}:`, JSON.stringify(tx, null, 2));
+      });
+    }
+    // Antes de minar, mostrar el estado de la wallet global
+    console.log("[MINER] Estado de global.wallet:", global.wallet);
+    if (!global.wallet) {
+      console.error("[MINER] Error: global.wallet no está inicializada");
+      return res.status(500).json({
+        success: false,
+        error: "global.wallet no está inicializada. No se puede minar.",
+        details: "Asegúrate de que la wallet esté cargada antes de minar.",
+      });
+    }
+    if (!global.wallet.keyPair) {
+      console.error(
+        "[MINER] Error: global.wallet.keyPair no está inicializada"
+      );
+      return res.status(500).json({
+        success: false,
+        error: "global.wallet.keyPair no está inicializada. No se puede minar.",
+        details: "Asegúrate de que la wallet tenga keyPair antes de minar.",
+      });
+    }
+    // Usar el miner para procesar transacciones pendientes
+    let block;
+    try {
+      block = miner.mine();
+    } catch (err) {
+      console.error("[MINER] Error interno en miner.mine():", err);
+      return res.status(500).json({
+        success: false,
+        error: "Error interno en miner.mine()",
+        details: err.message,
+      });
+    }
+    // Mostrar las transacciones que se intentan minar
+    if (block && block.data && block.data.length > 0) {
+      console.log("[MINER] Transacciones minadas en el bloque:");
+      block.data.forEach((tx, idx) => {
+        console.log(`[MINER] tx #${idx}:`, JSON.stringify(tx, null, 2));
+      });
+    }
+    // ✅ Verificar que el bloque se minó correctamente (incluye coinbase cuando mempool vacío)
+    if (!block) {
+      return res.json({
+        success: false,
+        message: "No se pudo minar el bloque",
+        info: "Minería cancelada o sin transacciones válidas",
+        mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0,
+      });
+    }
+    console.log(`✅ Nuevo bloque minado: ${block.hash}`);
+    console.log(`📦 Transacciones incluidas: ${Array.isArray(block.data) ? block.data.length : 0}`);
+    // Sincronizar con otros nodos
+    p2pServer.syncChains();
+    // Actualizar el UTXOManager con el nuevo bloque minado
+    if (block) {
+      utxoManager.updateWithBlock(block);
+    }
+    res.json({
+      success: true,
+      message: "Bloque minado exitosamente",
+      block: {
+        hash: block.hash,
+        timestamp: block.timestamp,
+        transactionsCount: Array.isArray(block.data) ? block.data.length : 0,
+        difficulty: block.difficulty,
+        processTime: block.processTime,
+      },
+      mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0, // Después del minado normal, debería ser 0
+    });
+  } catch (error) {
+    console.error("Error mining block:", error);
+    res.status(500).json({
+      success: false,
+      error: "Error mining block",
+      details: error.message,
+    });
+  }
 });
 
 // Ruta para minar las transacciones

@@ -744,6 +744,3 @@ esac
 
 ---
 
-**🍷 Del Terruño al Ciberespacio - Blockchain Distribuido en Red LAN 2025**
-
-> Esta guía te permitirá desplegar un verdadero entorno blockchain distribuido para testing real con múltiples dispositivos físicos en tu red local.

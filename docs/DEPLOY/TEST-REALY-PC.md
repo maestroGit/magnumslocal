@@ -28,7 +28,6 @@ Resumen:
 
 Solo modifica los .env de los nodos secundarios para apuntar al relay Seenode.
 
-###############################################################
 # Ejemplo de archivo .env.example para nodo secundario
 # que se conecta al relay público y seguro en Seenode
 #
