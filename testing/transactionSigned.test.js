@@ -5,8 +5,8 @@ let importsAvailable = false;
 beforeAll(async () => {
   try {
     request = await import('supertest').then(m => m.default || m);
-    app = (await import('../../server.js')).default;
-    Wallet = (await import('../../wallet/wallet.js')).Wallet;
+    app = (await import('../server.js')).default;
+    Wallet = (await import('../wallet/wallet.js')).Wallet;
     importsAvailable = true;
   } catch (e) {
     console.warn('Skipping transactionSigned.test.js: supertest or dependencies not available', e.message);
@@ -22,7 +22,7 @@ describe('POST /transaction signed flow', () => {
   if (!importsAvailable) return;
     const wallet = new Wallet();
     // create a fake utxo in the chain's utxoSet for testing
-    const bcModule = await import('../../src/blockchain.js');
+    const bcModule = await import('../src/blockchain.js');
     const bc = new bcModule.Blockchain();
     // create a fake utxo and push to server's bc via direct mutation (not ideal, but works for unit test)
 

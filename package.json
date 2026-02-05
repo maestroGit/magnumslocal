@@ -14,7 +14,8 @@
       "src/**/*",
       "wallet/**/*",
       ".env"
-    ]
+    ],
+    "type": "module"
   },
   "scripts": {
     "test": "jest --watchAll",

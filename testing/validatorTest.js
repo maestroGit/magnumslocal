@@ -1,12 +1,12 @@
 // Simulación de una blockchain y un transactions pool ficticios
 "use strict";
 
-import { Validator } from '../validator.js';
-import { Wallet } from '../../wallet/wallet.js';
-import { Transaction } from '../../wallet/transactions.js'
-import {Blockchain} from '../../src/blockchain.js';
-import {TransactionsPool} from '../../wallet/transactionsPool.js';
-import { P2PServer } from '../p2pServer.js';
+import { Validator } from '../app/validator.js';
+import { Wallet } from '../wallet/wallet.js';
+import { Transaction } from '../wallet/transactions.js'
+import {Blockchain} from '../src/blockchain.js';
+import {TransactionsPool} from '../wallet/transactionsPool.js';
+import { P2PServer } from '../app/p2pServer.js';
 
 // Creación de instancias de blockchain, transactions pool y p2p server
 const blockchain = new Blockchain();

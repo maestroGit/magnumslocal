@@ -1,3 +1,11 @@
+// script de prueba que:
+// Usa una clave privada de wallet local (o genera una temporal).
+// Consulta los UTXOs asociados a la clave pública.
+// Si no hay fondos, solicita al servidor que transfiera fondos de prueba y mina un bloque.
+// Construye y firma una transacción de 5 unidades (enviada a sí mismo).
+// Envía la transacción firmada al endpoint /transaction del servidor.
+// Muestra las respuestas y termina.
+
 import fs from 'fs';
 import fetch from 'node-fetch';
 import elliptic from 'elliptic';

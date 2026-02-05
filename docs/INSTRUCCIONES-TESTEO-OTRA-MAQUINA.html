@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Instrucciones para probar magnumslocal en otra máquina</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #222; background: #fff; }
+    h1, h2, h3 { color: #220F17; }
+    code, pre { background: #f4f4f4; border-radius: 4px; padding: 2px 6px; font-size: 1em; }
+    pre { padding: 12px; }
+    ul, ol { margin-left: 1.5em; }
+    .wallet { font-family: monospace; background: #f9f9f9; padding: 8px; border-radius: 4px; word-break: break-all; }
+    .important { color: #c0392b; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Instrucciones para probar <span style="color:#220F17">magnumslocal</span> en otra máquina</h1>
+
+  <p>Hola,</p>
+  <p>Te doy la bienvenida al proyecto <b>Blockswine</b> y al repositorio <b>magnumslocal</b>, donde se encuentra el desarrollo principal. Ya tienes permisos como colaborador, así que puedes clonar el código cuando quieras.</p>
+
+  <h2>Requisitos previos</h2>
+  <ul>
+    <li><b>Node.js</b> (recomendado: versión 18.x o superior)</li>
+    <li><b>Git</b> (para clonar el repositorio)</li>
+  </ul>
+  <p>Si no tienes Node.js, descárgalo aquí:<br>
+    <a href="https://nodejs.org/en/download/" target="_blank">https://nodejs.org/en/download/</a>
+  </p>
+
+  <h2>Pasos para poner en marcha el proyecto</h2>
+  <ol>
+    <li><b>Clona el repositorio</b><br>
+      Abre una terminal y ejecuta:<br>
+      <pre>git clone https://github.com/maestroGit/magnumslocal.git</pre>
+      (O si prefieres, descarga el ZIP desde el botón “Code” en GitHub).
+    </li>
+    <li><b>Accede al directorio del proyecto:</b><br>
+      <pre>cd magnumslocal</pre>
+    </li>
+    <li><b>Instala las dependencias:</b><br>
+      <pre>npm install</pre>
+    </li>
+    <li><b>Inicia la aplicación en modo local:</b><br>
+      <pre>npm run start</pre>
+        Esto levantará el servidor de desarrollo.<br>
+      </li>
+     <li><b>Acceso en el navegador</b><br>
+      <pre><a href="http://localhost:3000" target="_blank">http://localhost:3000</a></pre>
+      Solo tienes que abrir esa dirección en tu navegador para ver y probar el proyecto en tu entorno local.
+    <br></li>
+  </ol>
+
+  <h2>Simulación de usuario fundador</h2>
+  <p>Al arrancar el sistema, tendrás acceso simulado como el usuario <b>“Château Bordeaux”</b>, con la siguiente wallet:</p>
+  <div class="wallet">04325e339641e1def136cfa8ab904f88e8ffaa46a692b4992d71e6048a1ba964272c28a00490d39fbcef990093998a3717d9a6b8e16f7ab430af40f8cd158438cd</div>
+  <p>Este usuario dispone de un saldo inicial de <b>100 unidades</b> en la blockchain simulada.</p>
+
+  <h2>Flujo de prueba recomendado</h2>
+  <ol>
+    <li>Ve a la sección <b>wallet/crear</b> y crea una wallet nueva como usuario (elige tu contraseña).</li>
+    <li>Descarga el archivo keystore generado para esa wallet.</li>
+    <li>Dentro del keystore, localiza y copia tu <b>publicKey</b> (por ejemplo):<br>
+      <div class="wallet">04cc5a1a13ae35eeaf93d48c84662f95098e6b79d2d23779f2955f9981b09f4fb53f4857b849d47a77f5b147f23182790956ae3d932eabc439c0cc2d9ef78e89fb</div>
+    </li>
+    <li>Ve al dashboard principal (panel).</li>
+    <li>Accede al formulario de transferencia.</li>
+    <li>UYa estás la wallet de (<b>Château Bordeaux</b>) como origen, firmando con su contraseña: <span class="important">javi</span>.</li>
+    <li>En el campo destinatario, pega la <b>publicKey</b> de tu nueva wallet(la que has creado como WineLover)</li>
+    <li>Introduce el importe a transferir (recuerda que el saldo inicial de la bodega es 100).</li>
+    <li>Envía y firma la transferencia (<span class="important">contraseña: javi</span>).</li>
+    <li>La transferencia quedará pendiente en la mempool. Lo puedes verificar en la sección correspondiente del dashboard (Mempool)</li>
+    <li>Desde el dashboard, dezde la sección Mine, ejecuta la acción del botón “mine”</li>
+    <li>Si todo es correcto, la transferencia se consolidará en un nuevo bloque y los saldos se actualizarán.</li>
+    <li>Comprueba que el saldo de tu wallet nueva ha aumentado correctamente con la transferencia recibida.</li>
+    <li>Vuelves a wallet, desde importar, Opened, history o Transfer importa el fichero keystore de la wallet que creaste y deberías ver las transacción que te ha enviados Chateau de bordeaux.</li>
+    <li>Si quieres, puedes hacer una transfer o a otra wallet obteniendo desde map en los iconos de wineLover su <b>publicKey</b>, y así probar también el proceso de transferir una Botella desde tu wallet.</li>
+  </ol>
+
+  <h2>Resumen funcional</h2>
+  <ul>
+    <li>Simulas el papel del usuario fundador/bodega.</li>
+    <li>Creas y gestionas una wallet nueva como usuario normal.</li>
+    <li>Realizas una transferencia real desde la wallet fundadora a tu nueva <b>publicKey</b>.</li>
+    <li>Compruebas que la operación pasa de la mempool al bloque minado correctamente.</li>
+  </ul>
+
+  <p>Si tienes cualquier duda, problema con el keystore, la contraseña o la firma, avísame y te ayudo.</p>
+
+  <p><b>¡Gracias por tu colaboración y por probar a fondo el flujo!</b></p>
+
+  <p>Un saludo,</p>
+</body>
+</html>

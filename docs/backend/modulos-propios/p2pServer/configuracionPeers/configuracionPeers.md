@@ -69,6 +69,36 @@ Esto es idéntico a Bitcoin Core. Las transacciones se propagan entre nodos, per
 
 Por eso tu documentación sugiere la estrategia de limpiar mempool tras sincronización: es la forma robusta de garantizar consistencia sin depender de que todos los nodos tengan exactamente las mismas transacciones.
 
+
+# SINCRONIZACIÓN MEMPOOL
+ Ambos proyectos tienen exactamente la misma lógica de sincronización:
+
+magnumsmaster:
+✅ broadcastTransaction() propaga transacciones
+✅ MESSAGE_TYPES.transaction recibe transacciones
+✅ MESSAGE_TYPES.clear_transactions limpia mempool
+✅ Limpieza automática tras replaceChain
+magnumslocal:
+✅ Tiene exactamente la misma lógica
+✅ Incluso tiene más logs en el manejo de CLEAR_TRANSACTIONS
+El problema de sincronización de mempool que describes no es por los archivos copiados, sino por:
+
+Configuración de red - Los peers no se ven mutuamente
+Variable PEERS - Falta configurar correctamente en ambos nodos
+Firewall/NAT - Bloquea las conexiones P2P
+¿Tienes configurado PEERS correctamente en los archivos .env de ambos proyectos para que se conecten entre sí?
+
+Ambos proyectos llaman a broadcastTransaction() de manera idéntica. Entonces, el problema probablemente sea:
+
+Los nodos NO están conectados correctamente P2P - aunque la cadena se sincroniza, las transacciones individuales no se propagan
+Las transacciones se envían pero NO se reciben en el otro lado - posiblemente por un error en el handler o por cerrar conexión antes de recibir
+Pregunta clave: Cuando creas una transacción en magnumslocal, ¿ves en los logs del relay el mensaje "⬇️ Nueva transacción recibida"?
+
+Si NO lo ves, significa que aunque la cadena se sincroniza (que es un mensaje más grande), las transacciones individuales no están llegando. Eso sugeriría un problema en:
+Los sockets no se mantienen abiertos
+El nodo que envía la transacción no tiene conexión saliente activa al otro nodo
+Hay error silencioso al enviar
+
 ## Bitcoin Core:
 También solo usa su propia mempool. No hay forma de incluir transacciones de la mempool de otro nodo.
 
@@ -99,34 +129,3 @@ Pero después de que se propague TX4, Nodo B lo tendrá.
 No hay coordinación centralizada. Es consistencia eventual gracias a la propagación P2P robusta.
 
 Tu sistema debería hacer algo similar: asegurar que las transacciones se propaguen bien entre nodos antes de minar, en lugar de intentar sincronizar mempools.
-
-# SINCRONIZACIÓN MEMPOOL
- Ambos proyectos tienen exactamente la misma lógica de sincronización:
-
-magnumsmaster:
-✅ broadcastTransaction() propaga transacciones
-✅ MESSAGE_TYPES.transaction recibe transacciones
-✅ MESSAGE_TYPES.clear_transactions limpia mempool
-✅ Limpieza automática tras replaceChain
-magnumslocal:
-✅ Tiene exactamente la misma lógica
-✅ Incluso tiene más logs en el manejo de CLEAR_TRANSACTIONS
-El problema de sincronización de mempool que describes no es por los archivos copiados, sino por:
-
-Configuración de red - Los peers no se ven mutuamente
-Variable PEERS - Falta configurar correctamente en ambos nodos
-Firewall/NAT - Bloquea las conexiones P2P
-¿Tienes configurado PEERS correctamente en los archivos .env de ambos proyectos para que se conecten entre sí?
-
-Ambos proyectos llaman a broadcastTransaction() de manera idéntica. Entonces, el problema probablemente sea:
-
-Los nodos NO están conectados correctamente P2P - aunque la cadena se sincroniza, las transacciones individuales no se propagan
-Las transacciones se envían pero NO se reciben en el otro lado - posiblemente por un error en el handler o por cerrar conexión antes de recibir
-Pregunta clave: Cuando creas una transacción en magnumslocal, ¿ves en los logs del relay el mensaje "⬇️ Nueva transacción recibida"?
-
-Si NO lo ves, significa que aunque la cadena se sincroniza (que es un mensaje más grande), las transacciones individuales no están llegando. Eso sugeriría un problema en:
-
-Los sockets no se mantienen abiertos
-El nodo que envía la transacción no tiene conexión saliente activa al otro nodo
-Hay error silencioso al enviar
-¿Puedes verificar en los logs qué sucede exactamente?
