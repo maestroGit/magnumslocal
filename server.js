@@ -1,9 +1,19 @@
+// --- RUTA USUARIO AUTENTICADO ---
+// (Debe ir después de la inicialización de app y middlewares)
+// ...existing code...
+
+// ...existing code...
+// (Pega esto después de const app = express(); y la configuración de middlewares)
+
 // ¡IMPORTANTE! Cargar dotenv ANTES de cualquier otro import
 import dotenv from "dotenv";
 dotenv.config();
 console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
 console.log("[DEBUG] NODE_ENV:", process.env.NODE_ENV);
 import express from "express";
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import session from "express-session";
 import http from "http";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -34,6 +44,7 @@ import { UTXOManager } from "./src/utxomanager.js";
 
 
 
+
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
 app.set("trust proxy", isProduction ? 1 : false); // Solo activar trust proxy en producción
@@ -41,6 +52,52 @@ const HTTP_PORT = process.env.HTTP_PORT || 6001;
 const server = http.createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// --- PASSPORT GOOGLE OAUTH2 ---
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "/auth/google/callback"
+}, (accessToken, refreshToken, profile, done) => {
+  // Aquí puedes guardar el usuario en la base de datos si lo deseas
+  return done(null, profile);
+}));
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+passport.deserializeUser((obj, done) => {
+  done(null, obj);
+});
+// --- SESSION & PASSPORT MIDDLEWARE ---
+app.use(session({
+  secret: process.env.JWT_SECRET || "blockswine_secret",
+  resave: false,
+  saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+// --- RUTAS OAUTH2 GOOGLE ---
+app.get("/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get("/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    // Autenticación exitosa, redirigir a la página principal o dashboard
+    res.redirect("/");
+  }
+);
+
+// Ruta para obtener el usuario autenticado actual
+app.get("/auth/user", (req, res) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    res.json({ user: req.user });
+  } else {
+    res.status(401).json({ user: null });
+  }
+});
 
 // --- ENDPOINT PARA VER LOGS DEL PROCESO EN EL NAVEGADOR ---
 // (Debe ir después de la inicialización de 'app')
@@ -100,10 +157,21 @@ app.use(
       useDefaults: true,
       directives: {
         "default-src": ["'self'"],
-        "connect-src": connectSrc,
+        "connect-src": [
+          ...connectSrc,
+          "https://accounts.google.com",
+          "https://www.googleapis.com",
+          "https://*.googleusercontent.com"
+        ],
         "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", PROD_API],
         "style-src": ["'self'", "'unsafe-inline'"],
-        "img-src": ["'self'", "data:", PROD_API],
+        "img-src": [
+          "'self'",
+          "data:",
+          PROD_API,
+          "https://developers.google.com",
+          "https://*.googleusercontent.com"
+        ],
       },
     },
   })

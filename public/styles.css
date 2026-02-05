@@ -1,3 +1,114 @@
+.auth-header-container {
+	display: flex;
+	align-items: center;
+	margin-left: 2em;
+	height: 48px;
+}
+.hide-hamburger {
+	display: none !important;
+}
+/* --- Login page layout utility classes --- */
+.login-main-centered {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+}
+.login-keystore-container {
+	margin-top: 120px;
+}
+.google-login-container {
+	display: flex;
+	justify-content: center;
+	margin-top: 16px;
+}
+
+/* --- AuthComponent styles (no inline styles) --- */
+.auth-logout {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.auth-avatar {
+	width: 38px;
+	height: 38px;
+	border-radius: 50%;
+	box-shadow: 0 1px 4px #0002;
+	 filter: brightness(0) invert(1) grayscale(1) contrast(2);
+}
+.auth-logout-btn {
+	margin-left: 8px;
+	padding: 6px 14px;
+	border-radius: 6px;
+	border: none;
+	background: #f7931a;
+	color: #fff;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+.auth-logout-btn:hover {
+	background: #6B0F0F;
+}
+.auth-form {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-width: 320px;
+}
+.auth-error {
+	color: #b00;
+	display: none;
+}
+.auth-error[style*="display: block"] {
+	display: block !important;
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+.site-header .auth-logout #auth-user-label,
+#auth-user-label,
+.auth-logout #auth-user-label,
+.auth-user-label {
+	color: #fff !important;
+	font-weight: 700 !important;
+	margin-left: 4px !important;
+	text-shadow: 0 1px 2px #000a !important;
+}
+	
+.google-logo {
+	height: 20px;
+	vertical-align: middle;
+	margin-right: 8px;
+}
+
+/* --- Google login button style --- */
+.google-login-btn {
+	margin-top: 12px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+	color: #444;
+	padding: 8px 18px;
+	border-radius: 8px;
+	text-decoration: none;
+	border: 1.5px solid #ccc;
+	font-weight: 600;
+	font-size: 1rem;
+	min-width: 180px;
+	min-height: 40px;
+	box-shadow: 0 2px 8px #0001;
+	cursor: pointer;
+	transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.google-login-btn:hover, .google-login-btn:focus {
+	background: #f7931a;
+	color: #fff;
+	border-color: #f7931a;
+	text-decoration: none;
+}
+
 /* Main stylesheet - imports all component styles */
 @import url('base.css');
 @import url('header-custom.css');

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com https://developers.google.com;">
+  <title>Login - Blockswine</title>
+  <link rel="stylesheet" type="text/css" href="base.css">
+  <link rel="stylesheet" type="text/css" href="button.css">
+  <link rel="stylesheet" type="text/css" href="utxo.css">
+  <link rel="stylesheet" type="text/css" href="dashboard.css">
+  <link rel="stylesheet" type="text/css" href="modal.css">
+  <link rel="stylesheet" type="text/css" href="toast.css">
+  <link rel="stylesheet" type="text/css" href="wallet.css">
+  <link rel="stylesheet" type="text/css" href="utilities.css">
+  <link rel="stylesheet" type="text/css" href="transaction.css">
+  <link rel="stylesheet" type="text/css" href="header-custom.css">
+  <link rel="stylesheet" type="text/css" href="keystore.css">
+  <link rel="stylesheet" type="text/css" href="import-keystore.css">
+  <link rel="stylesheet" type="text/css" href="transfer-keystore.css">
+  <link rel="stylesheet" type="text/css" href="consume-keystore.css">
+  <link rel="stylesheet" type="text/css" href="history-keystore.css">
+  <link rel="stylesheet" type="text/css" href="qr.css">
+  <link rel="stylesheet" type="text/css" href="json.css">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20width%3D'192'%20height%3D'192'%20viewBox%3D'0%200%2048%2048'%20fill%3D'none'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Cpolygon%20points%3D'24%2C4%2044%2C14%2044%2C34%2024%2C44%204%2C34%204%2C14'%20fill%3D'%23FF9800'%20stroke%3D'%23FF9800'%20stroke-width%3D'2'/%3E%3Cpolygon%20points%3D'24%2C4%2044%2C14%2024%2C24%204%2C14'%20fill%3D'%23FF9800'%20opacity%3D'0.85'/%3E%3Cpolygon%20points%3D'24%2C24%2044%2C14%2044%2C34%2024%2C44'%20fill%3D'%23FFB74D'%20opacity%3D'0.7'/%3E%3Cpolygon%20points%3D'24%2C24%2024%2C44%204%2C34%204%2C14'%20fill%3D'%23A0522D'%20opacity%3D'0.7'/%3E%3Crect%20x%3D'21'%20y%3D'12'%20width%3D'6'%20height%3D'20'%20rx%3D'3'%20fill%3D'white'%20opacity%3D'0.25'/%3E%3Crect%20x%3D'23'%20y%3D'8'%20width%3D'2'%20height%3D'6'%20rx%3D'1'%20fill%3D'white'%20opacity%3D'0.25'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="logo">
+        <img src="images/iconoBWred.png" alt="BlocksWine icon" class="logo-icon rotatable white">
+        BlocksWine
+      </h1>
+      <button id="hamburger-menu-btn" class="btn hide-hamburger" aria-label="Abrir menú" aria-haspopup="true" aria-expanded="false" type="button">
+        <span class="hamburger-icon">☰</span>
+      </button>
+      <nav class="nav">
+        <a class="btn" href="view.html"><span class="metric-value">Panel</span></a>
+        <a class="btn" href="https://web-d5l049wewz07.up-de-fra1-k8s-1.apps.run-on-seenode.com/" target="_blank" rel="noopener noreferrer"><span class="metric-value">Map</span></a>
+        <a class="btn" href="keystore.html" target="_blank" rel="noopener noreferrer"><span class="metric-value">Wallet</span></a>
+        <button class="btn" id="go-bodega-wallet" type="button"><span class="metric-value">Winery</span></button>
+        <a class="btn active" href="login.html" id="login-btn"><span class="metric-value">Login</span></a>
+      </nav>
+      <script src="js/hamburger-menu.js"></script>
+    </div>
+  </header>
+  <main class="login-main-centered">
+    <div class="keystore-container login-keystore-container">
+      <div class="keystore-card">
+        <div class="keystore-header">
+          <h2>🔑 Iniciar sesión</h2>
+        </div>
+        <form id="authForm" autocomplete="on" class="auth-form">
+          <label for="auth-username">Usuario</label>
+          <input type="text" id="auth-username" name="username" required autocomplete="username">
+          <label for="auth-password">Contraseña</label>
+          <input type="password" id="auth-password" name="password" required autocomplete="current-password">
+          <button type="submit" class="keystore-btn primary">Iniciar sesión</button>
+          <div id="auth-error" class="auth-error"></div>
+        </form>
+        <div class="google-login-container">
+          <a href="/auth/google" id="googleLoginBtn" class="google-login-btn">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="google-logo">Iniciar sesión con Google
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="js/mount-auth-component.js"></script>
+</body>
+</html>
