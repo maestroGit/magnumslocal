@@ -37,12 +37,11 @@ import { INITIAL_BALANCE } from "./config/constantConfig.js"; // Valor inicial d
 import FileSystemMonitor from "./src/monitor/fileSystemMonitor.js"; // Monitor de sistema de ficheros
 import SystemMonitor from "./src/monitor/systemMonitor.js"; // Monitor de sistema
 import { BlockchainClient } from "./app/blockchainClient.js"; // Cliente para interactuar con otras blockchains
-import { Lote } from "./wallet/lote.js"; // Importar la clase Lote
+import Lote from "./src/models/Lote.js"; // Importar la clase Lote
 import crypto from "crypto";
 import { encryptWallet, decryptWallet } from "./app/walletCrypto.js";
 import { UTXOManager } from "./src/utxomanager.js";
-
-
+import loteRoutes from './app/routes/loteRoutes.js';
 
 
 const isProduction = process.env.NODE_ENV === "production";
