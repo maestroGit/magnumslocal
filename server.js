@@ -1,272 +1,3 @@
-// --- RUTA USUARIO AUTENTICADO ---
-// (Debe ir después de la inicialización de app y middlewares)
-
-// ===================
-// === LOTE ENDPOINTS (AHORA EN ROUTER MODULAR) ===
-// ===================
-
-/*
-// POST /qr-with-proof
-app.post('/qr-with-proof', async (req, res) => {
-  try {
-    const { loteId, transactionId } = req.body;
-    if (!loteId || !transactionId) {
-      return res.status(400).json({
-        success: false,
-        error: "Faltan parámetros: loteId y transactionId son requeridos",
-      });
-    }
-    let foundTransaction = null;
-    let ownerPublicKey = null;
-    let transactionStatus = null;
-    for (const block of bc.chain) {
-      const transaction = block.data.find((tx) => tx.id === transactionId);
-      if (transaction) {
-        foundTransaction = transaction;
-        transactionStatus = "confirmed";
-        ownerPublicKey = transaction.outputs.find((output) => output.amount > 0)?.address;
-        break;
-      }
-    }
-    if (!foundTransaction) {
-      const mempoolTransaction = tp.transactions.find((tx) => tx.id === transactionId);
-      if (mempoolTransaction) {
-        foundTransaction = mempoolTransaction;
-        transactionStatus = "pending";
-        ownerPublicKey = mempoolTransaction.outputs.find((output) => output.amount > 0)?.address;
-      }
-    }
-    if (!foundTransaction) {
-      return res.status(404).json({
-        success: false,
-        error: "Transacción no encontrada en blockchain ni en mempool",
-        transactionId,
-        suggestion: "Verifique que el ID de transacción sea correcto",
-      });
-    }
-    const loteData = {
-      loteId,
-      nombreProducto: req.body.nombreProducto || "Producto sin nombre",
-      fechaProduccion: req.body.fechaProduccion || new Date().toISOString().split("T")[0],
-      fechaCaducidad: req.body.fechaCaducidad || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      origen: req.body.origen || "España",
-      bodega: req.body.bodega || "Bodega desconocida",
-      año: req.body.año || new Date().getFullYear(),
-      variedad: req.body.variedad || "Variedad no especificada",
-      región: req.body.región || "Región no especificada",
-      denominacionOrigen: req.body.denominacionOrigen || "D.O. no especificada",
-      alcohol: req.body.alcohol || "13%",
-      notaDeCata: req.body.notaDeCata || "Nota de cata no disponible",
-      maridaje: req.body.maridaje || "Maridaje no especificado",
-      precio: req.body.precio || "Precio no especificado",
-      comentarios: req.body.comentarios || "Lote registrado con blockchain proof",
-      trazabilidad: req.body.trazabilidad || "Blockchain → Verificación QR",
-    };
-    const lote = new Lote(loteData.loteId);
-    Object.assign(lote, loteData);
-    const qrUrl = await lote.generarQRWithProof(
-      transactionId,
-      ownerPublicKey,
-      foundTransaction.inputs?.[0]?.signature || `verified_${transactionStatus}`
-    );
-    res.json({
-      success: true,
-      qrBase64: qrUrl,
-      proof: {
-        loteId: lote.loteId,
-        owner: ownerPublicKey,
-        transactionId: transactionId,
-        transactionStatus: transactionStatus,
-        verifiedAt: new Date().toISOString(),
-        blockchainVerifiable: true,
-        message:
-          transactionStatus === "pending"
-            ? "⏳ Transacción válida en mempool - Se confirmará tras el minado"
-            : "✅ Transacción confirmada en blockchain",
-      },
-      loteData: {
-        ...loteData,
-        isBlockchainLinked: true,
-        transactionReference: transactionId,
-      },
-    });
-  } catch (err) {
-    console.error("Error generando QR con prueba:", err);
-    res.status(500).json({
-      success: false,
-      error: "Error generando QR con prueba de propiedad",
-      details: err.message,
-    });
-  }
-});
-
-// POST /lotes
-app.post('/lotes', async (req, res) => {
-  try {
-    const { txId, metadata } = req.body;
-    if (!txId) {
-      return res.status(400).json({ success: false, error: "txId es requerido" });
-    }
-    const loteId = txId;
-    const metaObj = metadata && typeof metadata === "object" ? metadata : {};
-    const metaString = JSON.stringify(metaObj);
-    const metadataHash = crypto.createHash("sha256").update(metaString).digest("hex");
-    const lotesDir = path.join(process.cwd(), "app", "uploads", "lotes");
-    if (!fs.existsSync(lotesDir)) fs.mkdirSync(lotesDir, { recursive: true });
-    const record = {
-      loteId,
-      txId,
-      metadataHash,
-      metadata: metaObj,
-      createdAt: new Date().toISOString(),
-    };
-    const filePath = path.join(lotesDir, `${loteId}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(record, null, 2), "utf8");
-    const qrPayload = {
-      loteId,
-      metadataHash,
-      url: `${req.protocol}://${req.get("host")}/lotes/${encodeURIComponent(loteId)}`,
-    };
-    // Proof blockchain (opcional, igual que en server.js)
-    try {
-      let foundTransaction = null;
-      let ownerPublicKey = null;
-      let transactionStatus = null;
-      for (const block of bc.chain) {
-        const transaction = block.data.find((tx) => tx.id === txId);
-        if (transaction) {
-          foundTransaction = transaction;
-          transactionStatus = "confirmed";
-          ownerPublicKey = transaction.outputs.find((output) => output.amount > 0)?.address;
-          break;
-        }
-      }
-      if (!foundTransaction) {
-        const mempoolTransaction = tp.transactions.find((tx) => tx.id === txId);
-        if (mempoolTransaction) {
-          foundTransaction = mempoolTransaction;
-          transactionStatus = "pending";
-          ownerPublicKey = mempoolTransaction.outputs.find((output) => output.amount > 0)?.address;
-        }
-      }
-      if (foundTransaction) {
-        // Puedes añadir lógica de prueba aquí si lo necesitas
-      }
-    } catch (err) {
-      console.warn("No se pudo generar proof en POST /lotes (continuando):", err.message);
-    }
-    return res.json({ success: true, record, qrPayload });
-  } catch (err) {
-    console.error("Error creando lote:", err);
-    return res.status(500).json({
-      success: false,
-      error: "Error creando lote",
-      details: err.message,
-    });
-  }
-});
-
-// GET /lotes/:loteId
-app.get('/lotes/:loteId', async (req, res) => {
-  try {
-    const { loteId } = req.params;
-    const lotesDir = path.join(process.cwd(), "app", "uploads", "lotes");
-    const filePath = path.join(lotesDir, `${loteId}.json`);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, error: "Lote no encontrado" });
-    }
-    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    res.json({ success: true, data });
-  } catch (err) {
-    console.error("Error obteniendo lote:", err);
-    res.status(500).json({ success: false, error: "Error obteniendo lote", details: err.message });
-  }
-});
-
-// POST /verify-qr-proof
-app.post('/verify-qr-proof', async (req, res) => {
-  try {
-    const { qrData } = req.body;
-    if (!qrData) {
-      return res.status(400).json({
-        success: false,
-        error: "QR data es requerido",
-      });
-    }
-    let transactionId;
-    let ownerPublicKey = "SKIP_OWNER_CHECK";
-    let parsedData = null;
-    try {
-      parsedData = typeof qrData === "string" ? JSON.parse(qrData) : qrData;
-      if (parsedData.blockchainProof) {
-        transactionId = parsedData.blockchainProof.transactionId;
-        ownerPublicKey = parsedData.blockchainProof.ownerPublicKey;
-      } else if (parsedData.transactionId) {
-        transactionId = parsedData.transactionId;
-      }
-    } catch (parseErr) {
-      transactionId = qrData;
-    }
-    if (!transactionId) {
-      return res.status(400).json({
-        success: false,
-        error: "No se pudo extraer transactionId del QR",
-      });
-    }
-    let transactionFound = false;
-    let blockInfo = null;
-    let foundTransaction = null;
-    for (let i = 0; i < bc.chain.length; i++) {
-      const block = bc.chain[i];
-      const tx = block.data.find((tx) => tx.id === transactionId);
-      if (tx) {
-        transactionFound = true;
-        foundTransaction = tx;
-        blockInfo = {
-          index: i,
-          hash: block.hash,
-          timestamp: block.timestamp,
-        };
-        break;
-      }
-    }
-    if (!transactionFound) {
-      const memTx = tp.transactions.find((tx) => tx.id === transactionId);
-      if (memTx) {
-        return res.json({
-          success: true,
-          status: "pending",
-          message: "Transacción válida en mempool, pendiente de minado",
-          transaction: memTx,
-        });
-      }
-      return res.status(404).json({
-        success: false,
-        error: "Transacción no encontrada en blockchain ni en mempool",
-        transactionId,
-      });
-    }
-    res.json({
-      success: true,
-      status: "confirmed",
-      transaction: foundTransaction,
-      block: blockInfo,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      error: "Error verificando QR proof",
-      details: err.message,
-    });
-  }
-});
-*/
-// ...existing code...
-
-// ...existing code...
-// (Pega esto después de const app = express(); y la configuración de middlewares)
-
-// ¡IMPORTANTE! Cargar dotenv ANTES de cualquier otro import
 import dotenv from "dotenv";
 dotenv.config();
 console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
@@ -396,6 +127,9 @@ console.log("[BOOT] Iniciando imports...");
 // ...existing code...
 console.log("[BOOT] Imports y variables globales listos.");
 // --- CONFIGURACIÓN DE SEGURIDAD POR ENTORNO ---
+
+// Import tokenRoutes for modular baja-token endpoint
+import tokenRoutes from './app/routes/tokenRoutes.js';
 
 // --- CONFIGURACIÓN DE SEGURIDAD POR ENTORNO ---
 const LOCAL_API = process.env.LOCAL_API || "http://localhost:3000";
@@ -647,6 +381,8 @@ syncUTXOManagerWithBlockchain();
 
 // Declarar la wallet global en memoria
 let globalWallet = null;
+global.globalWallet = globalWallet;
+global.bc = bc;
 console.log("[INIT] Estado inicial de globalWallet:", globalWallet);
 
 // Mostrar la wallet global inicial al arrancar el backend
@@ -1106,263 +842,22 @@ app.use(express.json()); // Middleware moderno para parsear JSON
 
 // Nueva ruta GET para obtener los datos de una transacción por su ID
 // Nueva ruta POST para baja de token (transferencia a burn o bodega)
-app.post("/baja-token", async (req, res) => {
-  // Estructura esperada: { signedTransaction, origin, type }
-  let transactionId, ownerPublicKey, origin, type, utxoTxId, utxoOutputIndex, keystore, passphrase;
-  // Si viene signedTransaction, extraer datos de ahí
-  if (req.body.signedTransaction) {
-    const tx = req.body.signedTransaction;
-    transactionId = tx.id;
-    // Tomar el primer input como referencia de propietario y UTXO
-    if (tx.inputs && tx.inputs.length > 0) {
-      ownerPublicKey = tx.inputs[0].address;
-      utxoTxId = tx.inputs[0].txId;
-      utxoOutputIndex = tx.inputs[0].outputIndex;
-    }
-    origin = req.body.origin || "burn";
-    type = req.body.type || "quemada";
-    // No se requiere keystore/passphrase porque la tx ya viene firmada
-    keystore = undefined;
-    passphrase = undefined;
-  } else {
-    // Payload legacy: extraer como antes
-    ({
-      transactionId,
-      ownerPublicKey,
-      origin,
-      type,
-      utxoTxId,
-      utxoOutputIndex,
-      keystore,
-      passphrase,
-    } = req.body);
-    if (!origin) origin = "burn";
-    if (!type) type = "quemada";
-  }
-  // Validar que type sea "quemada" para quemadas
-  if (type !== "quemada") {
-    return res.status(400).json({
-      success: false,
-      error: "El campo 'type' debe ser 'quemada' para bajas de tipo burn.",
-      type
-    });
-  }
-  console.log("[BURN] /baja-token llamada con:", {
-    transactionId,
-    ownerPublicKey,
-    origin,
-    type,
-    utxoTxId,
-    utxoOutputIndex,
-  });
-  console.log("[BURN] Keystore recibido:", keystore ? "[OK]" : "[FALTA]");
-  console.log("[BURN] Passphrase recibido:", passphrase ? "[OK]" : "[FALTA]");
-  let foundTransaction = null;
-  let transactionStatus = null;
-
-  // Buscar en la blockchain (bloques minados)
-  for (const block of bc.chain) {
-    const transaction = block.data.find((tx) => tx.id === transactionId);
-    if (transaction) {
-      foundTransaction = transaction;
-      transactionStatus = "confirmed";
-      break;
-    }
-  }
-  // Si no se encuentra, buscar en la mempool
-  if (!foundTransaction) {
-    const mempoolTransaction = tp.transactions.find(
-      (tx) => tx.id === transactionId
-    );
-    if (mempoolTransaction) {
-      foundTransaction = mempoolTransaction;
-      transactionStatus = "pending";
-    }
-  }
-
-  if (!foundTransaction) {
-    console.log("Transacción no encontrada para ID:", transactionId);
-    return res.status(404).json({
-      success: false,
-      error: "Transacción no encontrada",
-      transactionId,
-    });
-  }
-
-  // Validar propietario
-  const currentOwner = foundTransaction.outputs.find(
-    (output) => output.amount > 0
-  )?.address;
-  if (currentOwner !== ownerPublicKey) {
-    console.log("[BURN] El propietario no coincide:", {
-      currentOwner,
-      ownerPublicKey,
-    });
-    return res.status(403).json({
-      success: false,
-      error: "El propietario no coincide con el actual",
-      currentOwner,
-      ownerPublicKey,
-    });
-  }
-
-  // Determinar dirección destino (burn o bodega)
-  let destino = null;
-  if (origin === "burn" || origin === "baja-definitiva") {
-    destino = "0x0000000000000000000000000000000000000000"; // Dirección burn estándar
-  } else if (origin === "bodega" || origin === "baja-temporal") {
-    destino = process.env.BODEGA_ADDRESS || "BODEGA_DEFAULT_ADDRESS";
-  } else {
-    return res.status(400).json({
-      success: false,
-      error: "Origin de baja no válido",
-      origin,
-    });
-  }
-
-  // Crear nueva transacción de baja
-  try {
-    // Buscar UTXO específico si se proporciona
-    let utxoToBurn;
-    if (utxoTxId && typeof utxoOutputIndex !== "undefined") {
-      utxoToBurn = bc.utxoSet.find(
-        (utxo) =>
-          utxo.address === ownerPublicKey &&
-          utxo.txId === utxoTxId &&
-          utxo.outputIndex === utxoOutputIndex
-      );
-      console.log("[BURN] UTXO específico buscado:", {
-        utxoTxId,
-        utxoOutputIndex,
-        utxoToBurn,
-      });
-      if (!utxoToBurn) {
-        console.log("[BURN] UTXO específico NO encontrado");
-        return res.status(400).json({
-          success: false,
-          error: "UTXO específico no encontrado para baja",
-          utxoTxId,
-          utxoOutputIndex,
-        });
-      }
-    } else {
-      // Si no se especifica, usar todos los UTXOs como antes
-      const utxos = bc.utxoSet.filter(
-        (utxo) => utxo.address === ownerPublicKey
-      );
-      if (utxos.length === 0) {
-        return res.status(400).json({
-          success: false,
-          error: "El propietario no tiene saldo disponible para baja",
-          ownerPublicKey,
-        });
-      }
-      utxoToBurn = utxos; // Usar todos
-    }
-
-    // Validar keystore y passphrase recibidos
-    if (!keystore || !passphrase) {
-      console.log("[BURN] Faltan keystore o passphrase");
-      return res.status(400).json({
-        success: false,
-        error:
-          "Faltan keystore o passphrase del usuario para firmar la transacción de baja",
-      });
-    }
-    // Descifrar la clave privada del usuario
-    let privateKeyBuf;
-    try {
-      privateKeyBuf = await decryptPrivateKeyFromKeystore(keystore, passphrase);
-      console.log(
-        "[BURN] Clave privada descifrada:",
-        privateKeyBuf ? "[OK]" : "[FALLO]"
-      );
-    } catch (err) {
-      return res.status(403).json({
-        success: false,
-        error: "No se pudo descifrar la clave privada del usuario",
-        details: err.message,
-      });
-    }
-    let privateKeyHex = Buffer.isBuffer(privateKeyBuf)
-      ? privateKeyBuf.toString("hex")
-      : privateKeyBuf;
-    // Crear instancia de Wallet del usuario
-    const userWallet = new Wallet(ownerPublicKey, 0, privateKeyHex);
-    console.log("[BURN] Wallet temporal creada para firmar:", {
-      ownerPublicKey,
-      privateKeyHex: privateKeyHex ? "[OK]" : "[FALLO]",
-    });
-
-    // Crear transacción de baja usando la wallet del usuario
-    let bajaTransaction;
-    if (Array.isArray(utxoToBurn)) {
-      // Comportamiento anterior: todos los UTXOs
-      const totalAmount = utxoToBurn.reduce(
-        (sum, utxo) => sum + utxo.amount,
-        0
-      );
-      console.log("[BURN] UTXOs seleccionados para baja:", utxoToBurn);
-      bajaTransaction = userWallet.createTransaction(
-        destino,
-        totalAmount,
-        bc,
-        tp,
-        bc.utxoSet
-      );
-    } else {
-      // Solo el UTXO indicado
-      console.log("[BURN] UTXO seleccionado para baja:", utxoToBurn);
-      bajaTransaction = userWallet.createTransaction(
-        destino,
-        utxoToBurn.amount,
-        bc,
-        tp,
-        [utxoToBurn]
-      );
-    }
-
-    if (!bajaTransaction) {
-      console.log("[BURN] No se pudo crear la transacción de baja");
-      return res.status(500).json({
-        success: false,
-        error: "No se pudo crear la transacción de baja",
-      });
-    }
-
-    // Difundir la transacción
-    p2pServer.broadcastTransaction(bajaTransaction);
-    console.log("[BURN] Transacción de baja creada:", bajaTransaction);
-
-    return res.json({
-      success: true,
-      status: "baja-pending",
-      message: "Transacción de baja creada y difundida exitosamente",
-      transactionId: bajaTransaction.id,
-      timestamp: bajaTransaction.timestamp,
-      origin,
-      type,
-      destino,
-      owner: ownerPublicKey,
-      amount: Array.isArray(utxoToBurn)
-        ? utxoToBurn.reduce((sum, utxo) => sum + utxo.amount, 0)
-        : utxoToBurn.amount,
-      details: {
-        previousTransactionId: transactionId,
-        previousOwner: ownerPublicKey,
-        transactionStatus: transactionStatus,
-        broadcasted: true,
-      },
-    });
-  } catch (error) {
-    console.error("Error creando la transacción de baja:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Error creando la transacción de baja",
-      details: error.message,
-    });
-  }
+// Modular baja-token endpoint
+app.use('/token', tokenRoutes);
+// Modular utxo-balance endpoints
+import utxoRoutes from './app/routes/utxoRoutes.js';
+app.use('/utxo-balance', utxoRoutes);
+// Legacy utxo-balance endpoints commented for reference
+/*
+// LEGACY: GET /utxo-balance/global
+app.get("/utxo-balance/global", (req, res) => {
+  // ...legacy logic moved to utxoController.js...
 });
+// LEGACY: GET /utxo-balance/:address
+app.get("/utxo-balance/:address", (req, res) => {
+  // ...legacy logic moved to utxoController.js...
+});
+*/
 
 // ✅ El saldo inicial ya está configurado en el bloque génesis
 // La wallet cargada desde wallet_default.json ya tiene 5000 unidades disponibles
@@ -1667,32 +1162,30 @@ try {
   });
 }
 
-// Ruta para mostrar los bloques de la cadena en formato JSON
-// Endpoint para obtener información del sistema y red P2P
-app.get("/systemInfo", (req, res) => {
+// ===================
+// === ADMIN ENDPOINTS (AHORA EN ROUTER MODULAR) ===
+// ===================
+/*
+// GET /system-info
+app.get('/system-info', async (req, res) => {
   try {
-    // Número de conexiones P2P activas
-    const p2pConnections = p2pServer.sockets.length;
-    // Peers configurados (enviados por variable de entorno)
-    const p2pPeers =
-      process.env.PEERS && process.env.PEERS.trim()
-        ? process.env.PEERS.split(",").filter((peer) => peer.trim())
-        : [];
-    res.json({
-      blockchain: {
-        network: {
-          p2pConnections,
-          p2pPeers,
-        },
-      },
-    });
+    // ... lógica de getSystemInfo ...
   } catch (error) {
-    console.error("Error obteniendo systemInfo:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Error obteniendo systemInfo" });
+    res.status(500).json({ success: false, error: 'Error obteniendo información del sistema', details: error.message });
   }
 });
+// GET /systemInfo
+app.get('/systemInfo', async (req, res) => {
+  try {
+    // ... lógica de getSystemInfo ...
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error obteniendo información del sistema', details: error.message });
+  }
+});
+*/
+
+import adminRoutes from './app/routes/adminRoutes.js';
+app.use('/admin', adminRoutes);
 app.get("/blocks", (req, res) => {
   try {
     console.log("Enviando blocks");
