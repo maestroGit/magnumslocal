@@ -1,76 +1,271 @@
 // app/controllers/loteController.js
-import Lote from '../../src/models/Lote.js'; // Ajusta si tu modelo está en otra ruta
-// Si necesitas interactuar con la base de datos, importa los modelos aquí
+import Lote from '../../src/models/Lote.js';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
-export async function generarQR(req, res) {
-  const {
-    loteId,
-    nombreProducto,
-    fechaProduccion,
-    fechaCaducidad,
-    origen,
-    bodega,
-    año,
-    variedad,
-    región,
-    denominacionOrigen,
-    alcohol,
-    notaDeCata,
-    maridaje,
-    precio,
-    comentarios,
-    trazabilidad,
-  } = req.body;
-
+// POST /qr-with-proof
+export async function generarQRWithProof(req, res) {
   try {
-    // Validación básica
-    if (!loteId || !nombreProducto || !bodega) {
+    const { loteId, transactionId } = req.body;
+    if (!loteId || !transactionId) {
       return res.status(400).json({
         success: false,
-        error: 'Faltan campos obligatorios: loteId, nombreProducto, bodega',
+        error: "Faltan parámetros: loteId y transactionId son requeridos",
       });
     }
-
-    // Crear instancia de Lote (ajusta según tu modelo real)
-    const lote = new Lote(
+    let foundTransaction = null;
+    let ownerPublicKey = null;
+    let transactionStatus = null;
+    for (const block of global.bc.chain) {
+      const transaction = block.data.find((tx) => tx.id === transactionId);
+      if (transaction) {
+        foundTransaction = transaction;
+        transactionStatus = "confirmed";
+        ownerPublicKey = transaction.outputs.find(
+          (output) => output.amount > 0
+        )?.address;
+        break;
+      }
+    }
+    if (!foundTransaction) {
+      const mempoolTransaction = global.tp.transactions.find(
+        (tx) => tx.id === transactionId
+      );
+      if (mempoolTransaction) {
+        foundTransaction = mempoolTransaction;
+        transactionStatus = "pending";
+        ownerPublicKey = mempoolTransaction.outputs.find(
+          (output) => output.amount > 0
+        )?.address;
+      }
+    }
+    if (!foundTransaction) {
+      return res.status(404).json({
+        success: false,
+        error: "Transacción no encontrada en blockchain ni en mempool",
+        transactionId,
+        suggestion: "Verifique que el ID de transacción sea correcto",
+      });
+    }
+    const loteData = {
       loteId,
-      nombreProducto,
-      fechaProduccion,
-      fechaCaducidad,
-      origen,
-      bodega,
-      año,
-      variedad,
-      región,
-      denominacionOrigen,
-      alcohol,
-      notaDeCata,
-      maridaje,
-      precio,
-      comentarios,
-      trazabilidad
+      nombreProducto: req.body.nombreProducto || "Producto sin nombre",
+      fechaProduccion: req.body.fechaProduccion || new Date().toISOString().split("T")[0],
+      fechaCaducidad: req.body.fechaCaducidad || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      origen: req.body.origen || "España",
+      bodega: req.body.bodega || "Bodega desconocida",
+      año: req.body.año || new Date().getFullYear(),
+      variedad: req.body.variedad || "Variedad no especificada",
+      región: req.body.región || "Región no especificada",
+      denominacionOrigen: req.body.denominacionOrigen || "D.O. no especificada",
+      alcohol: req.body.alcohol || "13%",
+      notaDeCata: req.body.notaDeCata || "Nota de cata no disponible",
+      maridaje: req.body.maridaje || "Maridaje no especificado",
+      precio: req.body.precio || "Precio no especificado",
+      comentarios: req.body.comentarios || "Lote registrado con blockchain proof",
+      trazabilidad: req.body.trazabilidad || "Blockchain → Verificación QR",
+    };
+    const lote = new Lote(loteData.loteId);
+    Object.assign(lote, loteData);
+    const qrUrl = await lote.generarQRWithProof(
+      transactionId,
+      ownerPublicKey,
+      foundTransaction.inputs?.[0]?.signature || `verified_${transactionStatus}`
     );
-
-    // Generar el código QR (ajusta si tu método es diferente)
-    const qrUrl = await lote.generarQR();
-
     res.json({
       success: true,
       qrBase64: qrUrl,
-      loteData: {
+      proof: {
         loteId: lote.loteId,
-        nombreProducto: lote.nombreProducto,
-        bodega: lote.bodega,
-        año: lote.año,
-        región: lote.región,
-        precio: lote.precio,
+        owner: ownerPublicKey,
+        transactionId: transactionId,
+        transactionStatus: transactionStatus,
+        verifiedAt: new Date().toISOString(),
+        blockchainVerifiable: true,
+        message:
+          transactionStatus === "pending"
+            ? "⏳ Transacción válida en mempool - Se confirmará tras el minado"
+            : "✅ Transacción confirmada en blockchain",
+      },
+      loteData: {
+        ...loteData,
+        isBlockchainLinked: true,
+        transactionReference: transactionId,
       },
     });
   } catch (err) {
-    console.error('Error generando el QR:', err);
+    console.error("Error generando QR con prueba:", err);
     res.status(500).json({
       success: false,
-      error: 'Error generando el QR',
+      error: "Error generando QR con prueba de propiedad",
+      details: err.message,
+    });
+  }
+}
+
+// POST /lotes
+export async function crearLote(req, res) {
+  try {
+    const { txId, metadata } = req.body;
+    if (!txId) {
+      return res.status(400).json({ success: false, error: "txId es requerido" });
+    }
+    const loteId = txId;
+    const metaObj = metadata && typeof metadata === "object" ? metadata : {};
+    const metaString = JSON.stringify(metaObj);
+    const metadataHash = crypto.createHash("sha256").update(metaString).digest("hex");
+    const lotesDir = path.join(process.cwd(), "app", "uploads", "lotes");
+    if (!fs.existsSync(lotesDir)) fs.mkdirSync(lotesDir, { recursive: true });
+    const record = {
+      loteId,
+      txId,
+      metadataHash,
+      metadata: metaObj,
+      createdAt: new Date().toISOString(),
+    };
+    const filePath = path.join(lotesDir, `${loteId}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(record, null, 2), "utf8");
+    const qrPayload = {
+      loteId,
+      metadataHash,
+      url: `${req.protocol}://${req.get("host")}/lotes/${encodeURIComponent(loteId)}`,
+    };
+    // Proof blockchain (opcional, igual que en server.js)
+    try {
+      let foundTransaction = null;
+      let ownerPublicKey = null;
+      let transactionStatus = null;
+      for (const block of global.bc.chain) {
+        const transaction = block.data.find((tx) => tx.id === txId);
+        if (transaction) {
+          foundTransaction = transaction;
+          transactionStatus = "confirmed";
+          ownerPublicKey = transaction.outputs.find(
+            (output) => output.amount > 0
+          )?.address;
+          break;
+        }
+      }
+      if (!foundTransaction) {
+        const mempoolTransaction = global.tp.transactions.find(
+          (tx) => tx.id === txId
+        );
+        if (mempoolTransaction) {
+          foundTransaction = mempoolTransaction;
+          transactionStatus = "pending";
+          ownerPublicKey = mempoolTransaction.outputs.find(
+            (output) => output.amount > 0
+          )?.address;
+        }
+      }
+      if (foundTransaction) {
+        // Puedes añadir lógica de prueba aquí si lo necesitas
+      }
+    } catch (err) {
+      console.warn("No se pudo generar proof en POST /lotes (continuando):", err.message);
+    }
+    return res.json({ success: true, record, qrPayload });
+  } catch (err) {
+    console.error("Error creando lote:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Error creando lote",
+      details: err.message,
+    });
+  }
+}
+
+// GET /lotes/:loteId
+export async function getLoteById(req, res) {
+  try {
+    const { loteId } = req.params;
+    const lotesDir = path.join(process.cwd(), "app", "uploads", "lotes");
+    const filePath = path.join(lotesDir, `${loteId}.json`);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: "Lote no encontrado" });
+    }
+    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("Error obteniendo lote:", err);
+    res.status(500).json({ success: false, error: "Error obteniendo lote", details: err.message });
+  }
+}
+
+// POST /verify-qr-proof
+export async function verifyQrProof(req, res) {
+  try {
+    const { qrData } = req.body;
+    if (!qrData) {
+      return res.status(400).json({
+        success: false,
+        error: "QR data es requerido",
+      });
+    }
+    let transactionId;
+    let ownerPublicKey = "SKIP_OWNER_CHECK";
+    let parsedData = null;
+    try {
+      parsedData = typeof qrData === "string" ? JSON.parse(qrData) : qrData;
+      if (parsedData.blockchainProof) {
+        transactionId = parsedData.blockchainProof.transactionId;
+        ownerPublicKey = parsedData.blockchainProof.ownerPublicKey;
+      } else if (parsedData.transactionId) {
+        transactionId = parsedData.transactionId;
+      }
+    } catch (parseErr) {
+      transactionId = qrData;
+    }
+    if (!transactionId) {
+      return res.status(400).json({
+        success: false,
+        error: "No se pudo extraer transactionId del QR",
+      });
+    }
+    let transactionFound = false;
+    let blockInfo = null;
+    let foundTransaction = null;
+    for (let i = 0; i < global.bc.chain.length; i++) {
+      const block = global.bc.chain[i];
+      const tx = block.data.find((tx) => tx.id === transactionId);
+      if (tx) {
+        transactionFound = true;
+        foundTransaction = tx;
+        blockInfo = {
+          index: i,
+          hash: block.hash,
+          timestamp: block.timestamp,
+        };
+        break;
+      }
+    }
+    if (!transactionFound) {
+      const memTx = global.tp.transactions.find((tx) => tx.id === transactionId);
+      if (memTx) {
+        return res.json({
+          success: true,
+          status: "pending",
+          message: "Transacción válida en mempool, pendiente de minado",
+          transaction: memTx,
+        });
+      }
+      return res.status(404).json({
+        success: false,
+        error: "Transacción no encontrada en blockchain ni en mempool",
+        transactionId,
+      });
+    }
+    res.json({
+      success: true,
+      status: "confirmed",
+      transaction: foundTransaction,
+      block: blockInfo,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Error verificando QR proof",
       details: err.message,
     });
   }
