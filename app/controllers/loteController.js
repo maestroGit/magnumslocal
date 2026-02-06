@@ -1,3 +1,71 @@
+// GET /propietario/:ownerPublicKey
+export async function getPropietario(req, res) {
+  try {
+    const { ownerPublicKey } = req.params;
+    let foundTransactions = [];
+    let source = null;
+    for (const block of global.bc.chain) {
+      const txs = block.data.filter(
+        (tx) =>
+          tx.outputs &&
+          tx.outputs.some((output) => output.address === ownerPublicKey)
+      );
+      if (txs.length > 0) {
+        foundTransactions = foundTransactions.concat(txs);
+        source = "blockchain";
+      }
+    }
+    if (foundTransactions.length === 0) {
+      const txs = global.tp.transactions.filter(
+        (tx) =>
+          tx.outputs &&
+          tx.outputs.some((output) => output.address === ownerPublicKey)
+      );
+      if (txs.length > 0) {
+        foundTransactions = foundTransactions.concat(txs);
+        source = "mempool";
+      }
+    }
+    if (foundTransactions.length > 0) {
+      return res.json({
+        success: true,
+        transactions: foundTransactions,
+        source,
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        error: "Propietario no encontrado",
+        ownerPublicKey,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Error obteniendo propietario", details: err.message });
+  }
+}
+// POST /qr
+export async function generateQR(req, res) {
+  try {
+    const { loteId, transactionId } = req.body;
+    if (!loteId || !transactionId) {
+      return res.status(400).json({
+        success: false,
+        error: "Faltan parámetros: loteId y transactionId son requeridos",
+      });
+    }
+    // Simulate QR generation logic (replace with real implementation)
+    const qrData = {
+      loteId,
+      transactionId,
+      generatedAt: new Date().toISOString(),
+    };
+    // For demo, return base64 placeholder
+    const qrBase64 = Buffer.from(JSON.stringify(qrData)).toString('base64');
+    res.json({ success: true, qrBase64, qrData });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "Error generando QR", details: err.message });
+  }
+}
 // app/controllers/loteController.js
 import Lote from '../../src/models/Lote.js';
 import fs from 'fs';
@@ -5,7 +73,7 @@ import path from 'path';
 import crypto from 'crypto';
 
 // POST /qr-with-proof
-export async function generarQRWithProof(req, res) {
+export async function generateQRWithProof(req, res) {
   try {
     const { loteId, transactionId } = req.body;
     if (!loteId || !transactionId) {
@@ -105,7 +173,7 @@ export async function generarQRWithProof(req, res) {
 }
 
 // POST /lotes
-export async function crearLote(req, res) {
+export async function createLote(req, res) {
   try {
     const { txId, metadata } = req.body;
     if (!txId) {
@@ -194,7 +262,7 @@ export async function getLoteById(req, res) {
 }
 
 // POST /verify-qr-proof
-export async function verifyQrProof(req, res) {
+export async function verifyQRProof(req, res) {
   try {
     const { qrData } = req.body;
     if (!qrData) {

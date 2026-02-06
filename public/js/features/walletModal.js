@@ -101,7 +101,7 @@ export function showWalletModal() {
     } catch (e) { console.warn('No se pudo actualizar el header de la wallet global:', e); }
     // Autocompletar clave pública global en el input si está disponible
     try {
-      const resp = await fetch(`${apiBaseUrl}/public-key`);
+      const resp = await fetch(`${apiBaseUrl}/wallet/public-key`);
       const data = await resp.json();
       const input = document.getElementById('addressInputModal');
       if (data && data.publicKey && input && !input.value) {

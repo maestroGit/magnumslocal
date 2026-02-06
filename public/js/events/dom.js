@@ -139,7 +139,7 @@ export function initDomEvents() {
   if (pkBtn && !pkBtn.dataset.bound) {
     pkBtn.addEventListener('click', async () => {
       showToast('Getting public key...', 'info');
-      const publicKey = await fetchData('/public-key');
+      const publicKey = await fetchData('/wallet/public-key');
       if (publicKey.error) {
         showModal(`Error getting public key: ${publicKey.error}`, 'Error');
         showToast('Error getting public key', 'error');
@@ -186,7 +186,7 @@ export function initDomEvents() {
   // Inicialización ligera: obtener clave pública activa y cachearla
   try {
     if (!window.walletAddress) {
-      fetchData('/public-key').then((pk) => {
+      fetchData('/wallet/public-key').then((pk) => {
         if (pk && pk.publicKey) {
           window.walletAddress = pk.publicKey;
           const infoWallet = document.getElementById('infoWallet');

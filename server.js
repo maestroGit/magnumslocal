@@ -36,6 +36,7 @@ import crypto from "crypto";
 import { encryptWallet, decryptWallet } from "./app/walletCrypto.js";
 import { UTXOManager } from "./src/utxomanager.js";
 import loteRoutes from './app/routes/loteRoutes.js';
+import blockchainRoutes from './app/routes/blockchainRoutes.js';
 
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
@@ -214,130 +215,7 @@ app.use(limiter);
 
 // --- ENDPOINTS PARA CIFRADO/DECIFRADO Y CARGA DE WALLET GLOBAL ---
 
-// POST /wallet/load-global
-// Permite cargar una wallet global desde el frontend y sobrescribe wallet_default.json
-app.post(
-  "/wallet/load-global",
-  [
-    check("encryptedPrivateKey").isString().notEmpty(),
-    check("salt").isString().notEmpty(),
-    check("iv").isString().notEmpty(),
-    check("tag").isString().notEmpty(),
-    check("passphrase").isString().notEmpty(),
-    check("publicKey").isString().notEmpty(),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    console.log(
-      "[LOAD-GLOBAL] Body recibido del frontend:",
-      JSON.stringify(req.body, null, 2)
-    );
-    const { encryptedPrivateKey, salt, iv, tag, passphrase, publicKey } =
-      req.body;
-    if (
-      !encryptedPrivateKey ||
-      !salt ||
-      !iv ||
-      !tag ||
-      !passphrase ||
-      !publicKey
-    ) {
-      console.error("[LOAD-GLOBAL] ❌ Faltan campos requeridos en la petición");
-      return res.status(400).json({ error: "Faltan campos requeridos" });
-    }
-    try {
-      // Mostrar la clave pública global actual antes del cambio
-      if (globalWallet && globalWallet.publicKey) {
-        console.log(
-          "[LOAD-GLOBAL] Clave pública global ANTES del cambio:",
-          globalWallet.publicKey
-        );
-      } else {
-        console.log(
-          "[LOAD-GLOBAL] No había wallet global cargada previamente."
-        );
-      }
-      // Construir objeto keystore compatible
-      const keystore = {
-        keystoreVersion: 1,
-        kdf: "pbkdf2",
-        kdfParams: {
-          salt,
-          iterations: 100000,
-          keylen: 32,
-          digest: "sha256",
-        },
-        cipher: "aes-256-gcm",
-        cipherParams: { iv },
-        tag,
-        publicKey,
-        encryptedPrivateKey,
-      };
-      // Intentar descifrar la clave privada
-      const privateKeyBuf = await decryptPrivateKeyFromKeystore(
-        keystore,
-        passphrase
-      );
-      // Cargar la wallet global en memoria (usando el parámetro correcto para clave privada)
-      globalWallet = new Wallet(null, undefined, privateKeyBuf.toString("hex"));
-        global.globalWallet = globalWallet;
-      // Forzar sincronización: derivar la clave pública desde keyPair y actualizar el campo publicKey
-      if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
-        globalWallet.publicKey = globalWallet.keyPair.getPublic().encode("hex");
-        global.globalWallet = globalWallet;
-      }
-      // Log justo después de actualizar la wallet global
-      if (
-        globalWallet &&
-        globalWallet.keyPair &&
-        globalWallet.keyPair.getPublic
-      ) {
-        console.log(
-          "[LOAD-GLOBAL][POST] publicKey servida por /wallet/global:",
-          globalWallet.keyPair.getPublic().encode("hex")
-        );
-      } else if (globalWallet && globalWallet.publicKey) {
-        console.log(
-          "[LOAD-GLOBAL][POST] publicKey servida por /wallet/global:",
-          globalWallet.publicKey
-        );
-      }
-      // Sobrescribir wallet_default.json
-      const walletPath = path.join(
-        __dirname,
-        "./app/uploads/wallet_default.json"
-      );
-      fs.writeFileSync(walletPath, JSON.stringify(keystore, null, 2), "utf8");
-      console.log(
-        "[LOAD-GLOBAL] wallet_default.json sobrescrito. Clave pública activa ahora:",
-        globalWallet.publicKey
-      );
-      // Log del cambio efectivo
-      console.log("[LOAD-GLOBAL] ✅ Wallet global actualizada.");
-      console.log(
-        "[LOAD-GLOBAL] Clave pública global DESPUÉS del cambio:",
-        globalWallet.publicKey
-      );
-      console.log(
-        "[LOAD-GLOBAL] Clave privada global DESPUÉS del cambio:",
-        globalWallet.privateKey
-      );
-      console.log(
-        "[LOAD-GLOBAL] wallet_default.json sobrescrito en:",
-        walletPath
-      );
-      return res.json({ ok: true, publicKey: globalWallet.publicKey });
-    } catch (e) {
-      console.error("[LOAD-GLOBAL] ❌ Error al cargar la wallet global:", e);
-      return res
-        .status(401)
-        .json({ error: "Passphrase incorrecta o wallet corrupta" });
-    }
-  }
-);
+
 
 
 
@@ -700,41 +578,11 @@ const loadWalletWithPassphrase = async (passphrase) => {
 // Devuelve: { publicKey, encryptedPrivateKey, salt, iv, tag }
 import { v4 as uuidv4 } from "uuid";
 
-app.post("/wallet/generate", async (req, res) => {
-  const { passphrase } = req.body;
-  if (!passphrase) {
-    return res.status(400).json({ error: "Falta passphrase" });
-  }
-  try {
-    const { generateKeystore } = await import("./app/walletCrypto.js");
-    const keystore = await generateKeystore(passphrase);
-    return res.json(keystore);
-  } catch (e) {
-    console.error("[/wallet/generate] Error:", e);
-    return res.status(500).json({ error: "Error generando wallet" });
-  }
-});
+
 
 // GET /wallet/global
 // Devuelve la publicKey de la wallet global cargada (no la privada)
-app.get("/wallet/global", (req, res) => {
-  if (!globalWallet) {
-    console.log("[WALLET-GLOBAL] No hay wallet global cargada.");
-    return res.status(404).json({ error: "No hay wallet global cargada" });
-  }
-  // Siempre devolver la clave pública derivada del keyPair
-  let pubKey = null;
-  if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
-    pubKey = globalWallet.keyPair.getPublic().encode("hex");
-  } else if (globalWallet.publicKey) {
-    pubKey = globalWallet.publicKey;
-  }
-  console.log(
-    "[WALLET-GLOBAL][GET] publicKey servida por /wallet/global:",
-    pubKey
-  );
-  return res.json({ publicKey: pubKey });
-});
+
 
 // --- Carga automática de wallet global al arrancar el backend ---
 const NODE_NAME = process.env.NODE_NAME || "Default_Node";
@@ -871,16 +719,23 @@ app.use(express.json()); // Middleware moderno para parsear JSON
 
 // Nueva ruta GET para obtener los datos de una transacción por su ID
 // Nueva ruta POST para baja de token (transferencia a burn o bodega)
+
 // Modular baja-token endpoint
 app.use('/token', tokenRoutes);
 
-// Importar routers al inicio para evitar problemas de hoisting
+// Importar y montar el router modular de wallet
+import walletRoutes from './app/routes/walletRoutes.js';
+app.use('/wallet', walletRoutes);
+
+
 import utxoRoutes from './app/routes/utxoRoutes.js';
 import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
+import systemRoutes from './app/routes/systemRoutes.js';
 
 // Montar routers después de importar
 app.use('/utxo-balance', utxoRoutes);
 app.use('/address-history', addressHistoryRoutes);
+app.use('/', systemRoutes);
 // Legacy utxo-balance endpoints commented for reference
 /*
 // LEGACY: GET /utxo-balance/global
@@ -888,48 +743,7 @@ app.get("/utxo-balance/global", (req, res) => {
   // ...legacy logic moved to utxoController.js...
 });
 // LEGACY: GET /utxo-balance/:address
-app.get("/utxo-balance/:address", (req, res) => {
-  // ...legacy logic moved to utxoController.js...
-});
-*/
 
-// ✅ El saldo inicial ya está configurado en el bloque génesis
-// La wallet cargada desde wallet_default.json ya tiene 5000 unidades disponibles
-
-// Ruta para obtener el balance de una dirección específica
-// Esta ruta utiliza el UTXOManager para obtener el balance y los UTXOs disponibles para una dirección dada.
-// Esto permite calcular el balance sin recorrer toda la blockchain, mejorando la eficiencia.
-// El cliente puede llamar a esta ruta con la dirección deseada para obtener su balance y UTXOs.
-// Ejemplo de llamada: GET /utxo-balance/:address
-// Endpoint fijo para consultar UTXOs de la wallet global actual
-// Donde :address es la dirección de la wallet que queremos consultar.
-// El servidor responde con un objeto JSON que incluye la dirección, su balance y los UTXOs disponibles.
-// Esto es útil para mostrar balances en la interfaz de usuario o para construir nuevas transacciones.
-// Las rutas /utxo-balance/global y /utxo-balance/:address están ahora gestionadas por el router modular utxoRoutes.
-// --- BLOQUE LEGACY DE UTXO-BALANCE ELIMINADO POR MODULARIZACIÓN ---
-
-
-// --- MANEJADOR DE ERRORES GLOBAL AL FINAL ---
-app.use((err, req, res, next) => {
-  console.error("[GLOBAL ERROR HANDLER]", err);
-  if (res.headersSent) {
-    return next(err);
-  }
-  res.status(500).json({
-    success: false,
-    error: err.message || "Internal Server Error",
-    details: err.stack,
-  });
-});
-
-
-// Crear instancia del cliente Blockchain
-const client = new BlockchainClient("http://localhost:3000");
-
-// Ruta raíz para servir el archivo HTML de la vista principal
-try {
-  app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "./public", "view.html"));
   });
 } catch (error) {
   console.error("Ocurrió un error al servir el archivo:", error);
@@ -964,15 +778,8 @@ app.get('/systemInfo', async (req, res) => {
 */
 
 app.use('/admin', adminRoutes);
-app.get("/blocks", (req, res) => {
-  try {
-    console.log("Enviando blocks");
-    res.json(bc.chain);
-  } catch (error) {
-    console.error("Error fetching blocks:", error);
-    res.status(500).json({ success: false, error: "Error fetching blocks" });
-  }
-});
+// Modular blockchain endpoints
+app.use('/', blockchainRoutes);
 
 // Ruta para mostrar las transacciones minadas en formato JSON
 // Endpoint para obtener las transacciones minadas
@@ -999,120 +806,7 @@ app.post("/transaction", async (req, res) => {
   // Logs generales de entrada
   console.log("\n--- [POST /transaction] INICIO ---");
   console.log("[POST /transaction] req.body:", JSON.stringify(req.body, null, 2));
-  if (req.body && req.body.signedTransaction) {
-    console.log("[DEBUG][POST /transaction] signedTransaction.inputs:", JSON.stringify(req.body.signedTransaction.inputs, null, 2));
-    console.log("[DEBUG][POST /transaction] signedTransaction.outputs:", JSON.stringify(req.body.signedTransaction.outputs, null, 2));
-    if (req.body.signedTransaction.inputs && req.body.signedTransaction.inputs.length > 0) {
-      req.body.signedTransaction.inputs.forEach((inp, idx) => {
-        console.log(`[DEBUG][POST /transaction] input[${idx}]:`, JSON.stringify(inp, null, 2));
-        if (inp.signature) {
-          console.log(`[DEBUG][POST /transaction] input[${idx}].signature:`, inp.signature, typeof inp.signature);
-        }
-      });
-    }
-  }
-  const signedTransaction = req.body && req.body.signedTransaction;
-  const passphrase = req.body && req.body.passphrase;
-  const keystore = req.body && req.body.keystore;
-  const mode = req.body && req.body.mode;
 
-  // === FLUJO 1: BODEGA ===
-  if (mode === "bodega") {
-    console.log(
-      "[FLUJO BODEGA] Solicitud recibida. El backend firmará la transacción usando la wallet global."
-    );
-    const { recipient, amount } = req.body;
-    if (!recipient || !amount) {
-      console.warn(
-        "[FLUJO BODEGA] ❌ Transacción rechazada: datos incompletos",
-        { recipient, amount }
-      );
-      return res.status(400).json({
-        error: "Datos de la transacción incompletos",
-        details: {
-          recipient,
-          amount,
-          message: "Debes proporcionar un destinatario y un monto.",
-        },
-      });
-    }
-    console.log("[FLUJO BODEGA] UTXO set global:", bc.utxoSet);
-    console.log(
-      "[FLUJO BODEGA] Wallet pública activa:",
-      globalWallet.publicKey
-    );
-    const utxos = bc.utxoSet.filter(
-      (utxo) => utxo.address === globalWallet.publicKey
-    );
-    const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
-    if (balance === 0) {
-      console.warn(
-        "[FLUJO BODEGA] ❌ Transacción rechazada: saldo insuficiente o sin UTXOs",
-        { address: globalWallet.publicKey, balance }
-      );
-      return res.status(400).json({
-        error: "No hay saldo disponible o la dirección no tiene UTXOs.",
-        address: globalWallet.publicKey,
-        balance,
-      });
-    }
-    if (!globalWallet.privateKey) {
-      console.warn(
-        "[FLUJO BODEGA] ❌ Transacción rechazada: wallet sin clave privada",
-        { address: globalWallet.publicKey }
-      );
-      return res.status(400).json({
-        error: "No hay saldo disponible o la dirección no tiene UTXOs.",
-        address: globalWallet.publicKey,
-        balance,
-        suggestion:
-          "Verifica que la clave privada cargada corresponda a una dirección con saldo.",
-      });
-    }
-    try {
-      const transaction = globalWallet.createTransaction(
-        recipient,
-        amount,
-        bc,
-        tp,
-        bc.utxoSet
-      );
-      console.log(
-        "[FLUJO BODEGA] Creando la transacción en la wallet global...",
-        transaction
-      );
-      if (transaction) {
-        p2pServer.broadcastTransaction(transaction);
-        res.json({
-          success: true,
-          message: "Transacción creada exitosamente (bodega)",
-          transaction: {
-            id: transaction.id,
-            timestamp: transaction.timestamp,
-            amount: amount,
-            recipient: recipient,
-            sender: globalWallet.publicKey,
-          },
-          enableTraceability: true,
-        });
-      } else {
-        return res.status(500).json({
-          success: false,
-          error: "Error creando la transacción (bodega)",
-        });
-      }
-    } catch (error) {
-      console.error("[FLUJO BODEGA] Error creando la transacción:", error);
-      if (!res.headersSent) {
-        res.status(500).json({
-          success: false,
-          error: "No se pudo crear la transacción (bodega).",
-          details: error.message,
-        });
-      }
-    }
-    return;
-  }
 
   // === FLUJO 2: USUARIO ===
   if (signedTransaction) {
@@ -1490,87 +1184,7 @@ app.post("/address-balance", (req, res) => {
 // Leemos el contenido del archivo y lo usamos para cargar la clave pública.
 // Enviamos una respuesta JSON que incluye la clave pública si todo va bien.
 // En el cliente, llamamos a HardwareWallet with la clave pública obtenida del servidor.
-app.post("/hardware-address", (req, res, next) => {
-  // Wrap multer invocation so we can control error handling per-request
-  const single = upload.single("usbPath");
-  single(req, res, function (err) {
-    if (err) {
-      console.error("Multer error on /hardware-address:", err);
-      // Multer-specific errors often have code property
-      if (err instanceof multer.MulterError) {
-        return res
-          .status(400)
-          .json({ success: false, error: err.message, code: err.code });
-      }
-      return res
-        .status(400)
-        .json({ success: false, error: err.message || "Upload error" });
-    }
 
-    try {
-      if (!req.file) {
-        return res
-          .status(400)
-          .json({ success: false, error: "No file received" });
-      }
-
-      const usbPath = req.file.path;
-      const fileContent = fs.readFileSync(usbPath, "utf8");
-      let parsedContent;
-      try {
-        parsedContent = JSON.parse(fileContent);
-      } catch (parseErr) {
-        console.error("Invalid JSON uploaded to /hardware-address:", parseErr);
-        // Clean up file
-        try {
-          fs.unlinkSync(usbPath);
-        } catch (e) {}
-        return res
-          .status(400)
-          .json({ success: false, error: "Uploaded file is not valid JSON" });
-      }
-
-      // Validate required fields
-      const publicKey = parsedContent.publicKey;
-      const privateKey = parsedContent.privateKey;
-      if (!publicKey) {
-        try {
-          fs.unlinkSync(usbPath);
-        } catch (e) {}
-        return res.status(400).json({
-          success: false,
-          error: "publicKey missing in uploaded file",
-        });
-      }
-
-      // Create the new global wallet
-      global.wallet = new Wallet(publicKey, INITIAL_BALANCE, privateKey);
-      // Actualizar el objeto miner con la wallet global descifrada
-      if (!(process.env.NODE_ENV === "test" || process.env.NO_P2P === "true")) {
-        miner = new Miner(bc, tp, global.wallet, p2pServer);
-        console.log(
-          "[POST /hardware-address] Miner actualizado con wallet global descifrada"
-        );
-      }
-      // Remove uploaded file after reading
-      try {
-        fs.unlinkSync(usbPath);
-      } catch (e) {
-        console.warn("Could not delete uploaded file:", e);
-      }
-      console.log("Usando la clave pública cargada:", global.wallet.publicKey);
-      // Respond with the public key of the global wallet
-      return res
-        .status(200)
-        .json({ message: "Success", publicKey: global.wallet.publicKey });
-    } catch (error) {
-      console.error("Error handling /hardware-address:", error);
-      return res
-        .status(500)
-        .json({ success: false, error: "Error processing uploaded file" });
-    }
-  });
-});
 // Ruta para minar los bloques con transacciones pendientes
 /**
  * POST /mine
@@ -1749,26 +1363,7 @@ app.post("/mine-transactions", (req, res) => {
   }
 });
 
-// Ruta para obtener la clave pública de la wallet en crudo
-// Ruta para obtener la clave pública de la wallet actualmente activa
-app.get("/public-key", (req, res) => {
-  try {
-    // Usa la wallet global si existe, si no, responde con error o null
-    if (global.wallet && global.wallet.publicKey) {
-      res.json({ publicKey: global.wallet.publicKey });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: "No hay wallet activa. Sube una wallet primero.",
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching public key:", error);
-    res
-      .status(500)
-      .json({ success: false, error: "Error fetching public key" });
-  }
-});
+
 
 // Export app for testing
 

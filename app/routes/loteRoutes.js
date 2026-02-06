@@ -1,18 +1,22 @@
 // app/routes/loteRoutes.js
 import express from 'express';
 import {
-  generarQRWithProof,
-  crearLote,
+  generateQR,
+  generateQRWithProof,
+  createLote,
+  verifyQRProof,
   getLoteById,
-  verifyQrProof
+  getPropietario
 } from '../controllers/loteController.js';
 
 const router = express.Router();
 
-// router.post('/qr', generarQR); // REMOVED: No export 'generarQR' in controller
-router.post('/qr-with-proof', generarQRWithProof);
-router.post('/lotes', crearLote);
+
+router.post('/qr', generateQR);
+router.post('/qr-with-proof', generateQRWithProof);
+router.post('/lotes', createLote);
+router.post('/verify-qr-proof', verifyQRProof);
 router.get('/lotes/:loteId', getLoteById);
-router.post('/verify-qr-proof', verifyQrProof);
+router.get('/propietario/:ownerPublicKey', getPropietario);
 
 export default router;
