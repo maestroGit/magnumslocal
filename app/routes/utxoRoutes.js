@@ -4,6 +4,7 @@ import { getGlobalUTXOBalance, getUTXOBalanceByAddress } from '../controllers/ut
 
 const router = express.Router();
 
+// Alias para compatibilidad legacy: /utxo-balance/global
 router.get('/global', getGlobalUTXOBalance);
 router.get('/:address', getUTXOBalanceByAddress);
 

@@ -1,3 +1,5 @@
+// Iniciar el servidor HTTP principal
+import adminRoutes from './app/routes/adminRoutes.js';
 import dotenv from "dotenv";
 dotenv.config();
 console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
@@ -281,9 +283,11 @@ app.post(
       );
       // Cargar la wallet global en memoria (usando el parámetro correcto para clave privada)
       globalWallet = new Wallet(null, undefined, privateKeyBuf.toString("hex"));
+        global.globalWallet = globalWallet;
       // Forzar sincronización: derivar la clave pública desde keyPair y actualizar el campo publicKey
       if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
         globalWallet.publicKey = globalWallet.keyPair.getPublic().encode("hex");
+        global.globalWallet = globalWallet;
       }
       // Log justo después de actualizar la wallet global
       if (
@@ -336,18 +340,10 @@ app.post(
 );
 
 
+
 const utxoManager = new UTXOManager();
 global.utxoManager = utxoManager;
 const bc = new Blockchain();
-// Log the result of Blockchain.initialize()
-bc.initialize().then((result) => {
-  console.log('[INIT][Blockchain] Resultado de bc.initialize():', result);
-}).catch((err) => {
-  console.error('[INIT][Blockchain] Error en bc.initialize():', err);
-});
-bc.chain.forEach((block) => utxoManager.updateWithBlock(block));
-// Sincronizar el UTXOManager con la cadena al arrancar
-// Refuerza la sincronización del UTXOManager con la blockchain al arrancar
 
 function syncUTXOManagerWithBlockchain() {
   console.log('[SYNC][DEBUG] syncUTXOManagerWithBlockchain llamada');
@@ -375,7 +371,14 @@ function syncUTXOManagerWithBlockchain() {
     console.error('[SYNC][ERROR] bc o bc.chain no definidos en syncUTXOManagerWithBlockchain');
   }
 }
-syncUTXOManagerWithBlockchain();
+
+// Inicializar la blockchain y sincronizar UTXOManager solo después de que esté lista
+bc.initialize().then((result) => {
+  console.log('[INIT][Blockchain] Resultado de bc.initialize():', result);
+  syncUTXOManagerWithBlockchain();
+}).catch((err) => {
+  console.error('[INIT][Blockchain] Error en bc.initialize():', err);
+});
 
 // Función para descifrar la clave privada desde el keystore
 
@@ -395,33 +398,51 @@ if (fs.existsSync(walletPathInit)) {
     const keystoreRaw = fs.readFileSync(walletPathInit, "utf8");
     const keystore = JSON.parse(keystoreRaw);
     console.log("[INIT] Keystore inicial encontrado en", walletPathInit);
-    //console.log('[INIT] Clave pública inicial:', keystore.publicKey);
-    console.log(
-      "[INIT] Clave pública en wallet_default.json:",
+    console.log("[INIT] Clave pública en wallet_default.json:", keystore.publicKey);
+    // Intentar cargar la wallet global en memoria usando la clave privada descifrada
+    const hasAllFields = [
+      keystore.encryptedPrivateKey,
+      keystore.salt,
+      keystore.iv,
+      keystore.tag,
       keystore.publicKey
-    );
-    if (globalWallet && globalWallet.publicKey) {
-      console.log(
-        "[INIT] Clave pública globalWallet en memoria:",
-        globalWallet.publicKey
-      );
-      // Log the value that will be returned by /wallet/global endpoint
-      let endpointPubKey = null;
-      if (
-        globalWallet &&
-        globalWallet.keyPair &&
-        globalWallet.keyPair.getPublic
-      ) {
-        endpointPubKey = globalWallet.keyPair.getPublic().encode("hex");
-      } else if (globalWallet && globalWallet.publicKey) {
-        endpointPubKey = globalWallet.publicKey;
+    ].every(v => typeof v === 'string' && v.length > 0);
+    if (hasAllFields) {
+      const defaultPassphrase = process.env.DEFAULT_WALLET_PASSPHRASE || null;
+      if (defaultPassphrase) {
+        decryptPrivateKeyFromKeystore(keystore, defaultPassphrase)
+          .then(privateKeyBuf => {
+            globalWallet = new Wallet(null, undefined, privateKeyBuf.toString("hex"));
+            if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
+              globalWallet.publicKey = globalWallet.keyPair.getPublic().encode("hex");
+            }
+            global.globalWallet = globalWallet;
+            // Redundante: asegurar que global.globalWallet siempre está sincronizado
+            if (typeof global.globalWallet === 'undefined' || !global.globalWallet || !global.globalWallet.publicKey) {
+              global.globalWallet = globalWallet;
+            }
+            console.log("[INIT] globalWallet cargada en memoria. publicKey:", globalWallet.publicKey);
+          })
+          .catch(e => {
+            console.error("[INIT] Error descifrando wallet_default.json con passphrase por defecto:", e);
+          });
+      } else {
+        console.warn("[INIT] No se ha definido DEFAULT_WALLET_PASSPHRASE. La wallet global no se cargará automáticamente.");
       }
-      console.log(
-        "[INIT] Endpoint: /wallet/global publicKey =",
-        endpointPubKey
-      );
+    } else if (keystore.privateKey && typeof keystore.privateKey === 'string' && keystore.privateKey.length > 0) {
+      globalWallet = new Wallet(null, undefined, keystore.privateKey);
+      global.globalWallet = globalWallet;
+      if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
+        globalWallet.publicKey = globalWallet.keyPair.getPublic().encode("hex");
+        global.globalWallet = globalWallet;
+      }
+      // Redundante: asegurar que global.globalWallet siempre está sincronizado
+      if (typeof global.globalWallet === 'undefined' || !global.globalWallet || !global.globalWallet.publicKey) {
+        global.globalWallet = globalWallet;
+      }
+      console.log("[INIT] globalWallet cargada en memoria desde privateKey. publicKey:", globalWallet.publicKey);
     } else {
-      console.log("[INIT] globalWallet aún no inicializada en memoria.");
+      console.warn("[INIT] wallet_default.json no tiene campos necesarios para cargar la wallet global.");
     }
   } catch (e) {
     console.error("[INIT] Error leyendo wallet_default.json:", e);
@@ -729,6 +750,10 @@ if (fs.existsSync(walletPath)) {
   (async () => {
     try {
       await loadWalletWithPassphrase(DEFAULT_WALLET_PASSPHRASE);
+      // Refuerzo: asegurar que global.globalWallet está sincronizado
+      if (typeof global.globalWallet === 'undefined' || !global.globalWallet || !global.globalWallet.publicKey) {
+        global.globalWallet = globalWallet;
+      }
       console.log(
         "[INIT] Wallet global cargada automáticamente al arrancar el backend"
       );
@@ -751,6 +776,10 @@ if (fs.existsSync(walletPath)) {
       fs.writeFileSync(walletPath, JSON.stringify(keystore, null, 2), "utf8");
       console.log(`🔑 Keystore generado y exportado a ${walletPath}`);
       await loadWalletWithPassphrase(DEFAULT_WALLET_PASSPHRASE);
+      // Refuerzo: asegurar que global.globalWallet está sincronizado
+      if (typeof global.globalWallet === 'undefined' || !global.globalWallet || !global.globalWallet.publicKey) {
+        global.globalWallet = globalWallet;
+      }
       if (!(process.env.NODE_ENV === "test" || process.env.NO_P2P === "true")) {
         miner = new Miner(bc, tp, global.wallet, p2pServer);
         console.log("[INIT] Miner actualizado con wallet global descifrada");
@@ -844,9 +873,14 @@ app.use(express.json()); // Middleware moderno para parsear JSON
 // Nueva ruta POST para baja de token (transferencia a burn o bodega)
 // Modular baja-token endpoint
 app.use('/token', tokenRoutes);
-// Modular utxo-balance endpoints
+
+// Importar routers al inicio para evitar problemas de hoisting
 import utxoRoutes from './app/routes/utxoRoutes.js';
+import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
+
+// Montar routers después de importar
 app.use('/utxo-balance', utxoRoutes);
+app.use('/address-history', addressHistoryRoutes);
 // Legacy utxo-balance endpoints commented for reference
 /*
 // LEGACY: GET /utxo-balance/global
@@ -868,267 +902,12 @@ app.get("/utxo-balance/:address", (req, res) => {
 // El cliente puede llamar a esta ruta con la dirección deseada para obtener su balance y UTXOs.
 // Ejemplo de llamada: GET /utxo-balance/:address
 // Endpoint fijo para consultar UTXOs de la wallet global actual
-app.get("/utxo-balance/global", (req, res) => {
-  if (!globalWallet || !globalWallet.publicKey) {
-    return res.status(404).json({ error: "No hay wallet global activa" });
-  }
-  const address = globalWallet.publicKey;
-  console.log(
-    "[UTXO-BALANCE][GLOBAL] Consulta UTXO para wallet global:",
-    address
-  );
-  const utxos = bc.utxoSet.filter((utxo) => utxo.address === address);
-  console.log(
-    "[UTXO-BALANCE][GLOBAL] UTXOs encontrados:",
-    JSON.stringify(utxos, null, 2)
-  );
-  const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
-  res.json({ address, balance, utxos });
-});
 // Donde :address es la dirección de la wallet que queremos consultar.
 // El servidor responde con un objeto JSON que incluye la dirección, su balance y los UTXOs disponibles.
 // Esto es útil para mostrar balances en la interfaz de usuario o para construir nuevas transacciones.
-// ✅ Primero define las rutas dinámicas
-app.get("/utxo-balance/:address", (req, res) => {
-  const { address } = req.params;
-  console.log("[UTXO-BALANCE][:address] Consulta UTXO para:", address);
-  let utxos = utxoManager.getUTXOs(address);
-  console.log("[UTXO-BALANCE][:address] utxoManager.getUTXOs:", JSON.stringify(utxos, null, 2));
-  // Comparar con el set de UTXOs directo de la blockchain
-  const utxosFromChain = bc.utxoSet.filter(utxo => utxo.address === address);
-  console.log("[UTXO-BALANCE][:address] bc.utxoSet.filter:", JSON.stringify(utxosFromChain, null, 2));
-  // Mostrar diferencias si existen
-  const utxoManagerSet = new Set(utxos.map(u => `${u.txId}:${u.outputIndex}:${u.amount}`));
-  const chainSet = new Set(utxosFromChain.map(u => `${u.txId}:${u.outputIndex}:${u.amount}`));
-  const onlyInManager = [...utxoManagerSet].filter(x => !chainSet.has(x));
-  const onlyInChain = [...chainSet].filter(x => !utxoManagerSet.has(x));
-  if (onlyInManager.length > 0) {
-    console.warn("[UTXO-BALANCE][:address] UTXOs solo en utxoManager:", onlyInManager);
-  }
-  if (onlyInChain.length > 0) {
-    console.warn("[UTXO-BALANCE][:address] UTXOs solo en bc.utxoSet:", onlyInChain);
-  }
-  // LOGS DETALLADOS DE DEPURACIÓN DE SINCRONIZACIÓN
-  if (utxos.length === 0 && utxosFromChain.length > 0) {
-    console.error("[SYNC-ERROR] utxoManager.getUTXOs está vacío pero bc.utxoSet sí tiene UTXOs para esta address.");
-    console.error("[SYNC-ERROR] utxoManager.getUTXOs:", JSON.stringify(utxos, null, 2));
-    console.error("[SYNC-ERROR] bc.utxoSet:", JSON.stringify(utxosFromChain, null, 2));
-    console.error("[SYNC-ERROR] ¿syncUTXOManagerWithBlockchain() se está llamando correctamente?");
-    // Mostrar el utxoSet global completo
-    const allUtxos = Object.entries(utxoManager.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
-    console.error("[SYNC-ERROR] utxoManager.utxoSet global:", JSON.stringify(allUtxos, null, 2));
-  }
-  if (utxos.length > 0 && utxosFromChain.length === 0) {
-    console.error("[SYNC-ERROR] utxoManager.getUTXOs tiene UTXOs pero bc.utxoSet está vacío para esta address.");
-    console.error("[SYNC-ERROR] utxoManager.getUTXOs:", JSON.stringify(utxos, null, 2));
-    console.error("[SYNC-ERROR] bc.utxoSet:", JSON.stringify(utxosFromChain, null, 2));
-    const allUtxos = Object.entries(utxoManager.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
-    console.error("[SYNC-ERROR] utxoManager.utxoSet global:", JSON.stringify(allUtxos, null, 2));
-  }
-  // ...existing code...
-  utxos = utxos.map(utxo => ({ ...utxo, address }));
+// Las rutas /utxo-balance/global y /utxo-balance/:address están ahora gestionadas por el router modular utxoRoutes.
+// --- BLOQUE LEGACY DE UTXO-BALANCE ELIMINADO POR MODULARIZACIÓN ---
 
-  // Inputs y outputs de la mempool
-  const mempoolInputs = tp.transactions.flatMap(tx => tx.inputs || []);
-  const mempoolOutputs = tp.transactions.flatMap(tx =>
-    (tx.outputs || []).map((output, idx) => ({ ...output, txId: tx.id, outputIndex: idx, status: 'pending-mempool' }))
-  );
-
-  // UTXOs pendientes por estar referenciados como input en la mempool
-  const utxosPendientesSpend = utxos.filter(utxo =>
-    mempoolInputs.some(input =>
-      input.txId === utxo.txId &&
-      input.outputIndex === utxo.outputIndex &&
-      input.address === utxo.address &&
-      input.amount === utxo.amount
-    )
-  ).map(utxo => ({ ...utxo, status: 'pending-spend' }));
-
-  // Outputs de la mempool a favor de la dirección
-  const utxosPendientesMempool = mempoolOutputs.filter(output => output.address === address);
-
-  // UTXOs realmente disponibles
-  const utxosDisponibles = utxos.filter(utxo =>
-    !mempoolInputs.some(input =>
-      input.txId === utxo.txId &&
-      input.outputIndex === utxo.outputIndex &&
-      input.address === utxo.address &&
-      input.amount === utxo.amount
-    )
-  );
-
-  // Unificar ambos tipos de pendientes
-  const utxosPendientes = [...utxosPendientesSpend, ...utxosPendientesMempool];
-
-  const balance = utxosDisponibles.reduce((sum, utxo) => sum + utxo.amount, 0);
-  res.json({ address, balance, utxosDisponibles, utxosPendientes });
-});
-
-// Endpoint para historial completo de una dirección (recibidos, gastados, quemados)
-app.get("/address-history/:address", (req, res) => {
-  const { address } = req.params;
-  let history = [];
-  // Definir WALLET_GLOBAL si existe globalWallet
-  const WALLET_GLOBAL =
-    globalWallet && globalWallet.publicKey ? globalWallet.publicKey : null;
-
-  // Recorrer todos los bloques y transacciones minadas
-  for (const [blockIndex, block] of bc.chain.entries()) {
-    for (const tx of block.data) {
-      // Recibidos: outputs a la dirección
-      tx.outputs.forEach((output, idx) => {
-        if (output.address === address) {
-          history.push({
-            txId: tx.id,
-            type: "recibido",
-            amount: output.amount,
-            blockHash: block.hash,
-            blockTimestamp: block.timestamp,
-            blockIndex,
-            timestamp: tx.timestamp, // se mantiene para compatibilidad, pero frontend debe usar blockTimestamp
-            outputIndex: idx,
-            status: "mined",
-            destino: address,
-            from: tx.inputs.map((inp) => inp.address),
-          });
-        }
-      });
-      // Gastados: inputs desde la dirección
-      tx.inputs.forEach((input, idx) => {
-        if (input.address === address) {
-          // Analizar destino del gasto
-          let tipoOperacion = "transferida";
-          let destino = null;
-          tx.outputs.forEach((output, oidx) => {
-            if (
-              output.address && output.address.startsWith("0x0000000000000000000000000000000000000000")
-            ) {
-              tipoOperacion = "opened";
-              destino = output.address;
-            } else if (WALLET_GLOBAL && output.address === WALLET_GLOBAL) {
-              tipoOperacion = "devuelta";
-              destino = WALLET_GLOBAL;
-            } else if (!destino) {
-              tipoOperacion = "transferida";
-              destino = output.address;
-            }
-          });
-          history.push({
-            txId: tx.id,
-            type: tipoOperacion,
-            amount: input.amount,
-            blockHash: block.hash,
-            blockTimestamp: block.timestamp,
-            blockIndex,
-            timestamp: tx.timestamp, // se mantiene para compatibilidad
-            inputIndex: idx,
-            destino,
-            to: tx.outputs.map((out) => out.address),
-            status: "mined",
-          });
-        }
-      });
-    }
-  }
-  // Recorrer la mempool (transacciones pendientes)
-  for (const tx of tp.transactions) {
-    tx.outputs.forEach((output, idx) => {
-      if (output.address === address) {
-        history.push({
-          txId: tx.id,
-          type: "recibido",
-          amount: output.amount,
-          blockHash: null,
-          timestamp: tx.timestamp,
-          outputIndex: idx,
-          status: "pending",
-          destino: address,
-          from: tx.inputs.map((inp) => inp.address),
-        });
-      }
-    });
-    tx.inputs.forEach((input, idx) => {
-      if (input.address === address) {
-        let tipoOperacion = "transferida";
-        let destino = null;
-        tx.outputs.forEach((output, oidx) => {
-          if (output.address && output.address.startsWith("0x0000000000000000000000000000000000000000")) {
-            tipoOperacion = "opened";
-            destino = output.address;
-          } else if (output.address === WALLET_GLOBAL) {
-            tipoOperacion = "devuelta";
-            destino = WALLET_GLOBAL;
-          } else if (!destino) {
-            tipoOperacion = "transferida";
-            destino = output.address;
-          }
-        });
-        history.push({
-          txId: tx.id,
-          type: tipoOperacion,
-          amount: input.amount,
-          blockHash: null,
-          timestamp: tx.timestamp,
-          inputIndex: idx,
-          destino,
-          to: tx.outputs.map((out) => out.address),
-          status: "pending",
-        });
-      }
-    });
-  }
-  // Ordenar por timestamp descendente
-  history.sort((a, b) => b.timestamp - a.timestamp);
-  res.json({ address, history });
-});
-
-// Admin endpoint: reconstruir UTXO set desde la cadena (útil para reparar inconsistencias)
-app.post("/admin/rebuild-utxo", (req, res) => {
-  try {
-    bc.utxoSet = [];
-    bc.chain.forEach((block) => bc.updateUTXOSet(block));
-    return res.json({ success: true, utxoCount: bc.utxoSet.length });
-  } catch (err) {
-    console.error("Failed to rebuild utxo set:", err);
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ...existing code...
-
-// Hook para sincronizar el UTXOManager tras minar un bloque
-if (miner && typeof miner.mine === 'function') {
-  const originalMine = miner.mine.bind(miner);
-  miner.mine = (...args) => {
-    const result = originalMine(...args);
-    // Si el bloque fue minado y añadido a la cadena, sincroniza el UTXOManager
-    if (result && result.block) {
-      utxoManager.updateWithBlock(result.block);
-      // Contar total de UTXOs después de minar
-      const totalUtxos = Object.values(utxoManager.utxoSet).reduce((acc, arr) => acc + arr.length, 0);
-      console.log('[SYNC] UTXOManager actualizado tras minar un bloque. Total UTXOs:', totalUtxos);
-    } else {
-      // Refuerza la sincronización completa si no hay bloque explícito
-      syncUTXOManagerWithBlockchain();
-    }
-    return result;
-  };
-}
-
-// --- Hook para sincronizar UTXOManager tras reemplazar la blockchain ---
-// Parchea el método replaceChain del Blockchain para llamar a syncUTXOManagerWithBlockchain después de reemplazar la cadena
-if (bc && typeof bc.replaceChain === 'function') {
-  const originalReplaceChain = bc.replaceChain.bind(bc);
-  bc.replaceChain = (...args) => {
-    const result = originalReplaceChain(...args);
-    // Espera brevemente para asegurar que bc.chain esté actualizado
-    setTimeout(() => {
-      console.log('[SYNC][PATCH] syncUTXOManagerWithBlockchain llamado tras replaceChain (con retardo)');
-      syncUTXOManagerWithBlockchain();
-    }, 100);
-    return result;
-  };
-}
 
 // --- MANEJADOR DE ERRORES GLOBAL AL FINAL ---
 app.use((err, req, res, next) => {
@@ -1184,7 +963,6 @@ app.get('/systemInfo', async (req, res) => {
 });
 */
 
-import adminRoutes from './app/routes/adminRoutes.js';
 app.use('/admin', adminRoutes);
 app.get("/blocks", (req, res) => {
   try {
@@ -1993,7 +1771,6 @@ app.get("/public-key", (req, res) => {
 });
 
 // Export app for testing
-export default app;
 
 // Arrow function para obtener la IP externa local segura
 // Esta función intenta obtener la primera IP externa (no interna) disponible
@@ -2751,11 +2528,71 @@ app.get("/propietario/:ownerPublicKey", (req, res) => {
 // Manejo de rutas no encontradas (404) - response JSON
 
 // Inicia el servidor HTTP y escucha en el puerto especificado
-server.listen(HTTP_PORT, () => {
-  console.log(
-    `Server HTTP is running on port ${HTTP_PORT} [${NODE_NAME}] (${process.env.NODE_ENV})`
-  );
-});
+
+// --- INICIO DIFERIDO DEL SERVIDOR: Esperar a que la wallet global y la blockchain estén listas ---
+async function startServerWhenReady() {
+  try {
+    // Esperar a que la wallet global esté cargada (si es promesa)
+    if (typeof globalWallet === 'undefined' || !globalWallet || !globalWallet.publicKey) {
+      // Si la wallet se carga asíncronamente, espera hasta que esté lista
+      let retries = 0;
+      while ((!globalWallet || !globalWallet.publicKey) && retries < 30) {
+        console.log(`[STARTUP][WALLET] Esperando a que globalWallet esté lista... intento ${retries+1}`);
+        if (typeof globalWallet === 'undefined') {
+          console.log(`[STARTUP][WALLET] globalWallet es undefined`);
+        } else if (!globalWallet) {
+          console.log(`[STARTUP][WALLET] globalWallet es null o falsy`);
+        } else if (!globalWallet.publicKey) {
+          console.log(`[STARTUP][WALLET] globalWallet existe pero no tiene publicKey`);
+        }
+        await new Promise(res => setTimeout(res, 500));
+        retries++;
+      }
+      if (!globalWallet || !globalWallet.publicKey) {
+        console.warn('[STARTUP][WALLET] Advertencia: globalWallet no está lista tras esperar. El endpoint /utxo-balance/global podría fallar.');
+      } else {
+        console.log(`[STARTUP][WALLET] globalWallet lista tras ${retries} intentos. publicKey: ${globalWallet.publicKey}`);
+      }
+    } else {
+      console.log(`[STARTUP][WALLET] globalWallet ya estaba lista. publicKey: ${globalWallet && globalWallet.publicKey}`);
+    }
+    // Esperar a que la blockchain esté inicializada (bc.chain)
+    if (!bc || !bc.chain || bc.chain.length === 0) {
+      let retries = 0;
+      while ((!bc || !bc.chain || bc.chain.length === 0) && retries < 30) {
+        console.log(`[STARTUP][CHAIN] Esperando a que la blockchain esté lista... intento ${retries+1}`);
+        if (!bc) {
+          console.log(`[STARTUP][CHAIN] bc es undefined o null`);
+        } else if (!bc.chain) {
+          console.log(`[STARTUP][CHAIN] bc existe pero bc.chain es undefined o null`);
+        } else if (bc.chain.length === 0) {
+          console.log(`[STARTUP][CHAIN] bc.chain existe pero está vacío`);
+        }
+        await new Promise(res => setTimeout(res, 500));
+        retries++;
+      }
+      if (!bc || !bc.chain || bc.chain.length === 0) {
+        console.warn('[STARTUP][CHAIN] Advertencia: Blockchain no está lista tras esperar.');
+      } else {
+        console.log(`[STARTUP][CHAIN] Blockchain lista tras ${retries} intentos. Longitud: ${bc.chain.length}`);
+      }
+    } else {
+      console.log(`[STARTUP][CHAIN] Blockchain ya estaba lista. Longitud: ${bc.chain && bc.chain.length}`);
+    }
+    console.log('[STARTUP] Iniciando server.listen y p2pServer.listen...');
+    server.listen(HTTP_PORT, () => {
+      console.log(
+        `Server HTTP is running on port ${HTTP_PORT} [${NODE_NAME}] (${process.env.NODE_ENV})`
+      );
+    });
+    p2pServer.listen(server);
+    console.log('[STARTUP] Servidor HTTP y P2P inicializados correctamente.');
+  } catch (err) {
+    console.error('[STARTUP] Error al iniciar el servidor:', err);
+    process.exit(1);
+  }
+}
+startServerWhenReady();
 
 // Middleware de manejo de errores global - siempre devuelve JSON
 app.use((err, req, res, next) => {
@@ -2780,9 +2617,6 @@ app.use((err, req, res, next) => {
   res.status(status).json(payload);
 });
 
-// Inicia el servidor P2P (peer-to-peer) para conexiones de red entre nodos, usando el mismo servidor HTTP
-p2pServer.listen(server);
-
 // Manejo de se\u00f1ales para cierre limpio del servidor
 process.on('SIGTERM', async () => {
   console.log('\ud83d\udea8 SIGTERM recibido. Cerrando servidor...');
@@ -2795,4 +2629,4 @@ process.on('SIGINT', async () => {
   await p2pServer.closeUPnP();
   process.exit(0);
 });
-// <--- FIN DEL ARCHIVO, cierre de módulo principal
+      
