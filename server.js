@@ -733,6 +733,17 @@ import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
 import systemRoutes from './app/routes/systemRoutes.js';
 
 // Montar routers después de importar
+// Frontend static pages (MUST be before app.use('/', systemRoutes))
+app.get("/view", (req, res) => {
+  const viewPath = path.join(__dirname, "public", "view.html");
+  res.sendFile(viewPath);
+});
+
+app.get("/", (req, res) => {
+  const viewPath = path.join(__dirname, "public", "view.html");
+  res.sendFile(viewPath);
+});
+
 app.use('/utxo-balance', utxoRoutes);
 app.use('/address-history', addressHistoryRoutes);
 app.use('/', systemRoutes);
