@@ -1,5 +1,6 @@
 // Iniciar el servidor HTTP principal
 import adminRoutes from './app/routes/adminRoutes.js';
+import authRoutes from './app/routes/authRoutes.js';
 import dotenv from "dotenv";
 dotenv.config();
 console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
@@ -71,6 +72,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 // --- RUTAS OAUTH2 GOOGLE ---
+// ✅ MIGRADAS A: app/routes/authRoutes.js
+// Se registran con app.use('/', authRoutes) más abajo
+/*
 app.get("/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
@@ -78,12 +82,10 @@ app.get("/auth/google",
 app.get("/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Autenticación exitosa, redirigir a la página principal o dashboard
     res.redirect("/");
   }
 );
 
-// Ruta para obtener el usuario autenticado actual
 app.get("/auth/user", (req, res) => {
   if (req.isAuthenticated && req.isAuthenticated()) {
     res.json({ user: req.user });
@@ -91,6 +93,7 @@ app.get("/auth/user", (req, res) => {
     res.status(401).json({ user: null });
   }
 });
+*/
 
 // --- ENDPOINT PARA VER LOGS DEL PROCESO EN EL NAVEGADOR ---
 // (Debe ir después de la inicialización de 'app')
@@ -721,6 +724,10 @@ const upload = multer({
 //app.use(bodyParser.json()); // activa un middleware de Express que permite al servidor interpretar automáticamente el cuerpo de las solicitudes HTTP en formato JSON.
 app.use(express.json()); // Middleware moderno para parsear JSON
 
+// --- REGISTRAR ROUTERS MODULARES ---
+// Auth routes (OAuth Google)
+app.use('/', authRoutes);
+
 // Nueva ruta GET para obtener los datos de una transacción por su ID
 // Nueva ruta POST para baja de token (transferencia a burn o bodega)
 
@@ -731,6 +738,8 @@ app.use('/token', tokenRoutes);
 import walletRoutes from './app/routes/walletRoutes.js';
 app.use('/wallet', walletRoutes);
 
+// Importar y montar el router modular de mining
+import miningRoutes from './app/routes/miningRoutes.js';
 
 import utxoRoutes from './app/routes/utxoRoutes.js';
 import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
@@ -751,24 +760,8 @@ app.get("/", (req, res) => {
 app.use('/utxo-balance', utxoRoutes);
 app.use('/address-history', addressHistoryRoutes);
 app.use('/', systemRoutes);
-// Legacy utxo-balance endpoints commented for reference
-/*
-// LEGACY: GET /utxo-balance/global
-app.get("/utxo-balance/global", (req, res) => {
-  // ...legacy logic moved to utxoController.js...
-});
-// LEGACY: GET /utxo-balance/:address
-
-  });
-} catch (error) {
-  console.error("Ocurrió un error al servir el archivo:", error);
-  // Always return JSON for errors so the UI can handle them consistently
-  res.status(500).json({
-    success: false,
-    error: "Hubo un problema al procesar tu solicitud.",
-    details: error && error.message ? error.message : undefined,
-  });
-}
+app.use('/', loteRoutes); // QR, Lotes, Propietario endpoints
+app.use('/', miningRoutes); // Mining endpoints
 
 // ===================
 // === ADMIN ENDPOINTS (AHORA EN ROUTER MODULAR) ===
@@ -1210,50 +1203,19 @@ app.post("/transaction", async (req, res) => {
   }
 });
 
-// Ruta para calcular el balance de nuestra wallet/dirección/cuenta
-app.get("/balance", (req, res) => {
-  try {
-    if (!globalWallet || !globalWallet.publicKey) {
-      return res.status(404).json({ error: "No hay wallet global activa" });
-    }
-    const result = globalWallet.calculateBalance(bc, globalWallet.publicKey);
-    res.json(result);
-  } catch (error) {
-    console.error("Error fetching balance:", error);
-    res.status(500).json({ success: false, error: "Error fetching balance" });
-  }
-});
+// GET /balance - Balance de wallet global
+// ✅ MIGRADO A: app/routes/walletRoutes.js
+// Se registra con app.use('/wallet', walletRoutes) línea 759
+// Ruta consolidada: GET /wallet/balance
 
-// Ruta para obtener el balance de cualquier wallet/dirección
-app.post("/address-balance", (req, res) => {
-  console.log("📥 Solicitud recibida en /address-balance"); // Verifica que entra
-  console.log("📥 Solicitud recibida en /address-balance:", req.body); // 👈 Verifica que llega la dirección
-  try {
-    // ✅ 1. Verifica si se ha proporcionado una dirección en el cuerpo de la solicitud
-    const { address } = req.body;
-    if (!address) {
-      throw new Error("Address is required");
-    }
+// POST /address-balance - Balance de dirección específica
+// ✅ MIGRADO A: app/routes/walletRoutes.js  
+// Se registra con app.use('/wallet', walletRoutes) línea 759
+// Ruta consolidada: POST /wallet/address-balance
 
-    // ✅ 2. En lugar de usar una instancia existente de wallet (que puede tener balance 1000),
-    // creamos una instancia temporal con la clave pública proporcionada y balance inicial 0.
-    // Esto evita que se arrastre el estado de otra wallet.
-    const tempWallet = new Wallet(address, 0);
-
-    // ✅ 3. Usamos el método calculateBalance de esa instancia para obtener el balance real.
-    // Este método ya está preparado para devolver un objeto con { address, balance, message }
-    const result = tempWallet.calculateBalance(bc, address);
-    // ✅ Verificar que el resultado es un objeto
-    console.log("Resultado enviado al frontend:", result); // Asegúrate de ver esto en consola
-
-    // ✅ 4. Respondemos al frontend con el objeto completo
-    res.json(result);
-  } catch (error) {
-    // ✅ 5. Captura errores como falta de dirección o problemas internos
-    console.error("Error fetching address balance:", error);
-    res.status(400).json({ success: false, error: error.message }); // Responder con un error 400 Bad Request si no se proporciona una dirección
-  }
-});
+// ⚠️ BREAKING CHANGE: Los clientes deben actualizar sus llamadas:
+// - GET /balance → GET /wallet/balance
+// - POST /address-balance → POST /wallet/address-balance
 
 // Ruta POST que permite subir un archivo desde el cliente (por ejemplo, un archivo JSON con la clave pública de una hardware wallet).
 // Ruta para obtener publickey de una Hardware wallet/dirección
@@ -1267,183 +1229,15 @@ app.post("/address-balance", (req, res) => {
 // Enviamos una respuesta JSON que incluye la clave pública si todo va bien.
 // En el cliente, llamamos a HardwareWallet with la clave pública obtenida del servidor.
 
-// Ruta para minar los bloques con transacciones pendientes
-/**
- * POST /mine
- *
- * Purpose:
- *   Principal endpoint para minado manual desde clientes modernos (frontend).
- *   Ejecuta una ronda de minado (PoW) e intenta incluir las transacciones pendientes de la mempool.
- *
- * Guard:
- *   - Si la mempool está vacía, NO mina y responde 409 (Conflict) con JSON:
- *       { success: false, error: 'No hay transacciones…', mempoolSize: 0 }
- *
- * Response (on success):
- *   200 JSON con datos del bloque minado, p.ej. { success, message, block: { hash, timestamp, transactionsCount, difficulty, processTime }, mempoolSize }
- *
- * Notes:
- *   - Recomendado para uso de UI: devuelve JSON (no redirige).
- *   - El frontend puede después consultar GET /blocks para obtener el bloque completo y renderizarlo.
- */
-app.post("/mine", (req, res) => {
-  try {
-    // Guard: tp y tp.transactions deben existir y ser array
-    if (!tp || !Array.isArray(tp.transactions)) {
-      return res.status(500).json({
-        success: false,
-        error: "TransactionPool (tp) no está inicializada o no es válida.",
-        details: "tp o tp.transactions es undefined. Revisa la inicialización del TransactionPool."
-      });
-    }
-    // Guard: no minar si la mempool está vacía
-    const pending = tp.transactions.length;
-    if (pending === 0) {
-      return res.status(409).json({
-        success: false,
-        error:
-          "No hay transacciones pendientes en la mempool. Minado cancelado.",
-        mempoolSize: 0,
-      });
-    }
-    console.log("🔄 Iniciando proceso de minado...");
-    console.log(`📋 Transacciones en mempool: ${tp.transactions.length}`);
-    // Mostrar todas las transacciones en la mempool (si las hay)
-    if (tp.transactions.length > 0) {
-      console.log("[MINER] Transacciones en mempool:");
-      tp.transactions.forEach((tx, idx) => {
-        console.log(`[MINER] tx #${idx}:`, JSON.stringify(tx, null, 2));
-      });
-    }
-    // Antes de minar, mostrar el estado de la wallet global
-    console.log("[MINER] Estado de global.wallet:", global.wallet);
-    if (!global.wallet) {
-      console.error("[MINER] Error: global.wallet no está inicializada");
-      return res.status(500).json({
-        success: false,
-        error: "global.wallet no está inicializada. No se puede minar.",
-        details: "Asegúrate de que la wallet esté cargada antes de minar.",
-      });
-    }
-    if (!global.wallet.keyPair) {
-      console.error(
-        "[MINER] Error: global.wallet.keyPair no está inicializada"
-      );
-      return res.status(500).json({
-        success: false,
-        error: "global.wallet.keyPair no está inicializada. No se puede minar.",
-        details: "Asegúrate de que la wallet tenga keyPair antes de minar.",
-      });
-    }
-    // Usar el miner para procesar transacciones pendientes
-    let block;
-    try {
-      block = miner.mine();
-    } catch (err) {
-      console.error("[MINER] Error interno en miner.mine():", err);
-      return res.status(500).json({
-        success: false,
-        error: "Error interno en miner.mine()",
-        details: err.message,
-      });
-    }
-    // Mostrar las transacciones que se intentan minar
-    if (block && block.data && block.data.length > 0) {
-      console.log("[MINER] Transacciones minadas en el bloque:");
-      block.data.forEach((tx, idx) => {
-        console.log(`[MINER] tx #${idx}:`, JSON.stringify(tx, null, 2));
-      });
-    }
-    // ✅ Verificar que el bloque se minó correctamente (incluye coinbase cuando mempool vacío)
-    if (!block) {
-      return res.json({
-        success: false,
-        message: "No se pudo minar el bloque",
-        info: "Minería cancelada o sin transacciones válidas",
-        mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0,
-      });
-    }
-    console.log(`✅ Nuevo bloque minado: ${block.hash}`);
-    console.log(`📦 Transacciones incluidas: ${Array.isArray(block.data) ? block.data.length : 0}`);
-    // Sincronizar con otros nodos
-    p2pServer.syncChains();
-    // Actualizar el UTXOManager con el nuevo bloque minado
-    if (block) {
-      utxoManager.updateWithBlock(block);
-    }
-    res.json({
-      success: true,
-      message: "Bloque minado exitosamente",
-      block: {
-        hash: block.hash,
-        timestamp: block.timestamp,
-        transactionsCount: Array.isArray(block.data) ? block.data.length : 0,
-        difficulty: block.difficulty,
-        processTime: block.processTime,
-      },
-      mempoolSize: tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0, // Después del minado normal, debería ser 0
-    });
-  } catch (error) {
-    console.error("Error mining block:", error);
-    res.status(500).json({
-      success: false,
-      error: "Error mining block",
-      details: error.message,
-    });
-  }
-});
+// POST /mine - Endpoint principal de minado
+// ✅ MIGRADO A: app/routes/miningRoutes.js
+// Se registra con app.use('/', miningRoutes) línea ~764
+// Controlador: app/controllers/miningController.js::mineBlock
 
-// Ruta para minar las transacciones
-// Eliminado: /mine-transactions (unificado en /mine)
-/**
- * POST /mine-transactions (LEGACY)
- *
- * Purpose:
- *   Endpoint legado mantenido por compatibilidad con clientes antiguos.
- *   Ejecuta una ronda de minado y, en caso de éxito, redirige a /blocks (HTML/JSON de la cadena completa).
- *
- * Guard:
- *   - Si la mempool está vacía, responde 409 (Conflict) con JSON y NO mina.
- *
- * Response:
- *   - Éxito: redirección HTTP a /blocks.
- *   - Error: 4xx/5xx con JSON.
- *
- * Notes:
- *   - Preferir POST /mine para nuevos desarrollos (respuesta JSON, más predecible para SPA/frontends modernos).
- */
-app.post("/mine-transactions", (req, res) => {
-  try {
-    const pending =
-      tp && Array.isArray(tp.transactions) ? tp.transactions.length : 0;
-    if (pending === 0) {
-      return res.status(409).json({
-        success: false,
-        error:
-          "No hay transacciones pendientes en la mempool. Minado cancelado.",
-        mempoolSize: 0,
-      });
-    }
-    const block = miner.mine();
-    if (!block) {
-      return res
-        .status(500)
-        .json({ success: false, error: "No se pudo minar el bloque" });
-    }
-    console.log(
-      `[LEGACY /mine-transactions] Nuevo bloque minado: ${block.hash || ""}`
-    );
-    // Comportamiento original: redirigir a /blocks
-    res.redirect("/blocks");
-  } catch (error) {
-    console.error("Error mining transactions (legacy):", error);
-    res.status(500).json({
-      success: false,
-      error: "Error mining transactions",
-      details: error.message,
-    });
-  }
-});
+// POST /mine-transactions - Endpoint legacy de minado
+// ✅ MIGRADO A: app/routes/miningRoutes.js
+// Se registra con app.use('/', miningRoutes) línea ~764
+// Controlador: app/controllers/miningController.js::mineTransactionsLegacy
 
 
 
@@ -1472,650 +1266,26 @@ const getLocalExternalIP = () => {
 const localIP = getLocalExternalIP();
 
 // Ruta para obtener información del sistema ampliada
-// ...existing code...
+// ✅ MIGRADA A: app/routes/systemRoutes.js
+// Se registra con app.use('/', systemRoutes) más arriba
+/*
 app.get("/system-info", async (req, res) => {
-  try {
-    const SystemMonitor = (await import("./src/monitor/fileSystemMonitor.js")).default;
-    const hostname = os.hostname();
-    const platform = os.platform();
-    const arch = os.arch();
-    const nodeVersion = process.version;
-    const cpus = os.cpus();
-    const cpuCount = cpus.length;
-    const freeMem = os.freemem();
-    const totalMem = os.totalmem();
-    const interfaces = os.networkInterfaces();
-    // Flatten IPs from interfaces
-    const ips = Object.values(interfaces)
-      .flat()
-      .filter(net => net && net.family === "IPv4" && !net.internal)
-      .map(net => net.address);
-
-    // LOGS DETALLADOS DE VALORES DEL SISTEMA
-    console.log("[SYSTEM-INFO] hostname:", hostname);
-    console.log("[SYSTEM-INFO] platform:", platform);
-    console.log("[SYSTEM-INFO] arch:", arch);
-    console.log("[SYSTEM-INFO] nodeVersion:", nodeVersion);
-    console.log("[SYSTEM-INFO] cpus:", cpus);
-    console.log("[SYSTEM-INFO] cpuCount:", cpuCount);
-    console.log("[SYSTEM-INFO] freeMem:", freeMem);
-    console.log("[SYSTEM-INFO] totalMem:", totalMem);
-    console.log("[SYSTEM-INFO] interfaces:", interfaces);
-    console.log("[SYSTEM-INFO] ips:", ips);
-
-    // Extraemos peers con info httpUrl desde el servidor P2P
-    const peersHttp = (p2pServer.peers || []).map((peer) => ({
-      nodeId: peer.nodeId,
-      httpUrl: peer.httpUrl,
-      lastSeen: peer.lastSeen,
-    }));
-
-    // Obtener uso de espacio en storage/data/
-    const storageDir = path.join(__dirname, "storage", "data");
-    const blockchainStorageBytes = await SystemMonitor.getDirectorySize(storageDir);
-    console.log("[SYSTEM-INFO] blockchainStorageBytes:", blockchainStorageBytes);
-
-    const blockchainInfo = {
-      server: {
-        httpPort: HTTP_PORT,
-        p2pPort: P2P_PORT,
-        httpUrl: `http://${localIP}:${HTTP_PORT}`,
-        status: "running",
-        uptime: process.uptime(),
-        startTime: new Date(Date.now() - process.uptime() * 1000).toISOString(),
-        blockchainStorageBytes,
-        blockchainStorageMB: (blockchainStorageBytes / (1024 * 1024)).toFixed(2),
-      },
-      network: {
-        p2pConnections: p2pServer.sockets.length,
-        p2pPeers: p2pServer.sockets.map((socket) => ({
-          id: socket.id || "unknown",
-          readyState: socket.readyState,
-          url: socket.url || "N/A",
-        })),
-        peersHttp,
-        networkStatus:
-          p2pServer.sockets.length > 0 ? "connected" : "standalone",
-        pendingTransactions: tp.transactions.length,
-      },
-    };
-
-    const systemInfo = {
-      host: hostname,
-      ips,
-      interfaces,
-      platform,
-      architecture: arch,
-      nodeVersion,
-      freeMemory: freeMem,
-      totalMemory: totalMem,
-      cpuCores: cpuCount,
-    };
-
-    const completeInfo = {
-      system: systemInfo,
-      blockchain: blockchainInfo,
-      timestamp: new Date().toISOString(),
-      version: "1.0.0",
-    };
-
-    console.log("[SYSTEM-INFO] completeInfo:", completeInfo);
-    res.json(completeInfo);
-  } catch (error) {
-    console.error("Error fetching system information:", error);
-    res.status(500).json({
-      error: "Error fetching system information",
-      details: error.message,
-      timestamp: new Date().toISOString(),
-    });
-  }
+  // ... lógica migrada a systemRoutes ...
 });
+*/
 
-// Ruta POST para generar el QR
-app.post("/qr", async (req, res) => {
-  const {
-    loteId,
-    nombreProducto,
-    fechaProduccion,
-    fechaCaducidad,
-    origen,
-    bodega,
-    año,
-    variedad,
-    región,
-    denominacionOrigen,
-    alcohol,
-    notaDeCata,
-    maridaje,
-    precio,
-    comentarios,
-    trazabilidad,
-  } = req.body; // Extraer datos del cuerpo de la solicitud
-
-  try {
-    // Crear una instancia de Lote con los datos proporcionados
-    const lote = new Lote(
-      loteId,
-      nombreProducto,
-      fechaProduccion,
-      fechaCaducidad,
-      origen,
-      bodega,
-      año,
-      variedad,
-      región,
-      denominacionOrigen,
-      alcohol,
-      notaDeCata,
-      maridaje,
-      precio,
-      comentarios,
-      trazabilidad
-    );
-
-    // Generar el código QR
-    const qrUrl = await lote.generarQR();
-
-    // Devolver JSON con el QR y datos del lote para el modal
-    res.json({
-      success: true,
-      qrBase64: qrUrl, // ✅ Cambiado de qrUrl a qrBase64 para consistencia
-      loteData: {
-        loteId: lote.loteId,
-        nombreProducto: lote.nombreProducto,
-        bodega: lote.bodega,
-        año: lote.año,
-        región: lote.región,
-        precio: lote.precio,
-      },
-    });
-  } catch (err) {
-    console.error("Error generando el QR:", err);
-    res.status(500).json({
-      success: false,
-      error: "Error generando el QR",
-      details: err.message,
-    });
-  }
-});
-
-// 🔐 Nueva ruta: QR con prueba de propiedad blockchain
-app.post("/qr-with-proof", async (req, res) => {
-  try {
-    const { loteId, transactionId } = req.body;
-
-    // Validación básica
-    if (!loteId || !transactionId) {
-      return res.status(400).json({
-        success: false,
-        error: "Faltan parámetros: loteId y transactionId son requeridos",
-      });
-    }
-
-    // 🔍 Buscar la transacción en la blockchain (bloques minados)
-    let foundTransaction = null;
-    let ownerPublicKey = null;
-    let transactionStatus = null;
-
-    // Buscar primero en blockchain, luego en mempool (acepta ambas)
-    for (const block of bc.chain) {
-      const transaction = block.data.find((tx) => tx.id === transactionId);
-      if (transaction) {
-        foundTransaction = transaction;
-        transactionStatus = "confirmed";
-        ownerPublicKey = transaction.outputs.find(
-          (output) => output.amount > 0
-        )?.address;
-        break;
-      }
-    }
-    if (!foundTransaction) {
-      const mempoolTransaction = tp.transactions.find(
-        (tx) => tx.id === transactionId
-      );
-      if (mempoolTransaction) {
-        foundTransaction = mempoolTransaction;
-        transactionStatus = "pending";
-        ownerPublicKey = mempoolTransaction.outputs.find(
-          (output) => output.amount > 0
-        )?.address;
-      }
-    }
-    // Si la transacción está en mempool, igual genera el QR con prueba blockchain
-    if (!foundTransaction) {
-      return res.status(404).json({
-        success: false,
-        error: "Transacción no encontrada en blockchain ni en mempool",
-        transactionId,
-        suggestion: "Verifique que el ID de transacción sea correcto",
-      });
-    }
-
-    console.log(`✅ Transacción encontrada - Estado: ${transactionStatus}`);
-    console.log(`👤 Owner: ${ownerPublicKey}`);
-    console.log(`🆔 Transaction ID: ${transactionId}`);
-
-    // 🍷 Crear lote con todos los datos del formulario
-    const loteData = {
-      loteId,
-      nombreProducto: req.body.nombreProducto || "Producto sin nombre",
-      fechaProduccion:
-        req.body.fechaProduccion || new Date().toISOString().split("T")[0],
-      fechaCaducidad:
-        req.body.fechaCaducidad ||
-        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0],
-      origen: req.body.origen || "España",
-      bodega: req.body.bodega || "Bodega desconocida",
-      año: req.body.año || new Date().getFullYear(),
-      variedad: req.body.variedad || "Variedad no especificada",
-      región: req.body.región || "Región no especificada",
-      denominacionOrigen: req.body.denominacionOrigen || "D.O. no especificada",
-      alcohol: req.body.alcohol || "13%",
-      notaDeCata: req.body.notaDeCata || "Nota de cata no disponible",
-      maridaje: req.body.maridaje || "Maridaje no especificado",
-      precio: req.body.precio || "Precio no especificado",
-      comentarios:
-        req.body.comentarios || "Lote registrado con blockchain proof",
-      trazabilidad: req.body.trazabilidad || "Blockchain → Verificación QR",
-    };
-
-    console.log("🍷 Datos del lote recibidos:", loteData);
-
-    // Intentar cargar metadata guardada previamente en /app/uploads/lotes/<loteId>.json
-    try {
-      const lotesDir = path.join(__dirname, "app", "uploads", "lotes");
-      const loteFile = path.join(lotesDir, `${loteData.loteId}.json`);
-      if (fs.existsSync(loteFile)) {
-        const saved = JSON.parse(fs.readFileSync(loteFile, "utf8"));
-        if (saved && saved.metadata) {
-          // Merge: prefer saved metadata values when present
-          Object.assign(loteData, saved.metadata);
-          console.log(
-            `🔎 Cargada metadata guardada para lote ${loteData.loteId}`
-          );
-        }
-      }
-    } catch (err) {
-      console.warn(
-        "No se pudo cargar metadata guardada para lote:",
-        err.message
-      );
-    }
-
-    // Crear instancia de lote con datos completos
-    const lote = new Lote(loteData.loteId);
-    // Asignar todos los datos al lote
-    Object.assign(lote, loteData);
-
-    // Generar QR con prueba de propiedad
-    const qrUrl = await lote.generarQRWithProof(
-      transactionId,
-      ownerPublicKey,
-      foundTransaction.inputs?.[0]?.signature || `verified_${transactionStatus}`
-    );
-
-    res.json({
-      success: true,
-      qrBase64: qrUrl,
-      proof: {
-        loteId: lote.loteId,
-        owner: ownerPublicKey,
-        transactionId: transactionId,
-        transactionStatus: transactionStatus, // "confirmed" o "pending"
-        verifiedAt: new Date().toISOString(),
-        blockchainVerifiable: true,
-        message:
-          transactionStatus === "pending"
-            ? "⏳ Transacción válida en mempool - Se confirmará tras el minado"
-            : "✅ Transacción confirmada en blockchain",
-      },
-      loteData: {
-        ...loteData,
-        isBlockchainLinked: true,
-        transactionReference: transactionId,
-      },
-    });
-  } catch (err) {
-    console.error("Error generando QR con prueba:", err);
-    res.status(500).json({
-      success: false,
-      error: "Error generando QR con prueba de propiedad",
-      details: err.message,
-    });
-  }
-});
+// QR & Lotes endpoints
+// ✅ MIGRADOS A: app/routes/loteRoutes.js  
+// Se registran con app.use('/', loteRoutes) línea 761
 
 // POST /lotes - crea un registro de lote asociado a una transacción (txId)
-app.post("/lotes", async (req, res) => {
-  try {
-    const { txId, metadata } = req.body;
+// POST /lotes - crea registro de lote
+// ✅ MIGRADO A: app/routes/loteRoutes.js
+// Se registra con app.use('/', loteRoutes) línea 761
 
-    if (!txId) {
-      return res
-        .status(400)
-        .json({ success: false, error: "txId es requerido" });
-    }
-
-    const loteId = txId; // adoptamos txId como loteId por convención
-
-    // Normalizar y calcular hash de metadata (si no existe, usar objeto vacío)
-    const metaObj = metadata && typeof metadata === "object" ? metadata : {};
-    const metaString = JSON.stringify(metaObj);
-    const metadataHash = crypto
-      .createHash("sha256")
-      .update(metaString)
-      .digest("hex");
-
-    // Asegurar carpeta de almacenamiento
-    const lotesDir = path.join(__dirname, "app", "uploads", "lotes");
-    if (!fs.existsSync(lotesDir)) fs.mkdirSync(lotesDir, { recursive: true });
-
-    const record = {
-      loteId,
-      txId,
-      metadataHash,
-      metadata: metaObj,
-      createdAt: new Date().toISOString(),
-    };
-
-    const filePath = path.join(lotesDir, `${loteId}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(record, null, 2), "utf8");
-
-    // Payload sugerido para el QR (compacto)
-    const qrPayload = {
-      loteId,
-      metadataHash,
-      url: `${req.protocol}://${req.get("host")}/lotes/${encodeURIComponent(
-        loteId
-      )}`,
-    };
-
-    // Intentar generar prueba blockchain en línea (si la transacción existe ahora)
-    try {
-      let foundTransaction = null;
-      let ownerPublicKey = null;
-      let transactionStatus = null;
-
-      // Buscar en blocks
-      for (const block of bc.chain) {
-        const tx = block.data.find((t) => t.id === txId);
-        if (tx) {
-          foundTransaction = tx;
-          transactionStatus = "confirmed";
-          ownerPublicKey = tx.outputs.find((o) => o.amount > 0)?.address;
-          break;
-        }
-      }
-      // Buscar en mempool si no está en blocks
-      if (!foundTransaction) {
-        const mempoolTx = tp.transactions.find((t) => t.id === txId);
-        if (mempoolTx) {
-          foundTransaction = mempoolTx;
-          transactionStatus = "pending";
-          ownerPublicKey = mempoolTx.outputs.find((o) => o.amount > 0)?.address;
-        }
-      }
-
-      if (foundTransaction) {
-        // Crear lote temporal y generar QR con proof
-        const lote = new Lote(loteId);
-        Object.assign(lote, { loteId, metadata });
-        const qrBase64 = await lote.generarQRWithProof(
-          txId,
-          ownerPublicKey,
-          foundTransaction.inputs?.[0]?.signature ||
-            `verified_${transactionStatus}`
-        );
-
-        const proof = {
-          loteId,
-          owner: ownerPublicKey,
-          transactionId: txId,
-          transactionStatus,
-          verifiedAt: new Date().toISOString(),
-        };
-
-        return res.json({ success: true, record, qrPayload, qrBase64, proof });
-      }
-    } catch (err) {
-      console.warn(
-        "No se pudo generar proof en POST /lotes (continuando):",
-        err.message
-      );
-    }
-
-    return res.json({ success: true, record, qrPayload });
-  } catch (err) {
-    console.error("Error creando lote:", err);
-    return res.status(500).json({
-      success: false,
-      error: "Error creando lote",
-      details: err.message,
-    });
-  }
-});
-
-// 🔍 Ruta para verificar si una transacción existe en la blockchain
-app.post("/verify-qr-proof", (req, res) => {
-  try {
-    const { qrData } = req.body;
-
-    if (!qrData) {
-      return res.status(400).json({
-        success: false,
-        error: "QR data es requerido",
-      });
-    }
-
-    let transactionId;
-    let ownerPublicKey = "SKIP_OWNER_CHECK"; // Por defecto saltar verificación de propietario
-    let parsedData = null;
-
-    // 🔄 Intentar parsear como JSON primero (formato completo)
-    try {
-      parsedData = JSON.parse(qrData);
-
-      // Verificar si tiene prueba blockchain
-      if (!parsedData.blockchainProof) {
-        return res.json({
-          success: true,
-          verified: false,
-          status: "no_blockchain_proof",
-          message: "QR sin prueba blockchain (versión antigua)",
-          loteData: parsedData,
-        });
-      }
-
-      transactionId = parsedData.blockchainProof.transactionId;
-      ownerPublicKey = parsedData.blockchainProof.ownerPublicKey;
-    } catch (parseErr) {
-      // 🆔 Si no es JSON, asumir que es un Transaction ID directo
-      transactionId = qrData.trim();
-      console.log(
-        `[VERIFY] Búsqueda directa de Transaction ID: ${transactionId}`
-      );
-    }
-
-    if (!transactionId) {
-      return res.status(400).json({
-        success: false,
-        error: "No se pudo extraer Transaction ID",
-      });
-    }
-
-    console.log(`[VERIFY] Buscando transacción: ${transactionId}`);
-    console.log(`[VERIFY] Total de bloques a revisar: ${bc.chain.length}`);
-
-    // 🔍 Buscar en blockchain (transacciones minadas)
-    let transactionFound = false;
-    let blockInfo = null;
-    let foundTransaction = null;
-
-    for (let i = 0; i < bc.chain.length; i++) {
-      const block = bc.chain[i];
-      console.log(
-        `[VERIFY] Revisando bloque ${i}, transacciones: ${block.data.length}`
-      );
-
-      const transaction = block.data.find((tx) => {
-        console.log(`[VERIFY] Comparando: ${tx.id} === ${transactionId}`);
-        return tx.id === transactionId;
-      });
-
-      if (transaction) {
-        transactionFound = true;
-        foundTransaction = transaction;
-        blockInfo = {
-          hash: block.hash,
-          timestamp: block.timestamp,
-          blockIndex: i,
-        };
-        console.log(`[VERIFY] ✅ Transacción encontrada en bloque ${i}`);
-        break;
-      }
-    }
-
-    // 🔍 Si no se encuentra en blockchain, buscar en mempool
-    if (!transactionFound) {
-      console.log(
-        `[VERIFY] No encontrada en blockchain, buscando en mempool...`
-      );
-      const mempoolTransaction = tp.transactions.find(
-        (tx) => tx.id === transactionId
-      );
-
-      if (mempoolTransaction) {
-        console.log(`[VERIFY] ⏳ Transacción encontrada en mempool`);
-        // Derivar propietario y tipo también para mempool
-        const isRewardTx =
-          !mempoolTransaction.inputs || mempoolTransaction.inputs.length === 0;
-        const isBurnTx =
-          mempoolTransaction.outputs?.some(
-            (o) => o.address === "0x0000000000000000000000000000000000000000"
-          ) || false;
-        const positiveOutputs = (mempoolTransaction.outputs || []).filter(
-          (o) => typeof o.amount === "number" && o.amount > 0
-        );
-        const currentOwnerPending = positiveOutputs.length
-          ? positiveOutputs[0].address
-          : null;
-        const transactionType = isRewardTx
-          ? "reward"
-          : isBurnTx
-          ? "burn"
-          : "transfer";
-        const skipOwnerCheck = ownerPublicKey === "SKIP_OWNER_CHECK";
-        const ownerForResponse = skipOwnerCheck
-          ? currentOwnerPending
-          : ownerPublicKey;
-        return res.json({
-          success: true,
-          verified: true,
-          status: "pending_mining",
-          message: "Transacción válida - esperando confirmación",
-          details: {
-            transactionId: transactionId,
-            transactionExists: true,
-            inMempool: true,
-            ownerPublicKey: ownerForResponse,
-            currentOwner: currentOwnerPending,
-            transactionType,
-            isReward: isRewardTx,
-            isBurn: isBurnTx,
-            verifiedAt: new Date().toISOString(),
-          },
-          blockNumber: null,
-          blockHash: null,
-          ownerPublicKey: ownerForResponse,
-          transactionType,
-          isReward: isRewardTx,
-          isBurn: isBurnTx,
-        });
-      }
-    }
-
-    if (!transactionFound) {
-      console.log(`[VERIFY] ❌ Transacción no encontrada en ningún lado`);
-      return res.json({
-        success: true,
-        verified: false,
-        status: "not_found",
-        message: "Transacción no encontrada en blockchain",
-        details: {
-          transactionId: transactionId,
-          searchedBlocks: bc.chain.length,
-          mempoolSize: tp.transactions.length,
-          verifiedAt: new Date().toISOString(),
-        },
-      });
-    }
-
-    // ✅ Determinar tipo de transacción y propietario con fallback robusto
-    const isRewardTx =
-      !foundTransaction.inputs || foundTransaction.inputs.length === 0;
-    const isBurnTx = foundTransaction.outputs.some(
-      (o) => o.address === "0x0000000000000000000000000000000000000000"
-    );
-    const positiveOutputs = foundTransaction.outputs.filter(
-      (o) => typeof o.amount === "number" && o.amount > 0
-    );
-    const currentOwner = positiveOutputs.length
-      ? positiveOutputs[0].address
-      : null;
-    const transactionType = isRewardTx
-      ? "reward"
-      : isBurnTx
-      ? "burn"
-      : "transfer";
-    const skipOwnerCheck = ownerPublicKey === "SKIP_OWNER_CHECK";
-    const isOwnerValid = skipOwnerCheck
-      ? true
-      : currentOwner === ownerPublicKey;
-
-    console.log(`[VERIFY] ✅ Transacción verificada exitosamente`);
-    console.log(`[VERIFY] Propietario actual: ${currentOwner}`);
-    console.log(`[VERIFY] Propietario esperado: ${ownerPublicKey}`);
-    console.log(`[VERIFY] Saltar verificación: ${skipOwnerCheck}`);
-
-    res.json({
-      success: true,
-      verified: isOwnerValid,
-      status: isOwnerValid ? "verified_mined" : "invalid_owner",
-      message: isOwnerValid
-        ? skipOwnerCheck
-          ? "Transacción confirmada en blockchain (verificación directa)"
-          : "Transacción confirmada en blockchain"
-        : "Propietario no válido",
-      details: {
-        transactionId: transactionId,
-        transactionExists: true,
-        ownerMatches: isOwnerValid,
-        blockInfo: blockInfo,
-        currentOwner: currentOwner,
-        expectedOwner: ownerPublicKey,
-        ownerPublicKey: currentOwner,
-        verifiedAt: new Date().toISOString(),
-      },
-      // Datos adicionales para compatibilidad con frontend
-      blockNumber: blockInfo.blockIndex,
-      blockHash: blockInfo.hash,
-      ownerPublicKey: skipOwnerCheck ? currentOwner : ownerPublicKey,
-      transactionType,
-      isReward: isRewardTx,
-      isBurn: isBurnTx,
-      loteData: parsedData,
-    });
-  } catch (err) {
-    console.error("[VERIFY] Error verificando QR:", err);
-    res.status(500).json({
-      success: false,
-      error: "Error verificando QR",
-      details: err.message,
-    });
-  }
-});
+// POST /verify-qr-proof - verifica transacción en blockchain
+// ✅ MIGRADO A: app/routes/loteRoutes.js
+// Se registra con app.use('/', loteRoutes) línea 761
 
 // Ruta para obtener el contenido de un directorio
 app.get("/directory-contents", async (req, res) => {
@@ -2134,73 +1304,13 @@ app.get("/directory-contents", async (req, res) => {
 });
 // Endpoint to get lote data by loteId
 
-app.get("/lotes/:loteId", (req, res) => {
-  try {
-    const { loteId } = req.params;
-    const lotesDir = path.join(__dirname, "app", "uploads", "lotes");
-    const filePath = path.join(lotesDir, `${loteId}.json`);
-    if (!fs.existsSync(filePath)) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Lote no encontrado", loteId });
-    }
-    const content = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    return res.json({ success: true, record: content });
-  } catch (err) {
-    console.error("Error leyendo lote:", err);
-    return res.status(500).json({
-      success: false,
-      error: "Error leyendo lote",
-      details: err.message,
-    });
-  }
-});
+// GET /lotes/:loteId - obtiene registro de lote por ID
+// ✅ MIGRADO A: app/routes/loteRoutes.js
+// Se registra con app.use('/', loteRoutes) línea 761
 
-// Endpoint to get propietario data by ownerPublicKey
-app.get("/propietario/:ownerPublicKey", (req, res) => {
-  const { ownerPublicKey } = req.params;
-  let foundTransactions = [];
-  let source = null;
-
-  // Search in blockchain (mined blocks)
-  for (const block of bc.chain) {
-    const txs = block.data.filter(
-      (tx) =>
-        tx.outputs &&
-        tx.outputs.some((output) => output.address === ownerPublicKey)
-    );
-    if (txs.length > 0) {
-      foundTransactions = foundTransactions.concat(txs);
-      source = "blockchain";
-    }
-  }
-  // If not found, search in mempool
-  if (foundTransactions.length === 0) {
-    const txs = tp.transactions.filter(
-      (tx) =>
-        tx.outputs &&
-        tx.outputs.some((output) => output.address === ownerPublicKey)
-    );
-    if (txs.length > 0) {
-      foundTransactions = foundTransactions.concat(txs);
-      source = "mempool";
-    }
-  }
-
-  if (foundTransactions.length > 0) {
-    return res.json({
-      success: true,
-      transactions: foundTransactions,
-      source,
-    });
-  } else {
-    return res.status(404).json({
-      success: false,
-      error: "Propietario no encontrado",
-      ownerPublicKey,
-    });
-  }
-});
+// GET /propietario/:ownerPublicKey - busca transacciones por propietario
+// ✅ MIGRADO A: app/routes/loteRoutes.js
+// Se registra con app.use('/', loteRoutes) línea 761
 
 // Manejo de rutas no encontradas (404) - response JSON
 

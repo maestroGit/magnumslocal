@@ -132,7 +132,7 @@ export function setupWalletModalEvents() {
       if (!publicKey) { showModal('Please enter a valid public key.', 'Validation Error'); return; }
       showToast('Consult balance...', 'info');
       try {
-        const response = await fetch(`${apiBaseUrl}/address-balance`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ address: publicKey }) });
+        const response = await fetch(`${apiBaseUrl}/wallet/address-balance`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ address: publicKey }) });
         const data = await response.json();
         if (data.error) { showModal(`Error consulting balance: ${data.error}`, 'Error'); showToast('Error consulting balance', 'error'); return; }
         const modalHtml = `

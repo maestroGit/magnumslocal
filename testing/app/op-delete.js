@@ -1,8 +1,8 @@
 // op-delete.js
 // Script para eliminar usuario oauth_test_99
 
-import { User, Wallet } from './app/models/index.js';
-import sequelize from './app/config/database.js';
+import { User, Wallet } from '../../app/models/index.js';
+import sequelize from '../../app/config/database.js';
 
 async function main() {
   try {

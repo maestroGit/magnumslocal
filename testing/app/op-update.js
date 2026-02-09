@@ -1,8 +1,8 @@
 // op-update.js
 // Script para actualizar usuario oauth_015
 
-import { User } from './app/models/index.js';
-import sequelize from './app/config/database.js';
+import { User } from '../../app/models/index.js';
+import sequelize from '../../app/config/database.js';
 
 async function main() {
   try {

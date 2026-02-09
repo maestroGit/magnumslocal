@@ -45,7 +45,7 @@ export async function checkPublicKeyBalance() {
       return;
     }
     showToast && showToast('Checking balance...', 'info');
-    const response = await fetch(`${apiBaseUrl}/address-balance`, {
+    const response = await fetch(`${apiBaseUrl}/wallet/address-balance`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: publicKey })
     });
     const data = await response.json();

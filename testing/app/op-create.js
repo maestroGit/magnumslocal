@@ -1,8 +1,8 @@
 // op-create.js
 // Script para crear un usuario y wallet de prueba
 
-import { User, Wallet } from './app/models/index.js';
-import sequelize from './app/config/database.js';
+import { User, Wallet } from '../../app/models/index.js';
+import sequelize from '../../app/config/database.js';
 
 async function main() {
   try {

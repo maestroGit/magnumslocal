@@ -1,6 +1,19 @@
 // app/models/User.js
 // Sequelize User model for DB architect skill
-
+/**
+ * MODELO: User (Tabla: 'usuarios')
+ * ============================================================================
+ * Estructura de Datos para MagnumsMaster & CartoLMM
+ * * 🟦 IDENTIDAD: id (PK), provider, role (admin|winery|user), nombre, email
+ * 📍 GEO-LOCALIZACIÓN: localizacion_direccion, localizacion_lat, localizacion_lng
+ * 🍷 PERFIL BODEGA: descripcion, web, categorias (ARRAY), img_bottle
+ * 🛡️ ESTADO KYC: kyc_status, kyc_date, kyc_doc_type, kyc_doc_id, kyc_doc_img
+ * 💳 SUSCRIPCIÓN: subscription_status, subscription_type, subscription_valid_until
+ * 🏆 GAMIFICACIÓN: points, badges (ARRAY)
+ * ⚙️ METADATOS: registrado, fecha_registro, blockchain_active, org_id
+ * ============================================================================
+ * Configuración: underscored (true), timestamps (false).
+ */
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 

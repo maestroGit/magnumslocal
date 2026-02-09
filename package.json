@@ -19,6 +19,8 @@
   },
   "scripts": {
     "test": "jest --watchAll",
+    "test:mining": "node testing/miningEndpoints.test.js",
+    "test:mining:bash": "bash testing/test-mining-endpoints.sh",
     "dev": "nodemon server.js",
     "start": "node server.js",
     "network": "node scripts/nodeLauncher.js",

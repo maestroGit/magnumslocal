@@ -119,7 +119,7 @@ export function initDomEvents() {
   if (balanceBtn && !balanceBtn.dataset.bound) {
     balanceBtn.addEventListener('click', async () => {
       showToast('Checking balance...', 'info');
-      const balance = await fetchData('/balance');
+      const balance = await fetchData('/wallet/balance');
       if (balance.error) {
         showModal(`Error balance: ${balance.error}`, 'Error');
         showToast('Error balance', 'error');
