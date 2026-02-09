@@ -75,21 +75,52 @@ export const openTransactionModal = async () => {
   showProgressModal('Loading Magnums...', 'Magnum Control', ['Fetching Magnums...']);
   let utxoData;
   try {
-    // Siempre obtener la clave pública activa del backend
-    const { getCurrentPublicKey } = await import('../core/walletUtils.js');
-    let address = await getCurrentPublicKey();
-    console.log('[COIN CONTROL] Clave pública activa obtenida de getCurrentPublicKey:', address);
-    if (!address) {
-      closeCurrentModal();
-      showModal('No active wallet address. Please load a wallet first.', 'Coin Control');
-      return;
-    }
     const { apiBaseUrl } = await import('../core/config.js');
     const base = (apiBaseUrl || '').replace(/\/undefined$/,'');
-    console.log('[COIN CONTROL] Fetching UTXOs for:', address, 'at', `${base}/utxo-balance/${address}`);
-    const res = await fetch(`${base}/utxo-balance/${address}`);
-    utxoData = await res.json();
-    console.log('[COIN CONTROL] UTXO response:', utxoData);
+    console.log('[COIN CONTROL] Fetching UTXOs from /utxo-balance/global');
+    const res = await fetch(`${base}/utxo-balance/global`);
+    const rawData = await res.json();
+    console.log('[COIN CONTROL] Raw response from /utxo-balance/global:', rawData);
+    
+    // Transformar la respuesta para que tenga la estructura esperada
+    // /utxo-balance/global devuelve { address, balance, utxos }
+    // pero necesitamos separar disponibles de pendientes
+    const { tp } = window;
+    const mempoolInputs = tp?.transactions?.flatMap(tx => tx.inputs || []) || [];
+    const mempoolOutputs = tp?.transactions?.flatMap(tx =>
+      (tx.outputs || []).map((output, idx) => ({ 
+        ...output, 
+        txId: tx.id, 
+        outputIndex: idx, 
+        status: 'pending-mempool',
+        address: output.address
+      }))
+    ) || [];
+
+    const utxosPendientesSpend = rawData.utxos.filter(utxo =>
+      mempoolInputs.some(input =>
+        input.txId === utxo.txId &&
+        input.outputIndex === utxo.outputIndex
+      )
+    ).map(utxo => ({ ...utxo, status: 'pending-spend' }));
+
+    const utxosPendientesMempool = mempoolOutputs.filter(output => output.address === rawData.address);
+
+    const utxosDisponibles = rawData.utxos.filter(utxo =>
+      !mempoolInputs.some(input =>
+        input.txId === utxo.txId &&
+        input.outputIndex === utxo.outputIndex
+      )
+    );
+
+    utxoData = {
+      address: rawData.address,
+      balance: rawData.balance,
+      utxosDisponibles,
+      utxosPendientes: [...utxosPendientesSpend, ...utxosPendientesMempool]
+    };
+    
+    console.log('[COIN CONTROL] Processed UTXO data:', utxoData);
     window._debugUtxos = utxoData.utxosDisponibles;
   } catch (err) {
     closeCurrentModal();

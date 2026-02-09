@@ -271,10 +271,14 @@ const walletPathInit = path.join(
   __dirname,
   "./app/uploads/wallet_default.json"
 );
+// Variable global para almacenar el keystore del servidor
+let serverKeystore = null;
+
 if (fs.existsSync(walletPathInit)) {
   try {
     const keystoreRaw = fs.readFileSync(walletPathInit, "utf8");
     const keystore = JSON.parse(keystoreRaw);
+    serverKeystore = keystore; // Guardar referencia global al keystore
     console.log("[INIT] Keystore inicial encontrado en", walletPathInit);
     console.log("[INIT] Clave pública en wallet_default.json:", keystore.publicKey);
     // Intentar cargar la wallet global en memoria usando la clave privada descifrada
@@ -818,6 +822,8 @@ app.post("/transaction", async (req, res) => {
   console.log("\n--- [POST /transaction] INICIO ---");
   console.log("[POST /transaction] req.body:", JSON.stringify(req.body, null, 2));
 
+  // Deserializar variables del request body
+  const { signedTransaction, recipient, amount, passphrase, keystore, inputs, mode } = req.body;
 
   // === FLUJO 2: USUARIO ===
   if (signedTransaction) {
@@ -913,17 +919,9 @@ app.post("/transaction", async (req, res) => {
     }
   }
 
-  // === FLUJO NO PERMITIDO ===
-  console.warn(
-    "[POST /transaction] ❌ Transacción rechazada: no es ni modo bodega ni transacción pre-firmada."
-  );
-  return res.status(400).json({
-    error:
-      "Transacción no permitida: solo se aceptan transacciones pre-firmadas (usuario) o modo bodega explícito.",
-  });
-
-  // Legacy flow: accept recipient+amount and create/ sign on server if global.wallet has the private key
-  const { recipient, amount } = req.body;
+  // === FLUJO 1: BODEGA ===
+  else if (mode === 'bodega') {
+    // Legacy flow: accept recipient+amount and create/ sign on server if global.wallet has the private key
 
   // Validación básica de datos de entrada
   if (!recipient || !amount) {
@@ -946,36 +944,91 @@ app.post("/transaction", async (req, res) => {
 
   // Nueva lógica: solo procesar si keystore y passphrase existen
   if (!keystore || !passphrase) {
+    // Si no viene keystore en el request, intentar usar la wallet global del servidor
+    if (!passphrase) {
+      console.log(
+        "[POST /transaction] Falta passphrase. Transacción NO procesada."
+      );
+      return res.status(400).json({
+        error:
+          "Falta passphrase del usuario para firmar la transacción.",
+      });
+    }
+    // Si tampoco está el keystore en el request, LOG informativo
     console.log(
-      "[POST /transaction] Faltan keystore o passphrase. Transacción NO procesada."
+      "[POST /transaction] El keystore no viene en el request. Usaremos la wallet global del servidor si está disponible."
     );
-    return res.status(400).json({
-      error:
-        "Faltan keystore o passphrase del usuario para firmar la transacción.",
-    });
   }
   try {
-    // Usar el keystore y passphrase enviados por el usuario
-    let privateKeyRaw = await decryptPrivateKeyFromKeystore(
-      keystore,
-      passphrase
-    );
     let privateKeyHex;
-    if (Buffer.isBuffer(privateKeyRaw)) {
-      privateKeyHex = privateKeyRaw.toString("hex");
-    } else if (typeof privateKeyRaw === "string") {
-      // Si ya es string, verifica si parece hex (longitud par, solo [0-9a-f])
-      if (
-        /^[0-9a-fA-F]+$/.test(privateKeyRaw) &&
-        privateKeyRaw.length % 2 === 0
-      ) {
-        privateKeyHex = privateKeyRaw;
+    
+    // Caso 1: El cliente envía el keystore encriptado
+    if (keystore) {
+      console.log("[POST /transaction] Usando keystore enviado desde el cliente");
+      // Usar el keystore y passphrase enviados por el usuario
+      let privateKeyRaw = await decryptPrivateKeyFromKeystore(
+        keystore,
+        passphrase
+      );
+      if (Buffer.isBuffer(privateKeyRaw)) {
+        privateKeyHex = privateKeyRaw.toString("hex");
+      } else if (typeof privateKeyRaw === "string") {
+        if (
+          /^[0-9a-fA-F]+$/.test(privateKeyRaw) &&
+          privateKeyRaw.length % 2 === 0
+        ) {
+          privateKeyHex = privateKeyRaw;
+        } else {
+          privateKeyHex = Buffer.from(privateKeyRaw, "utf8").toString("hex");
+        }
       } else {
-        privateKeyHex = Buffer.from(privateKeyRaw, "utf8").toString("hex");
+        throw new Error("Formato inesperado de clave privada descifrada");
       }
-    } else {
-      throw new Error("Formato inesperado de clave privada descifrada");
+    } 
+    // Caso 2: Validar passphrase contra el keystore del servidor y usar la wallet global
+    else if (serverKeystore) {
+      console.log("[POST /transaction] Validando passphrase contra keystore del servidor");
+      // Validar passphrase intentando descifrar el keystore del servidor
+      try {
+        let privateKeyRaw = await decryptPrivateKeyFromKeystore(
+          serverKeystore,
+          passphrase
+        );
+        // Si llegamos aquí, la passphrase es correcta
+        console.log("[POST /transaction] ✅ Passphrase validada correctamente");
+        if (Buffer.isBuffer(privateKeyRaw)) {
+          privateKeyHex = privateKeyRaw.toString("hex");
+        } else if (typeof privateKeyRaw === "string") {
+          if (
+            /^[0-9a-fA-F]+$/.test(privateKeyRaw) &&
+            privateKeyRaw.length % 2 === 0
+          ) {
+            privateKeyHex = privateKeyRaw;
+          } else {
+            privateKeyHex = Buffer.from(privateKeyRaw, "utf8").toString("hex");
+          }
+        } else {
+          throw new Error("Formato inesperado de clave privada descifrada");
+        }
+      } catch (decryptError) {
+        console.error("[POST /transaction] ❌ Passphrase incorrecta:", decryptError.message);
+        throw new Error("Passphrase incorrecta");
+      }
     }
+    // Caso 3: Usar la wallet global del servidor (solo si ya está descifrada en memoria)
+    else if (global.wallet && global.wallet.privateKey) {
+      console.log("[POST /transaction] ⚠️ Usando wallet global del servidor sin validar passphrase (no hay keystore disponible)");
+      privateKeyHex = global.wallet.privateKey;
+    }
+    // Caso 4: Intentar usar globalWallet (wallet por defecto del servidor)
+    else if (globalWallet && globalWallet.privateKey) {
+      console.log("[POST /transaction] ⚠️ Usando globalWallet del servidor sin validar passphrase (no hay keystore disponible)");
+      privateKeyHex = globalWallet.privateKey;
+    }
+    else {
+      throw new Error("No hay wallet disponible para firmar la transacción");
+    }
+    
     console.log(
       "[POST /transaction] privateKeyHex (usada en wallet):",
       privateKeyHex
@@ -985,14 +1038,13 @@ app.post("/transaction", async (req, res) => {
       typeof privateKeyHex
     );
     // Crear wallet temporal SOLO para esta transacción
+    const walletPublicKey = keystore?.publicKey || global.wallet?.publicKey || globalWallet?.publicKey;
     const tempWallet = new Wallet(
-      keystore.publicKey,
+      walletPublicKey,
       INITIAL_BALANCE,
       privateKeyHex
     );
     console.log("[POST /transaction] tempWallet:", tempWallet);
-    // No actualizar global.wallet ni miner
-    // Verifica si la wallet tiene saldo suficiente usando el UTXOManager
     const utxos = bc.utxoSet.filter(
       (utxo) => utxo.address === tempWallet.publicKey
     );
@@ -1035,7 +1087,7 @@ app.post("/transaction", async (req, res) => {
       // Si la transacción es válida, la difunde
       p2pServer.broadcastTransaction(transaction);
       // 🚀 Respuesta mejorada para integración con trazabilidad
-      res.json({
+      return res.json({
         success: true,
         message: "Transacción creada exitosamente",
         transaction: {
@@ -1055,9 +1107,18 @@ app.post("/transaction", async (req, res) => {
       });
     }
   } catch (err) {
-    return res.status(403).json({
-      error:
-        "No se pudo descifrar la clave privada. Passphrase incorrecta o keystore inválido.",
+    console.error("[POST /transaction] Error en flujo BODEGA:", err);
+    // Diferenciar entre errores de passphrase y otros errores
+    if (err.message.includes("Passphrase incorrecta") || err.message.includes("Unsupported state or unable to authenticate data")) {
+      return res.status(403).json({
+        success: false,
+        error: "Passphrase incorrecta. Verifica tu contraseña e intenta nuevamente.",
+        details: err.message,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      error: "Error procesando la transacción.",
       details: err.message,
     });
   }
@@ -1136,6 +1197,16 @@ app.post("/transaction", async (req, res) => {
         details: error.message,
       });
     }
+  }
+  } else {
+    // === FLUJO NO PERMITIDO ===
+    console.warn(
+      "[POST /transaction] ❌ Transacción rechazada: no es ni modo bodega ni transacción pre-firmada."
+    );
+    return res.status(400).json({
+      error:
+        "Transacción no permitida: solo se aceptan transacciones pre-firmadas (usuario) o modo bodega explícito.",
+    });
   }
 });
 

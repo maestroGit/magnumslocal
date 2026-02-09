@@ -6,6 +6,7 @@
 
 import { Block } from "./block.js";
 import path from "path";
+import fs from "fs";
 import { writeBlockToFile, readBlockSeq } from "../storage/blockFile.js";
 // Si no tienes utxomanager.js, puedes eliminar esta línea o dejarla para futuro
 // import { UTXOManager } from "./utxomanager.js"; // ✅ Importamos el gestor de salidas no gastadas (UTXO)
@@ -34,9 +35,23 @@ class Blockchain {
         this.updateUTXOSet(block);
         loaded = true;
       });
+      console.log("[Blockchain] Loaded", this.chain.length, "blocks from file");
     } catch (err) {
       // Si el archivo no existe, crear génesis
-      if (err.code !== 'ENOENT') throw err;
+      if (err.code === 'ENOENT') {
+        console.log("[Blockchain] No blockchain file found, will create genesis");
+      } else {
+        // Archivo corrupto: mover a backup y empezar de cero
+        console.error("[Blockchain] Error loading blockchain file:", err.message);
+        console.log("[Blockchain] Moving corrupted file to backup and starting fresh");
+        try {
+          const backupPath = this.blockFilePath + '.corrupted.' + Date.now();
+          await fs.promises.rename(this.blockFilePath, backupPath);
+          console.log("[Blockchain] Corrupted file backed up to:", backupPath);
+        } catch (renameErr) {
+          console.error("[Blockchain] Could not backup corrupted file:", renameErr.message);
+        }
+      }
     }
     if (!loaded) {
       const genesis = Block.getGenesisBlock();
@@ -45,6 +60,7 @@ class Blockchain {
       this.updateUTXOSet(genesis);
       // Guardar génesis en disco
       await writeBlockToFile(this.blockFilePath, genesis);
+      console.log("[Blockchain] Genesis block created and saved");
     }
     this._initialized = true;
     console.log("Blockchain initialized (persisted):", this.chain.length, "blocks");
