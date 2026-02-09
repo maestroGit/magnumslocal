@@ -1,25 +1,53 @@
 // ============================================================================
 // SERVER.JS - SERVIDOR HTTP PRINCIPAL DE MAGNUMSLOCAL
 // ============================================================================
-// Estado: en refactor activo
-// Progreso refactorización:
+// 
+// ARQUITECTURA MODULAR (Refactor completado):
+//
+// CONTROLLERS (app/controllers/):
+//   - authController.js       → Lógica OAuth2 Google
+//   - miningController.js     → POST /mine, POST /mine-transactions
+//   - transactionController.js → POST /transaction, GET /transactionsPool
+//   - walletController.js     → GET /wallet/*, POST /wallet/address-balance
+//
+// ROUTES (app/routes/):
+//   - authRoutes.js           → /auth/google, /auth/google/callback, /logout
+//   - miningRoutes.js         → /mine, /mine-transactions, /mempool
+//   - transactionRoutes.js    → /transaction, /transactionsPool
+//   - walletRoutes.js         → /wallet/balance, /wallet/global, /wallet/address-balance
+//   - tokenRoutes.js          → /token/baja-token
+//   - utxoRoutes.js           → /utxo-balance/*, /utxos/*
+//   - addressHistoryRoutes.js → /address-history/*
+//   - loteRoutes.js           → /qr/*, /lotes/*, /propietario
+//   - blockchainRoutes.js     → /blocks, /replace-chain
+//   - systemRoutes.js         → /directory-contents, /peers
+//   - logRoutes.js            → /logs
+//   - adminRoutes.js          → /admin/*
+//
+// SERVICES (app/services/):
+//   - walletCryptoService.js    → Decrypt keystore (PBKDF2 + AES-GCM)
+//   - walletLoaderService.js    → Wallet startup loader (ensureWalletOnStartup)
+//   - serverStartupService.js   → Server readiness check (startServerWhenReady)
+//   - logService.js             → Log capture con circular buffer
+//
+// PROGRESO REFACTORIZACIÓN:
 //   ✅ FASE 1: Auth Routes
 //   ✅ FASE 2: Mining Routes
 //   ✅ FASE 3: Transaction Routes
 //   ✅ FASE 4: Wallet/Crypto/Startup services
 //   ✅ FASE 5: Logs y Dev Tools
-//   🔄 FASE 6: Limpieza final
+//   ✅ FASE 6: Limpieza final
+//
+// Estado: Refactor completado - Servidor modular y mantenible
 // ============================================================================
 
 // ============================================================================
 // SECCIÓN 1: IMPORTS Y DEPENDENCIAS
 // ============================================================================
-import adminRoutes from './app/routes/adminRoutes.js';
-import authRoutes from './app/routes/authRoutes.js';
+// Importación de routers modulares, servicios, y dependencias core.
+// Estructura organizada: rutas → servicios → utilidades → frameworks.
+// Importaciones de frameworks y core libraries
 import dotenv from "dotenv";
-dotenv.config();
-console.log("[DEBUG] dotenv.config() ejecutado al inicio. PEERS:", process.env.PEERS);
-console.log("[DEBUG] NODE_ENV:", process.env.NODE_ENV);
 import express from "express";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
@@ -30,24 +58,29 @@ import path from "path";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cors from "cors";
-// Este archivo contiene varios endpoints y funcionalidades que permiten interactuar con una blockchain a través de HTTP
-// las llaves {} son necesarias cuando el módulo exporta múltiples valores y deseas importar uno o varios de esos valores específicos.
-// Si el módulo exporta un solo valor por defecto, no se utilizan las llaves.
-import { Blockchain } from "./src/blockchain.js"; // Clase Blockchain que gestiona la cadena de bloques
-import { P2PServer } from "./app/p2pServer.js"; // Servidor P2P para comunicación entre nodos
-import { Wallet } from "./wallet/wallet.js"; // Clase Wallet que gestiona claves y firma
-import { TransactionsPool } from "./wallet/transactionsPool.js"; // Clase TransactionsPool para gestionar la mempool
-import { Miner } from "./app/miner.js"; // Clase Miner para minar bloques
-import { INITIAL_BALANCE } from "./config/constantConfig.js"; // Valor inicial deseado para la wallet
+
+// Importaciones de clases blockchain core
+import { Blockchain } from "./src/blockchain.js";
+import { P2PServer } from "./app/p2pServer.js";
+import { Wallet } from "./wallet/wallet.js";
+import { TransactionsPool } from "./wallet/transactionsPool.js";
+import { Miner } from "./app/miner.js";
+import { INITIAL_BALANCE } from "./config/constantConfig.js";
 import { generateKeystore } from "./app/walletCrypto.js";
 import { UTXOManager } from "./src/utxomanager.js";
-import loteRoutes from './app/routes/loteRoutes.js';
-import blockchainRoutes from './app/routes/blockchainRoutes.js';
-import createLogRouter from './app/routes/logRoutes.js';
+
+// Importaciones de servicios
 import { decryptPrivateKeyFromKeystore } from './app/services/walletCryptoService.js';
 import { ensureWalletOnStartup } from './app/services/walletLoaderService.js';
 import { startServerWhenReady } from './app/services/serverStartupService.js';
 import { initLogCapture } from './app/services/logService.js';
+
+// Importaciones de routers modulares
+import adminRoutes from './app/routes/adminRoutes.js';
+import authRoutes from './app/routes/authRoutes.js';
+import loteRoutes from './app/routes/loteRoutes.js';
+import blockchainRoutes from './app/routes/blockchainRoutes.js';
+import createLogRouter from './app/routes/logRoutes.js';
 import tokenRoutes from './app/routes/tokenRoutes.js';
 import walletRoutes from './app/routes/walletRoutes.js';
 import miningRoutes from './app/routes/miningRoutes.js';
@@ -56,9 +89,18 @@ import utxoRoutes from './app/routes/utxoRoutes.js';
 import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
 import systemRoutes from './app/routes/systemRoutes.js';
 
+// Configurar variables de entorno antes que todo
+dotenv.config();
+console.log("[BOOT] Iniciando servidor modular (Refactor completado)...");
+console.log("[BOOT] Variables de entorno cargadas. NODE_ENV:", process.env.NODE_ENV);
+
 // ============================================================================
 // SECCIÓN 2: CONFIGURACIÓN GLOBAL Y CONSTANTES
 // ============================================================================
+// Configuración base del servidor Express y constantes de entorno.
+// - isProduction: determina configuraciones de seguridad
+// - HTTP_PORT: puerto del servidor (default 6001)
+// - __dirname: directorio raíz para resolución de paths
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
 app.set("trust proxy", isProduction ? 1 : false); // Solo activar trust proxy en producción
@@ -70,7 +112,11 @@ const __dirname = path.dirname(__filename);
 // ============================================================================
 // SECCIÓN 3: CONFIGURACIÓN DE PASSPORT Y OAUTH2
 // ============================================================================
-// --- PASSPORT GOOGLE OAUTH2 ---
+// Configuración de autenticación OAuth2 con Google.
+// - Strategy: passport-google-oauth20
+// - Session storage: express-session con secret desde env
+// - Callbacks: serialización/deserialización de usuario
+// Ver app/controllers/authController.js para la lógica de autenticación.
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -83,10 +129,11 @@ passport.use(new GoogleStrategy({
 passport.serializeUser((user, done) => {
   done(null, user);
 });
+
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
-// --- SESSION & PASSPORT MIDDLEWARE ---
+
 app.use(session({
   secret: process.env.JWT_SECRET || "blockswine_secret",
   resave: false,
@@ -97,20 +144,23 @@ app.use(passport.session());
 // ============================================================================
 // SECCIÓN 4: SISTEMA DE LOGS Y MONITOREO
 // ============================================================================
-// --- ENDPOINT PARA VER LOGS DEL PROCESO EN EL NAVEGADOR ---
-// (Debe ir después de la inicialización de 'app')
+// Sistema de captura de logs con circular buffer (500 líneas).
+// - logStore: almacena stdout/stderr en memoria
+// - global.logStore: accesible desde routers para endpoint /logs
+// Ver app/services/logService.js y app/routes/logRoutes.js
 const logStore = initLogCapture({ historySize: 500 });
 global.logStore = logStore;
-// --- IMPORTS Y CONFIGURACIÓN INICIAL ---
-console.log("[BOOT] Iniciando imports...");
-// ...existing code...
-console.log("[BOOT] Imports y variables globales listos.");
+
+console.log("[BOOT] Imports y routers modulares cargados correctamente.");
 
 // ============================================================================
 // SECCIÓN 5: CONFIGURACIÓN DE SEGURIDAD (HELMET, CORS, RATE LIMITING)
 // ============================================================================
-
-// --- CONFIGURACIÓN DE SEGURIDAD POR ENTORNO ---
+// Middlewares de seguridad para producción y desarrollo:
+// - Helmet: CSP, protección headers
+// - CORS: whitelist dinámica (localhost + app.blockswine.com)
+// - Rate Limiting: 100 req/15min por IP
+// - Static files: public/ y app/uploads/ servidos con cache
 const PROD_API = process.env.PROD_API || "https://app.blockswine.com";
 
 const connectSrc = [
@@ -147,13 +197,12 @@ app.use(
   })
 );
 
-// --- CORS dinámico por entorno ---
+// CORS: whitelist dinámica por entorno (localhost en dev, app.blockswine.com en prod)
 const allowedPattern = /^(http:\/\/localhost(:\d+)?|https?:\/\/app\.blockswine\.com)$/;
 const corsOptions = {
   origin: function (origin, callback) {
     console.log("[CORS] Origin recibido:", origin);
     console.log("[CORS] Regex test:", allowedPattern.test(origin));
-    // Permitir app.blockswine.com en producción, localhost en desarrollo
     if (!origin || allowedPattern.test(origin)) {
       callback(null, true);
     } else {
@@ -166,8 +215,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "32kb" }));
-// --- SERVE STATIC FILES EARLY ---
-// Middleware para forzar Content-Type correcto en archivos JS ESM
+
+// Static files: public/ y app/uploads/ con Content-Type correcto para ESM
 app.use("/js", (req, res, next) => {
   if (req.path.endsWith(".js")) {
     res.type("application/javascript");
@@ -178,18 +227,23 @@ app.use(express.static(path.join(__dirname, "./public")));
 app.use("/uploads", express.static(path.join(__dirname, "app", "uploads")));
 console.log("[BOOT] Express inicializado. Definiendo endpoints...");
 
-// Configurar rate limiting global: 100 peticiones por 15 minutos por IP
+// Rate limiting: 100 peticiones por 15 minutos por IP
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // límite de peticiones por IP
-  standardHeaders: true, // devuelve info de rate limit en headers estándar
-  legacyHeaders: false, // desactiva headers obsoletos
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
 // ============================================================================
 // SECCIÓN 6: INICIALIZACIÓN BLOCKCHAIN Y UTXO MANAGER
 // ============================================================================
+// Inicialización de la blockchain y el sistema UTXO.
+// - bc: instancia de Blockchain (persistida en storage/data/)
+// - utxoManager: gestor de UTXOs (Unspent Transaction Outputs)
+// - syncUTXOManagerWithBlockchain(): reconstruye UTXO set desde la chain
+// Ver src/blockchain.js y src/utxomanager.js
 
 const utxoManager = new UTXOManager();
 global.utxoManager = utxoManager;
@@ -233,8 +287,11 @@ bc.initialize().then((result) => {
 // ============================================================================
 // SECCIÓN 7: GESTIÓN DE WALLET GLOBAL Y CIFRADO
 // ============================================================================
-
-// Declarar la wallet global en memoria
+// Variables globales para wallet y keystore del servidor.
+// - globalWallet: instancia de Wallet cargada al startup
+// - serverKeystore: keystore cifrado (PBKDF2 + AES-GCM)
+// - global.decryptPrivateKeyFromKeystore: función de decrypt expuesta
+// Carga automática en SECCIÓN 8 con passphrase desde env
 let globalWallet = null;
 global.globalWallet = globalWallet;
 global.bc = bc;
@@ -249,9 +306,12 @@ global.decryptPrivateKeyFromKeystore = decryptPrivateKeyFromKeystore;
 // ============================================================================
 // SECCIÓN 8: CARGA AUTOMÁTICA DE WALLET AL INICIAR
 // ============================================================================
-
-
-// --- Carga automática de wallet global al arrancar el backend ---
+// Carga asíncrona de la wallet global al arrancar el servidor.
+// - walletPath: app/uploads/wallet_default.json
+// - DEFAULT_WALLET_PASSPHRASE: desde env o fallback "javi"
+// - ensureWalletOnStartup(): carga o genera wallet con keystore cifrado
+// - walletReadyPromise: promesa esperada antes de startServerWhenReady
+// Ver app/services/walletLoaderService.js y app/services/walletCryptoService.js
 const NODE_NAME = process.env.NODE_NAME || "Default_Node";
 const walletPath = path.join(__dirname, "./app/uploads/wallet_default.json");
 
@@ -305,6 +365,12 @@ const walletReadyPromise = (async () => {
 // ============================================================================
 // SECCIÓN 9: INICIALIZACIÓN P2P Y MINER
 // ============================================================================
+// Inicialización del sistema P2P y minero.
+// - tp: TransactionsPool (mempool de transacciones pendientes)
+// - p2pServer: servidor WebSocket para sincronización entre nodos
+// - miner: instancia de Miner para Proof-of-Work
+// En modo test/NO_P2P: stubs para evitar sockets de red
+// Ver app/p2pServer.js y app/miner.js
 
 const tp = new TransactionsPool();
 global.tp = tp;
@@ -337,10 +403,12 @@ global.p2pServer = p2pServer;
 global.miner = miner;
 
 // ============================================================================
-// SECCIÓN 11: REGISTRO DE ROUTERS MODULARES Y ENDPOINTS
+// SECCIÓN 10: REGISTRO DE ROUTERS MODULARES Y ENDPOINTS
 // ============================================================================
-
-// --- REGISTRAR ROUTERS MODULARES ---
+// Montaje de routers modulares en la app Express.
+// Orden de registro importante: páginas estáticas antes de catch-all routes.
+// Cada router tiene su propio prefijo y maneja un dominio específico.
+// Ver app/routes/* para implementación de cada router.
 // ✅ Auth routes (OAuth Google) - MIGRADO FASE 1
 app.use('/', authRoutes);
 
@@ -388,20 +456,59 @@ app.use('/', blockchainRoutes);
 app.use('/', transactionRoutes);
 
 // ============================================================================
-// SECCIÓN 12: NOTAS DE MIGRACION
+// SECCIÓN 11: ESTRUCTURA DE ENDPOINTS (POST-REFACTOR)
 // ============================================================================
-// /transactionsPool -> transactionRoutes
-// /transaction -> transactionRoutes
-// /wallet/* -> walletRoutes
-// /mine, /mine-transactions -> miningRoutes
-// /directory-contents -> systemRoutes
-// /logs -> logRoutes
+// Mapeo de endpoints principales a sus routers:
+//
+// AUTH & SECURITY:
+//   /auth/google              → authRoutes (OAuth2 login)
+//   /auth/google/callback     → authRoutes (OAuth2 callback)
+//   /logout                   → authRoutes
+//
+// BLOCKCHAIN CORE:
+//   /blocks                   → blockchainRoutes (GET chain)
+//   /replace-chain            → blockchainRoutes (POST sync)
+//
+// MINING & TRANSACTIONS:
+//   /mine                     → miningRoutes (POST manual mine)
+//   /mine-transactions        → miningRoutes (POST legacy mine)
+//   /mempool                  → miningRoutes (GET mempool state)
+//   /transaction              → transactionRoutes (POST create tx)
+//   /transactionsPool         → transactionRoutes (GET pending txs)
+//
+// WALLET & BALANCE:
+//   /wallet/balance           → walletRoutes (GET wallet balance)
+//   /wallet/global            → walletRoutes (GET server wallet)
+//   /wallet/address-balance   → walletRoutes (POST custom address)
+//   /utxo-balance/*           → utxoRoutes (GET UTXO balance)
+//   /utxos/*                  → utxoRoutes (GET UTXOs detail)
+//   /address-history/*        → addressHistoryRoutes (GET tx history)
+//
+// TOKENS & LOTES:
+//   /token/baja-token         → tokenRoutes (POST burn token)
+//   /qr/*                     → loteRoutes (GET QR codes)
+//   /lotes/*                  → loteRoutes (GET/POST lotes)
+//   /propietario              → loteRoutes (GET owner info)
+//
+// SYSTEM & MONITORING:
+//   /logs                     → logRoutes (GET server logs)
+//   /directory-contents       → systemRoutes (GET file tree)
+//   /peers                    → systemRoutes (GET P2P peers)
+//   /admin/*                  → adminRoutes (Admin panel)
+//
+// FRONTEND:
+//   /                         → view.html (static)
+//   /view                     → view.html (static)
 
 // ============================================================================
-// SECCIÓN 13: INICIO DEL SERVIDOR Y MANEJO DE ERRORES
+// SECCIÓN 12: INICIO DEL SERVIDOR Y MANEJO DE ERRORES
 // ============================================================================
-
-// --- INICIO DIFERIDO DEL SERVIDOR: Esperar a que la wallet global y la blockchain estén listas ---
+// Startup diferido: espera a que wallet y blockchain estén listas.
+// - await walletReadyPromise: asegura wallet cargada antes de listen()
+// - startServerWhenReady: polling de readiness (wallet.publicKey + blockchain)
+// - server.listen(HTTP_PORT): inicia servidor HTTP
+// - p2pServer.listen(server): inicia servidor WebSocket P2P
+// Ver app/services/serverStartupService.js
 (async () => {
   await walletReadyPromise;
   startServerWhenReady({
@@ -415,10 +522,12 @@ app.use('/', transactionRoutes);
 })();
 
 // ============================================================================
-// SECCIÓN 17: MIDDLEWARE DE ERRORES Y SIGNALS
+// SECCIÓN 13: MIDDLEWARE DE ERRORES Y SIGNAL HANDLERS
 // ============================================================================
-
-// Middleware de manejo de errores global - siempre devuelve JSON
+// Error handling global y graceful shutdown.
+// - Error middleware: catch-all que devuelve JSON con stack en dev
+// - SIGTERM/SIGINT: cierre limpio cerrando UPnP y conexiones P2P
+// Debe ser el último middleware registrado en la app
 app.use((err, req, res, next) => {
   // Log the error server-side
   console.error(err && err.stack ? err.stack : err);
