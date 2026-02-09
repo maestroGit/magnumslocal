@@ -119,17 +119,17 @@ const generateWallet = async (req, res) => {
 
 // GET /wallet/global
 const getGlobalWallet = (req, res) => {
-  const globalWallet = global.globalWallet || globalWallet;
-  if (!globalWallet) {
+  const walletRef = global.globalWallet || global.wallet || null;
+  if (!walletRef) {
     console.log("[WALLET-GLOBAL] No hay wallet global cargada.");
     return res.status(404).json({ error: "No hay wallet global cargada" });
   }
   // Siempre devolver la clave pública derivada del keyPair
   let pubKey = null;
-  if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
-    pubKey = globalWallet.keyPair.getPublic().encode("hex");
-  } else if (globalWallet.publicKey) {
-    pubKey = globalWallet.publicKey;
+  if (walletRef.keyPair && walletRef.keyPair.getPublic) {
+    pubKey = walletRef.keyPair.getPublic().encode("hex");
+  } else if (walletRef.publicKey) {
+    pubKey = walletRef.publicKey;
   }
   console.log(
     "[WALLET-GLOBAL][GET] publicKey servida por /wallet/global:",

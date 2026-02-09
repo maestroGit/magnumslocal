@@ -8,14 +8,14 @@
 
 ## 📊 Fases de Trabajo
 
-### **FASE 1: Extracción de Auth Routes** ⛔→🟢
+### **FASE 1: Extracción de Auth Routes** ✅
 **Complejidad:** Baja | **Tiempo:** 30 min | **Riesgo:** Bajo
 
 #### 1.1 - Crear `authRoutes.js`
-- [ ] Extraer `/auth/google` → GET
-- [ ] Extraer `/auth/google/callback` → GET  
-- [ ] Extraer `/auth/user` → GET
-- [ ] Extraer configuración de Passport
+- [x] Extraer `/auth/google` → GET
+- [x] Extraer `/auth/google/callback` → GET  
+- [x] Extraer `/auth/user` → GET
+- [x] Extraer configuración de Passport
 
 **Líneas en server.js afectadas:** 57-95 (~38 líneas)
 
@@ -38,14 +38,14 @@ npm run dev 2>&1 | grep -i "error" | head -5
 
 ---
 
-### **FASE 2: Extracción de Mining Routes** 🟡→🟢
+### **FASE 2: Extracción de Mining Routes** ✅
 **Complejidad:** Media | **Tiempo:** 45 min | **Riesgo:** Medio
 
 #### 2.1 - Crear `miningRoutes.js` y `miningController.js`
-- [ ] Extraer `POST /mine` (actualmente líneas ~1289)
-- [ ] Extraer `POST /mine-transactions` (líneas ~1415)
-- [ ] Crear controlador con lógica de minería
-- [ ] Validar acceso a `global.bc`, `global.tp`, `global.miner`, `global.utxoManager`
+- [x] Extraer `POST /mine`
+- [x] Extraer `POST /mine-transactions`
+- [x] Crear controlador con lógica de minería
+- [x] Validar acceso a `global.bc`, `global.tp`, `global.miner`, `global.utxoManager`
 
 **Líneas en server.js afectadas:** ~200 líneas (1289-1415 + lógica asociada)
 
@@ -74,15 +74,15 @@ npm run dev 2>&1 | grep -i "mined\|block" | head -3
 
 ---
 
-### **FASE 3: Extracción de Transaction Routes** 🟡→🟢
+### **FASE 3: Extracción de Transaction Routes** ✅
 **Complejidad:** Alta | **Tiempo:** 1 hora | **Riesgo:** Alto (lógica critica)
 
 #### 3.1 - Crear `transactionRoutes.js` y `transactionController.js`
-- [ ] Extraer `POST /transaction` (líneas ~815-1213)
-- [ ] Extraer `GET /transactionsPool` (líneas ~803-811)
-- [ ] Separar flujo BODEGA vs USUARIO
-- [ ] Validaciones de UTXO
-- [ ] Prevención de doble gasto
+- [x] Extraer `POST /transaction`
+- [x] Extraer `GET /transactionsPool`
+- [x] Separar flujo BODEGA vs USUARIO
+- [x] Validaciones de UTXO
+- [x] Prevención de doble gasto
 
 **Observación:** Verificar que NO haya duplicación en `createTransaction()`
 
@@ -123,81 +123,47 @@ echo "✅ Double-spend prevention OK"
 
 ---
 
-### **FASE 4: Extracción de QR Routes** 🟡→🟢
-**Complejidad:** Media | **Tiempo:** 40 min | **Riesgo:** Bajo
+### **FASE 4: Servicios Wallet/Crypto/Startup** ✅
+**Complejidad:** Media | **Tiempo:** 45 min | **Riesgo:** Medio
 
-#### 4.1 - Crear `qrRoutes.js` y `qrController.js`
-- [ ] Extraer `POST /qr` (líneas ~1575-1642)
-- [ ] Extraer `POST /qr-with-proof` (líneas ~1643-1790)
-- [ ] Extraer `POST /verify-qr-proof` (líneas ~1901-2120)
-- [ ] Mantener deps: `loteRoutes`, multer, fs
+#### 4.1 - Crear servicios
+- [x] `walletCryptoService.js` (descifrado de keystore)
+- [x] `walletLoaderService.js` (carga/creación de wallet)
+- [x] `serverStartupService.js` (arranque diferido)
 
-**Líneas en server.js afectadas:** ~250 líneas
+#### 4.2 - Integración en server.js
+- [x] Reemplazar funciones inline por servicios
+- [x] Mantener compatibilidad con globals necesarios
 
-#### 4.2 - Testeo FASE 4
-```bash
-# Test 1: Verificar POST /qr genera código
-curl -X POST http://localhost:6001/qr \
-  -H "Content-Type: application/json" \
-  -d '{
-    "loteId": "test-lote-001",
-    "nombreProducto": "Rioja 2020",
-    "bodega": "Casa Beronia"
-  }' | jq '.qrBase64 | length' && echo "✅ QR generation OK"
-
-# Test 2: Verificar que qrBase64 es válido
-curl ... | jq '.qrBase64' | grep "data:image" && echo "✅ QR format OK"
-
-# Test 3: Verificar POST /qr-with-proof con archivo
-curl -X POST http://localhost:6001/qr-with-proof \
-  -F "file=@path/to/file.pdf" \
-  -F "loteId=test" | jq '.success' && echo "✅ QR with proof OK"
-```
-
-**Criterio de éxito:**
-- ✅ POST /qr devuelve base64 válido
-- ✅ POST /qr-with-proof soporta file upload
-- ✅ POST /verify-qr-proof valida pruebas
+**Resultado:** separación de lógica pesada y reducción de ruido en `server.js`
 
 ---
 
-### **FASE 5: Extracción de UTXO & Balance Routes** 🟢 (parcial)
-**Complejidad:** Media | **Tiempo:** 45 min | **Riesgo:** Bajo
-
-#### 5.1 - Extracción de endpoints en server.js
-- [x] GET `/utxo-balance/global` (ya en utxoRoutes?)
-- [x] GET `/balance` (ya en walletRoutes?)
-- [x] POST `/address-balance` (ya modularizado?)
-
-**Verificar:** Qué está en `utxoRoutes.js` vs `walletRoutes.js`
-
-**Líneas en server.js afectadas:** ~50 líneas
-
-#### 5.2 - Testeo FASE 5
-```bash
-# Test 1: GET /utxo-balance/global
-curl http://localhost:6001/utxo-balance/global | jq '.balance' && echo "✅ Global balance OK"
-
-# Test 2: GET /balance (wallet global)
-curl http://localhost:6001/balance | jq '.balance' && echo "✅ Wallet balance OK"
-
-# Test 3: POST /address-balance
-curl -X POST http://localhost:6001/address-balance \
-  -H "Content-Type: application/json" \
-  -d '{"address": "04..."}' | jq '.balance' && echo "✅ Address balance OK"
-```
-
-**Criterio de éxito:**
-- ✅ Todos los endpoints devuelven balance numérico
-- ✅ Valores son consistentes entre endpoints
-
----
-
-### **FASE 6: Extracción de Logs & Dev Routes** 🟢 (baja prioridad)
+### **FASE 5: Logs & Dev Tools** ✅
 **Complejidad:** Baja | **Tiempo:** 20 min | **Riesgo:** Muy Bajo
 
-#### 6.1 - Crear `logsRoutes.js`
-- [ ] Extraer `GET /logs` (líneas ~116-120)
+#### 5.1 - Logs y tooling
+- [x] `logService.js` + `logRoutes.js`
+- [x] Mover `/logs` fuera de `server.js`
+- [x] Consolidar `/directory-contents` en `systemRoutes`
+
+#### 5.2 - Validación
+- [x] `/logs` responde HTML
+- [x] `/directory-contents` responde JSON
+
+---
+
+### **FASE 6: Limpieza Final** ✅
+**Complejidad:** Baja | **Tiempo:** 30 min | **Riesgo:** Muy Bajo
+
+#### 6.1 - Higiene de server.js
+- [x] Eliminar imports y bloques legacy no usados
+- [x] Compactar comentarios y secciones
+- [x] Normalizar numeración de secciones
+
+#### 6.2 - Verificación
+- [x] `node -c server.js`
+- [x] `npm run test:transactions`
 
 #### 6.2 - Crear `devRoutes.js`
 - [ ] Extraer `GET /directory-contents` (líneas ~2121)

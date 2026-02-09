@@ -21,6 +21,7 @@
     "test": "jest --watchAll",
     "test:mining": "node testing/miningEndpoints.test.js",
     "test:mining:bash": "bash testing/test-mining-endpoints.sh",
+    "test:transactions": "node testing/transactionEndpoints.test.js",
     "dev": "nodemon server.js",
     "start": "node server.js",
     "network": "node scripts/nodeLauncher.js",
