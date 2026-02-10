@@ -217,4 +217,15 @@ export function attachWalletButton() {
 // Optional initialization helper
 export function initWalletModalFeature() {
   attachWalletButton();
+  // Listener para refrescar modal UTXO cuando se mina
+  if (!window._utxoModalBlockMinedBound) {
+    window.addEventListener('blockMined', () => {
+      console.log('[WALLET MODAL] Bloque minado, refrescando UTXO Set...');
+      const modal = document.querySelector('.modal-container:not(.hidden)');
+      if (modal && document.getElementById('utxoListContainer')) {
+        setTimeout(() => handleUTXOCheckClick(), 1000);
+      }
+    });
+    window._utxoModalBlockMinedBound = true;
+  }
 }

@@ -107,6 +107,13 @@ export function initDomEvents() {
         } else if (showModal) {
           showModal(minedModal, 'New block mined');
         }
+        // Disparar evento para refrescar UI tras minar
+        try {
+          const detail = { block: lastBlock || null, minedResponse: res || null };
+          window.dispatchEvent(new CustomEvent('blockMined', { detail }));
+        } catch (err) {
+          console.warn('[events] No se pudo disparar blockMined', err);
+        }
       } catch (e) {
         console.error('[events] error POST /mine-transactions', e);
         showModal && showModal('Could not execute mining.', 'Connection Error');

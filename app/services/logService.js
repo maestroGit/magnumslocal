@@ -1,5 +1,21 @@
 // Log capture helpers
 
+// Formatea valores para logs, compactando Buffers
+const formatValue = (a) => {
+  if (typeof a !== 'object') return String(a);
+  
+  // Detectar objetos Buffer: { type: "Buffer", data: [...] }
+  if (a && a.type === 'Buffer' && Array.isArray(a.data)) {
+    const dataLen = a.data.length;
+    const preview = a.data.slice(0, 5).join(',');
+    const remaining = dataLen > 5 ? ` +${dataLen - 5} more` : '';
+    return `Buffer[${dataLen}]: [${preview}${remaining}]`;
+  }
+  
+  // Para otros objetos, usar JSON sin indentación
+  return JSON.stringify(a);
+};
+
 export const initLogCapture = ({ historySize = 500 } = {}) => {
   const logHistory = [];
   const origConsoleLog = console.log;
@@ -8,7 +24,7 @@ export const initLogCapture = ({ historySize = 500 } = {}) => {
 
   const pushLog = (type, args) => {
     const msg = args
-      .map((a) => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)))
+      .map((a) => formatValue(a))
       .join(' ');
     const entry = { ts: new Date().toISOString(), type, msg };
     logHistory.push(entry);

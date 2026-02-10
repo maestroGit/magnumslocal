@@ -84,29 +84,35 @@ export const openTransactionModal = async () => {
     
     // Transformar la respuesta para que tenga la estructura esperada
     // /utxo-balance/global devuelve { address, balance, utxos }
-    // pero necesitamos separar disponibles de pendientes
-    const { tp } = window;
-    const mempoolInputs = tp?.transactions?.flatMap(tx => tx.inputs || []) || [];
-    const mempoolOutputs = tp?.transactions?.flatMap(tx =>
-      (tx.outputs || []).map((output, idx) => ({ 
-        ...output, 
-        txId: tx.id, 
-        outputIndex: idx, 
+    // pero necesitamos separar disponibles de pendientes usando la mempool real
+    const pool = await fetchData('/transactionsPool');
+    const mempoolTxs = Array.isArray(pool) ? pool : [];
+    const mempoolInputs = mempoolTxs.flatMap(tx => tx.inputs || []);
+    const mempoolOutputs = mempoolTxs.flatMap(tx =>
+      (tx.outputs || []).map((output, idx) => ({
+        ...output,
+        txId: tx.id,
+        outputIndex: idx,
         status: 'pending-mempool',
         address: output.address
       }))
-    ) || [];
+    );
 
-    const utxosPendientesSpend = rawData.utxos.filter(utxo =>
+    const utxosList = Array.isArray(rawData?.utxos) ? rawData.utxos : [];
+    const address = rawData?.address || rawData?.publicKey || '';
+
+    const utxosPendientesSpend = utxosList.filter(utxo =>
       mempoolInputs.some(input =>
         input.txId === utxo.txId &&
         input.outputIndex === utxo.outputIndex
       )
     ).map(utxo => ({ ...utxo, status: 'pending-spend' }));
 
-    const utxosPendientesMempool = mempoolOutputs.filter(output => output.address === rawData.address);
+    const utxosPendientesMempool = address
+      ? mempoolOutputs.filter(output => output.address === address)
+      : [];
 
-    const utxosDisponibles = rawData.utxos.filter(utxo =>
+    const utxosDisponibles = utxosList.filter(utxo =>
       !mempoolInputs.some(input =>
         input.txId === utxo.txId &&
         input.outputIndex === utxo.outputIndex
@@ -114,8 +120,8 @@ export const openTransactionModal = async () => {
     );
 
     utxoData = {
-      address: rawData.address,
-      balance: rawData.balance,
+      address,
+      balance: rawData?.balance,
       utxosDisponibles,
       utxosPendientes: [...utxosPendientesSpend, ...utxosPendientesMempool]
     };
@@ -217,5 +223,16 @@ export const initTransactionsFeature = () => {
   if (btn && !btn.dataset.txBound) {
     btn.addEventListener('click', () => openTransactionModal());
     btn.dataset.txBound = '1';
+  }
+  // Listener para refrescar cuando se mina un bloque
+  if (!window._blockMinedListenerBound) {
+    window.addEventListener('blockMined', () => {
+      console.log('[TX] Bloque minado detectado, refrescando UTXOs...');
+      const modal = document.querySelector('.modal-container:not(.hidden)');
+      if (modal && document.getElementById('transactionForm')) {
+        setTimeout(() => openTransactionModal(), 1000);
+      }
+    });
+    window._blockMinedListenerBound = true;
   }
 };

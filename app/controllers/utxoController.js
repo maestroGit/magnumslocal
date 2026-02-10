@@ -3,12 +3,12 @@
 // Controlador para endpoints de balance UTXO
 
 const getGlobalUTXOBalance = (req, res) => {
-  const { globalWallet, bc } = global;
+  const { globalWallet, utxoManager } = global;
   if (!globalWallet || !globalWallet.publicKey) {
     return res.status(404).json({ error: "No hay wallet global activa" });
   }
   const address = globalWallet.publicKey;
-  const utxos = bc.utxoSet.filter((utxo) => utxo.address === address);
+  const utxos = utxoManager.getUTXOs(address);
   const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
   res.json({ address, balance, utxos });
 };
