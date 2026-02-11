@@ -4,7 +4,7 @@
 import User from './User.js';
 import Wallet from './Wallet.js';
 
-User.hasMany(Wallet, { foreignKey: 'usuario_id' });
-Wallet.belongsTo(User, { foreignKey: 'usuario_id' });
+User.hasMany(Wallet, { foreignKey: 'usuario_id', as: 'wallets' });
+Wallet.belongsTo(User, { foreignKey: 'usuario_id', as: 'user' });
 
 export { User, Wallet };

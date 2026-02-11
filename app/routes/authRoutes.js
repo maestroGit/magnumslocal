@@ -3,7 +3,7 @@
 
 import express from "express";
 import passport from "passport";
-import { getAuthUser, getGoogleCallback } from "../controllers/authController.js";
+import { getAuthUser, getGoogleCallback, postAuthLogin, postAuthLogout } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -36,5 +36,17 @@ router.get("/auth/google/callback",
  * Si no autenticado → 401 { user: null }
  */
 router.get("/auth/user", getAuthUser);
+
+/**
+ * POST /auth/login
+ * Autenticación local con email y contraseña
+ */
+router.post("/auth/login", postAuthLogin);
+
+/**
+ * POST /auth/logout
+ * Cierra la sesión local
+ */
+router.post("/auth/logout", postAuthLogout);
 
 export default router;

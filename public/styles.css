@@ -60,8 +60,7 @@
 	color: #b00;
 	display: none;
 }
-.auth-error[style*="display: block"] {
-	display: block !important;
+.auth-error.visible {
 	display: flex;
 	align-items: center;
 	gap: 18px;

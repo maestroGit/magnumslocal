@@ -1,0 +1,98 @@
+/* Register layout and card structure */
+body {
+  display: block;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.register-main-centered {
+  width: 100vw;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 0;
+  padding: 170px 0 40px;
+}
+
+.register-keystore-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  margin-top: 0;
+}
+
+.register-card {
+  background: #220F17;
+  border: 1px solid rgba(247, 147, 26, 0.15);
+  border-radius: 15px;
+  padding: 48px 32px 32px;
+  box-shadow: 0 8px 32px rgba(247, 147, 26, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  min-width: 380px;
+  max-width: 520px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: slideIn 0.4s ease-out;
+}
+
+.register-card .keystore-header h2 {
+  margin: 0 0 8px 0;
+  color: #f7931a;
+  font-size: 1.8rem;
+}
+
+.register-subtitle {
+  color: #ccc;
+  font-size: 0.95rem;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .register-card {
+    min-width: unset;
+    max-width: 100%;
+    padding: 24px 18px;
+  }
+
+  .register-keystore-container {
+    padding: 10px;
+  }
+
+  .register-card .keystore-header h2 {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-main-centered {
+    padding-top: 150px;
+  }
+
+  .register-card {
+    padding: 20px 16px;
+  }
+
+  .register-card .keystore-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .register-subtitle {
+    font-size: 0.85rem;
+  }
+}

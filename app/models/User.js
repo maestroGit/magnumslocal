@@ -45,6 +45,10 @@ const User = sequelize.define('User', {
     unique: true,
     validate: { isEmail: true },
   },
+  password_hash: {
+    type: DataTypes.STRING(120),
+    allowNull: true,
+  },
   email_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -145,6 +149,9 @@ const User = sequelize.define('User', {
   underscored: true,
   tableName: 'usuarios',
   timestamps: false,
+  defaultScope: {
+    attributes: { exclude: ['password_hash'] },
+  },
 });
 
 export default User;

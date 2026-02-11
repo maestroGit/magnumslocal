@@ -33,9 +33,9 @@ export class AuthComponent {
   render(isOAuth = false) {
     if (!this.container) return;
     const isLoginPage = window.location.pathname.endsWith('login.html');
-    if (this.user && (isOAuth || this.user.username)) {
+    if (this.user && (isOAuth || this.user.email || this.user.nombre || this.user.username)) {
       // Usuario autenticado (local o OAuth)
-      const name = this.user.displayName || this.user.username || (this.user.emails && this.user.emails[0]?.value) || 'Usuario';
+      const name = this.user.displayName || this.user.nombre || this.user.username || this.user.email || (this.user.emails && this.user.emails[0]?.value) || 'Usuario';
       const photo = this.user.photos && this.user.photos[0]?.value;
       console.log('[AuthComponent] Render usuario:', { name, photo, user: this.user });
       this.container.innerHTML = `
@@ -73,34 +73,68 @@ export class AuthComponent {
   addListeners() {
     const form = this.container.querySelector('#authForm');
     const errorDiv = this.container.querySelector('#auth-error');
-    const logoutDiv = this.container.querySelector('#auth-logout');
     const logoutBtn = this.container.querySelector('#logoutBtn');
-    const userLabel = this.container.querySelector('#auth-user-label');
 
     if (form) {
-      form.onsubmit = (e) => {
+      form.onsubmit = async (e) => {
         e.preventDefault();
         const username = form["auth-username"].value.trim();
         const password = form["auth-password"].value;
-        if (username && password) {
-          // Simulación de autenticación local (reemplazar por lógica real)
-          if (username === "admin" && password === "admin") {
-            this.user = { username };
-            form.style.display = "none";
-            if (logoutDiv) logoutDiv.style.display = "block";
-            if (userLabel) userLabel.textContent = `Bienvenido, ${username}`;
-            errorDiv.style.display = "none";
-          } else {
-            errorDiv.textContent = "Usuario o contraseña incorrectos.";
-            errorDiv.style.display = "block";
+        if (!username || !password) {
+          if (errorDiv) {
+            errorDiv.textContent = 'Usuario y contraseña son requeridos.';
+            errorDiv.classList.add('visible');
+          }
+          return;
+        }
+
+        if (errorDiv) {
+          errorDiv.textContent = '';
+          errorDiv.classList.remove('visible');
+        }
+
+        try {
+          const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            if (errorDiv) {
+              errorDiv.textContent = data.error || 'Usuario o contraseña incorrectos.';
+              errorDiv.classList.add('visible');
+            }
+            return;
+          }
+
+          this.user = data.user;
+          this.render(true);
+        } catch (error) {
+          console.error('[AuthComponent] Error en login local:', error);
+          if (errorDiv) {
+            errorDiv.textContent = 'Error de conexión. Intenta nuevamente.';
+            errorDiv.classList.add('visible');
           }
         }
       };
     }
     if (logoutBtn) {
-      logoutBtn.onclick = () => {
-        this.user = null;
-        this.render();
+      logoutBtn.onclick = async () => {
+        try {
+          await fetch('/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+          });
+        } catch (error) {
+          console.error('[AuthComponent] Error en logout:', error);
+        } finally {
+          this.user = null;
+          this.render();
+          window.location.href = 'login.html';
+        }
       };
     }
   }

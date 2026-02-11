@@ -68,21 +68,25 @@
 
 .close {
     color: #FFC48C;
-    float: right;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: bold;
     cursor: pointer;
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 40px;
-    height: 40px;
-    display: flex;
+    top: 10px;
+    right: 10px;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background-color: rgba(255, 196, 140, 0.12) !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     transition: all 0.3s ease;
-    background-color: rgba(255, 196, 140, 0.12);
+    flex-shrink: 0;
+    line-height: 1;
 }
 
 .close:hover,

@@ -29,6 +29,14 @@ const Wallet = sequelize.define('Wallet', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  usuario_id: {
+    type: DataTypes.STRING(32),
+    allowNull: true,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    }
+  },
 }, {
   underscored: true,
   tableName: 'wallets',

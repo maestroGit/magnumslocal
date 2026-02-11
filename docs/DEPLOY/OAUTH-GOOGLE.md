@@ -97,3 +97,7 @@ Cuando el usuario inicia sesión con Google, el backend (Passport.js) guarda el 
 El frontend (AuthComponent) puede consultar /auth/user y, si hay usuario autenticado, mostrar su imagen en vez del botón "Login".
 Si no hay usuario autenticado, se muestra el botón normal.
 No es complicado, solo hay que modificar el AuthComponent y el HTML para mostrar la imagen de perfil cuando esté disponible.
+
+
+No sé si con las credenciales en .env es suficiente o esta es más comodo
+Podríamos adaptar el controlador de Auth para que, tras el login de Google, verifique en Seenode si el usuario tiene permiso y, si es así, le "entregue" su Wallet para operar.
