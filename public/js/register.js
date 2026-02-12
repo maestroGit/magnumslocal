@@ -8,7 +8,10 @@ console.log('[REGISTER] Script iniciado');
 // DOM Elements
 const registerForm = document.getElementById('registerForm');
 const roleSelect = document.getElementById('role');
-const categoriasGroup = document.getElementById('categorias-group');
+const doGroup = document.getElementById('do-group');
+const continentesGroup = document.getElementById('continentes-group');
+const denominacionesSelect = document.getElementById('denominaciones');
+const continentesSelect = document.getElementById('continentes');
 const passwordInput = document.getElementById('password');
 const confirmPasswordInput = document.getElementById('confirmPassword');
 const strengthBar = document.querySelector('.strength-bar');
@@ -18,7 +21,6 @@ const successModal = document.getElementById('successModal');
 const continueBtn = document.getElementById('continueBtn');
 const passwordModal = document.getElementById('passwordInfoModal');
 const closePasswordModalBtn = document.getElementById('closePasswordModal');
-const allCategoryCheckboxes = document.querySelectorAll('input[name="categorias"]');
 const useLocationBtn = document.getElementById('useLocationBtn');
 const locationStatus = document.getElementById('locationStatus');
 const locationLatInput = document.getElementById('locationLat');
@@ -34,6 +36,9 @@ console.log('[REGISTER] Elementos cargados:', {
 
 // Configuration
 const API_BASE_URL = 'http://localhost:6001';
+
+// Cache de datos
+let denominacionesData = [];
 
 /**
  * Password Strength Validator
@@ -157,28 +162,102 @@ function validatePasswordMatch() {
 }
 
 /**
- * Muestra/oculta el grupo de categorías según el tipo de usuario
+ * Muestra/oculta el grupo de categorías y campos de bodega según el tipo de usuario
  */
 function toggleCategoriesGroup() {
   const role = roleSelect.value;
   if (role === 'winery') {
-    categoriasGroup.classList.remove('hidden-category');
-    categoriasGroup.classList.add('visible-category');
+    // Mostrar todos los campos de bodega
+    doGroup.classList.remove('hidden-category');
+    doGroup.classList.add('visible-category');
+    continentesGroup.classList.remove('hidden-category');
+    continentesGroup.classList.add('visible-category');
   } else {
-    categoriasGroup.classList.add('hidden-category');
-    categoriasGroup.classList.remove('visible-category');
-    // Desmarcar todos los checkboxes
-    allCategoryCheckboxes.forEach(cb => cb.checked = false);
+    // Ocultar todos los campos de bodega y limpiar selecciones
+    doGroup.classList.add('hidden-category');
+    doGroup.classList.remove('visible-category');
+    continentesGroup.classList.add('hidden-category');
+    continentesGroup.classList.remove('visible-category');
+    
+    // Limpiar selecciones
+    if (denominacionesSelect) denominacionesSelect.value = '';
+    if (continentesSelect) continentesSelect.value = '';
   }
 }
 
 /**
- * Obtiene las categorías seleccionadas
+ * Carga las opciones de denominaciones de origen desde el API
  */
-function getSelectedCategories() {
-  return Array.from(allCategoryCheckboxes)
-    .filter(cb => cb.checked)
-    .map(cb => cb.value);
+async function loadDenominaciones() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/denominaciones`);
+    if (!response.ok) throw new Error('Error cargando denominaciones');
+    
+    const result = await response.json();
+    const denominaciones = result.data || [];
+    
+    denominacionesSelect.innerHTML = '<option value="" disabled selected>Selecciona una DO...</option>';
+    
+    if (denominaciones.length === 0) {
+      denominacionesSelect.innerHTML = '<option value="" disabled>No hay denominaciones disponibles</option>';
+      return;
+    }
+    
+    denominaciones.forEach(do_ => {
+      const option = document.createElement('option');
+      option.value = do_.id;
+      option.textContent = `${do_.tipo || 'DO'} ${do_.nombre} (${do_.region})`;
+      denominacionesSelect.appendChild(option);
+    });
+    
+    console.log('[REGISTER] Denominaciones cargadas:', denominaciones.length);
+  } catch (error) {
+    console.error('[REGISTER] Error cargando denominaciones:', error);
+    denominacionesSelect.innerHTML = '<option value="" disabled>Error al cargar</option>';
+  }
+}
+
+/**
+ * Carga las opciones de continentes
+ */
+function loadContinentes() {
+  const continentes = [
+    'Asia',
+    'América',
+    'África',
+    'Antártida',
+    'Europa',
+    'Oceanía',
+    'América del Norte',
+    'América del Sur'
+  ];
+  
+  continentesSelect.innerHTML = '<option value="" disabled selected>Selecciona un continente...</option>';
+  
+  continentes.forEach(continente => {
+    const option = document.createElement('option');
+    option.value = continente;
+    option.textContent = continente;
+    continentesSelect.appendChild(option);
+  });
+  
+  console.log('[REGISTER] Continentes cargados:', continentes.length);
+}
+
+/**
+ * Obtiene los IDs seleccionados de un select multiple
+ */
+function getSelectedOptions(selectElement) {
+  const selected = [];
+  if (!selectElement) return selected;
+  
+  const options = selectElement.selectedOptions;
+  for (let i = 0; i < options.length; i++) {
+    if (options[i].value && options[i].value !== '') {
+      selected.push(options[i].value);
+    }
+  }
+  return selected;
 }
 
 /**
@@ -279,7 +358,6 @@ async function submitRegister(event) {
     const email = document.getElementById('email').value.trim();
     const city = document.getElementById('city')?.value.trim() || '';
     const role = roleSelect.value;
-    const categorias = getSelectedCategories();
     const password = passwordInput.value;
     const localizacionDireccion = city || null;
     const latValue = locationLatInput?.value ? Number(locationLatInput.value) : null;
@@ -292,7 +370,6 @@ async function submitRegister(event) {
       nombre,
       email,
       role,
-      categorias: categorias.length > 0 ? categorias : null,
       localizacion_direccion: localizacionDireccion,
       localizacion_lat: Number.isFinite(latValue) ? latValue : null,
       localizacion_lng: Number.isFinite(lngValue) ? lngValue : null,
@@ -319,7 +396,15 @@ async function submitRegister(event) {
       return;
     }
 
-    // Éxito - mostrar modal
+    // Éxito
+    const userId = responseData.data?.id || userData.id;
+    
+    // Si es bodega, vincular DOs
+    if (role === 'winery') {
+      await linkWineryDenominaciones(userId);
+    }
+    
+    // Mostrar modal de éxito
     showSuccessModal(nombre);
 
   } catch (error) {
@@ -328,6 +413,36 @@ async function submitRegister(event) {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
+  }
+}
+
+/**
+ * Vincula las denominaciones seleccionadas a la bodega recién creada
+ */
+async function linkWineryDenominaciones(bodegaId) {
+  const selectedDoId = denominacionesSelect.value;
+  
+  if (!selectedDoId || selectedDoId === '') {
+    console.log('[REGISTER] No se seleccionó DO para vincular');
+    return;
+  }
+  
+  console.log(`[REGISTER] Vinculando DO ${selectedDoId} a bodega ${bodegaId}`);
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/denominaciones/${selectedDoId}/bodegas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bodega_id: bodegaId })
+    });
+    
+    if (response.ok) {
+      console.log(`[REGISTER] ✓ DO ${selectedDoId} vinculada exitosamente`);
+    } else {
+      console.warn(`[REGISTER] ✗ Error vinculando DO ${selectedDoId}`);
+    }
+  } catch (error) {
+    console.error(`[REGISTER] Error vinculando DO ${selectedDoId}:`, error);
   }
 }
 
@@ -500,4 +615,15 @@ function showToast(message, type = 'info') {
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[REGISTER] Formulario de registro cargado');
+  
+  // Cargar datos de denominaciones y continentes
+  if (denominacionesSelect && continentesSelect) {
+    console.log('[REGISTER] Cargando datos de DO y continentes...');
+    loadDenominaciones().then(() => {
+      console.log('[REGISTER] Denominaciones cargadas');
+    }).catch(error => {
+      console.error('[REGISTER] Error cargando denominaciones:', error);
+    });
+    loadContinentes();
+  }
 });

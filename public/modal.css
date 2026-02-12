@@ -242,7 +242,7 @@
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
-    min-width: 120px;
+    min-width: 80px;
 }
 
 .modal-content button:hover {

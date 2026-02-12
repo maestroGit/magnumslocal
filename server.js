@@ -89,6 +89,9 @@ import utxoRoutes from './app/routes/utxoRoutes.js';
 import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
 import systemRoutes from './app/routes/systemRoutes.js';
 import userRoutes from './app/routes/userRoutes.js';
+import denominacionOrigenRoutes from './app/routes/denominacionOrigenRoutes.js';
+import variedadRoutes from './app/routes/variedadRoutes.js';
+import tipoVinoRoutes from './app/routes/tipoVinoRoutes.js';
 
 // Configurar variables de entorno antes que todo
 dotenv.config();
@@ -421,6 +424,11 @@ app.use('/wallet', walletRoutes);
 
 // ✅ User routes (PostgreSQL) - Gestión de usuarios
 app.use('/users', userRoutes);
+
+// ✅ DO routes - Denominaciones de origen
+app.use('/denominaciones', denominacionOrigenRoutes);
+app.use('/variedades', variedadRoutes);
+app.use('/tipos-vino', tipoVinoRoutes);
 
 // --- Montar routers modulares ---
 // Frontend static pages (MUST be before app.use('/', systemRoutes))

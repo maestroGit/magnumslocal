@@ -284,6 +284,72 @@ body {
   font-weight: 500;
 }
 
+/* ===== DO SECTION ===== */
+.winery-card-dos {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.winery-dos-section,
+.winery-variedades-section,
+.winery-tipos-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.winery-dos-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-right: 4px;
+}
+
+.winery-do-tag {
+  background: rgba(103, 58, 183, 0.15);
+  color: #b39ddb;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.winery-variedad-tag {
+  background: rgba(156, 39, 176, 0.15);
+  color: #ce93d8;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.winery-tipo-tag {
+  background: rgba(233, 30, 99, 0.15);
+  color: #f48fb1;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.winery-more-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
 .winery-card-actions {
   display: flex;
   gap: 8px;
@@ -312,32 +378,39 @@ body {
 
 /* ===== MODAL CLOSE (WINERY) ===== */
 .modal-close {
+  color: #FFC48C;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: auto;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  margin: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 196, 140, 0.12);
-  color: #ffc48c;
-  display: inline-flex;
+  top: 10px;
+  right: 10px;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background-color: rgba(255, 196, 140, 0.12) !important;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  font-size: 22px;
-  line-height: 1;
+  border-radius: 50%;
   transition: all 0.3s ease;
+  flex-shrink: 0;
+  line-height: 1;
+  overflow: hidden;
 }
 
 .modal-close:hover,
 .modal-close:focus {
   color: #fff;
-  background: #6b0f0f;
-  transform: scale(1.08);
+  background-color: #6B0F0F;
+  transform: scale(1.1);
+  text-decoration: none;
 }
 
 /* ===== LOADING STATE ===== */

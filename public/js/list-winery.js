@@ -19,19 +19,120 @@ class WineryListManager {
     this.sortBy = 'name-asc';
     this.hasSearched = false;
 
+    // Cache de labels para badges dinámicos
+    this.badgeLabels = {};
+
     this.init();
   }
 
   async init() {
     this.setupEventListeners();
-    this.loadFiltersFromURL();
     this.syncHeaderOffset();
     window.addEventListener('resize', () => this.syncHeaderOffset());
+    
+    // Cargar opciones dinámicas de filtros
+    await this.populateFilterOptions();
+    
+    // Cargar filtros desde URL después de poblar opciones
+    this.loadFiltersFromURL();
     
     // Si hay filtros en URL, ejecutar búsqueda automáticamente
     if (this.hasSearched) {
       await this.loadWineries();
     }
+  }
+
+  async populateFilterOptions() {
+    try {
+      // Cargar opciones en paralelo
+      const [denominaciones, variedades, tiposVino] = await Promise.all([
+        this.loadDenominaciones(),
+        this.loadVariedades(),
+        this.loadTiposVino()
+      ]);
+
+      // Poblar select de DO
+      this.populateSelect('doFilter', denominaciones, 'Selecciona DO');
+      
+      // Poblar select de Uva (variedades)
+      this.populateSelect('uvaFilter', variedades, 'Selecciona uva');
+      
+      // Poblar select de Estilo (tipos de vino)
+      this.populateSelect('estiloFilter', tiposVino, 'Selecciona estilo');
+      
+    } catch (error) {
+      console.error('Error cargando opciones de filtros:', error);
+    }
+  }
+
+  async loadDenominaciones() {
+    try {
+      const response = await fetch('/denominaciones');
+      if (!response.ok) {
+        throw new Error('Error cargando denominaciones');
+      }
+      const result = await response.json();
+      return result.data.map(do_ => ({
+        value: `do_${do_.id}`,
+        label: `${do_.tipo || 'DO'} ${do_.nombre}`
+      }));
+    } catch (error) {
+      console.error('Error en loadDenominaciones:', error);
+      return [];
+    }
+  }
+
+  async loadVariedades() {
+    try {
+      const response = await fetch('/variedades');
+      if (!response.ok) {
+        throw new Error('Error cargando variedades');
+      }
+      const result = await response.json();
+      return result.data.map(variedad => ({
+        value: `uva_${variedad.id}`,
+        label: `Uva ${variedad.nombre}`
+      }));
+    } catch (error) {
+      console.error('Error en loadVariedades:', error);
+      return [];
+    }
+  }
+
+  async loadTiposVino() {
+    try {
+      const response = await fetch('/tipos-vino');
+      if (!response.ok) {
+        throw new Error('Error cargando tipos de vino');
+      }
+      const result = await response.json();
+      return result.data.map(tipo => ({
+        value: `estilo_${tipo.id}`,
+        label: tipo.nombre
+      }));
+    } catch (error) {
+      console.error('Error en loadTiposVino:', error);
+      return [];
+    }
+  }
+
+  populateSelect(selectId, options, placeholder) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    // Limpiar opciones existentes (excepto placeholder)
+    select.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+
+    // Agregar nuevas opciones y guardar labels en cache
+    options.forEach(option => {
+      const optionElement = document.createElement('option');
+      optionElement.value = option.value;
+      optionElement.textContent = option.label;
+      select.appendChild(optionElement);
+      
+      // Guardar label en cache para uso posterior
+      this.badgeLabels[option.value] = option.label;
+    });
   }
 
   setupEventListeners() {
@@ -313,6 +414,10 @@ class WineryListManager {
         ).join('')
       : '<span class="winery-badge-tag">Sin badges</span>';
 
+    // ✅ NUEVO: Extraer información de DO, variedades y tipos
+    const denominacionesData = this.extractDenominacionesInfo(winery);
+    const dosHtml = this.createDosSection(denominacionesData);
+
     return `
       <div class="winery-card">
         <div class="winery-card-header">
@@ -343,6 +448,8 @@ class WineryListManager {
         <div class="winery-card-badges">
           ${badgesHtml}
         </div>
+
+        ${dosHtml}
 
         <div class="winery-card-actions">
           <button class="winery-view-btn">Ver Detalles</button>
@@ -376,6 +483,24 @@ class WineryListManager {
       ? winery.badges.map((badge) => `<span class="winery-badge-tag">${this.escapeHtml(this.getBadgeLabel(badge))}</span>`).join(' ')
       : 'Sin badges';
     document.getElementById('modalWineryBadges').innerHTML = badgesHtml;
+
+    // Denominaciones, Variedades y Tipos
+    const doData = this.extractDenominacionesInfo(winery);
+    
+    const dosHtml = doData.dos.length > 0
+      ? doData.dos.map(do_ => `<span class="winery-do-tag">${this.escapeHtml(do_.tipo)} ${this.escapeHtml(do_.nombre)}</span>`).join(' ')
+      : 'Sin denominaciones';
+    document.getElementById('modalWineryDenominaciones').innerHTML = dosHtml;
+
+    const variedadesHtml = doData.variedades.length > 0
+      ? doData.variedades.map(v => `<span class="winery-variedad-tag">${this.escapeHtml(v)}</span>`).join(' ')
+      : 'Sin variedades';
+    document.getElementById('modalWineryVariedades').innerHTML = variedadesHtml;
+
+    const tiposHtml = doData.tipos.length > 0
+      ? doData.tipos.map(t => `<span class="winery-tipo-tag">${this.escapeHtml(t)}</span>`).join(' ')
+      : 'Sin tipos';
+    document.getElementById('modalWineryTipos').innerHTML = tiposHtml;
 
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -480,34 +605,13 @@ class WineryListManager {
   }
 
   getBadgeLabel(badge) {
+    // Primero buscar en el cache de labels dinámicos
+    if (this.badgeLabels[badge]) {
+      return this.badgeLabels[badge];
+    }
+
+    // Fallback a labels hardcodeados (medallas y otros)
     const labels = {
-      do_rioja: 'DO Rioja',
-      doca_rioja: 'DOCa Rioja',
-      do_ribera_duero: 'DO Ribera del Duero',
-      do_ribeiro: 'DO Ribeiro',
-      do_rueda: 'DO Rueda',
-      do_ribera_sacra: 'DO Ribeira Sacra',
-      do_priorat: 'DO Priorat',
-      do_penedes: 'DO Penedes',
-      do_rias_baixas: 'DO Rias Baixas',
-      do_jerez: 'DO Jerez',
-      uva_tempranillo: 'Uva Tempranillo',
-      uva_garnacha: 'Uva Garnacha',
-      uva_albarino: 'Uva Albarino',
-      uva_verdejo: 'Uva Verdejo',
-      uva_mencia: 'Uva Mencia',
-      uva_cabernet: 'Uva Cabernet',
-      uva_merlot: 'Uva Merlot',
-      uva_syrah: 'Uva Syrah',
-      uva_chardonnay: 'Uva Chardonnay',
-      uva_sauvignon_blanc: 'Uva Sauvignon Blanc',
-      estilo_tinto: 'Estilo Tinto',
-      estilo_blanco: 'Estilo Blanco',
-      estilo_rosado: 'Estilo Rosado',
-      estilo_espumoso: 'Estilo Espumoso',
-      estilo_dulce: 'Estilo Dulce',
-      estilo_fortificado: 'Estilo Fortificado',
-      estilo_natural: 'Estilo Natural',
       crianza_joven: 'Crianza Joven',
       crianza_crianza: 'Crianza',
       crianza_reserva: 'Reserva',
@@ -523,6 +627,102 @@ class WineryListManager {
     };
 
     return labels[badge] || badge;
+  }
+
+  /**
+   * Extrae información de denominaciones, variedades y tipos de vino de una bodega
+   * @param {Object} winery - Objeto bodega con relaciones
+   * @returns {Object} - { dos: [], variedades: [], tipos: [] }
+   */
+  extractDenominacionesInfo(winery) {
+    const result = {
+      dos: [],
+      variedades: new Set(),
+      tipos: new Set()
+    };
+
+    if (!winery.denominaciones || !Array.isArray(winery.denominaciones)) {
+      return result;
+    }
+
+    winery.denominaciones.forEach(do_ => {
+      result.dos.push({
+        id: do_.id,
+        nombre: do_.nombre,
+        tipo: do_.tipo || 'DO'
+      });
+
+      // Agregar variedades de esta DO
+      if (do_.variedades && Array.isArray(do_.variedades)) {
+        do_.variedades.forEach(v => result.variedades.add(v.nombre));
+      }
+
+      // Agregar tipos de vino de esta DO
+      if (do_.tipos_vino && Array.isArray(do_.tipos_vino)) {
+        do_.tipos_vino.forEach(t => result.tipos.add(t.nombre));
+      }
+    });
+
+    // Convertir Sets a arrays
+    result.variedades = Array.from(result.variedades);
+    result.tipos = Array.from(result.tipos);
+
+    return result;
+  }
+
+  /**
+   * Crea la sección HTML para mostrar DOs, variedades y tipos
+   * @param {Object} data - Objeto con dos, variedades, tipos
+   * @returns {string} - HTML de la sección
+   */
+  createDosSection(data) {
+    if (data.dos.length === 0 && data.variedades.length === 0 && data.tipos.length === 0) {
+      return '';
+    }
+
+    let html = '<div class="winery-card-dos">';
+
+    // Denominaciones de Origen
+    if (data.dos.length > 0) {
+      html += '<div class="winery-dos-section">';
+      html += '<span class="winery-dos-label">🏅 DO:</span> ';
+      html += data.dos.slice(0, 2).map(do_ => 
+        `<span class="winery-do-tag">${this.escapeHtml(do_.tipo)} ${this.escapeHtml(do_.nombre)}</span>`
+      ).join('');
+      if (data.dos.length > 2) {
+        html += `<span class="winery-more-tag">+${data.dos.length - 2}</span>`;
+      }
+      html += '</div>';
+    }
+
+    // Variedades
+    if (data.variedades.length > 0) {
+      html += '<div class="winery-variedades-section">';
+      html += '<span class="winery-dos-label">🍇 Uvas:</span> ';
+      html += data.variedades.slice(0, 3).map(v => 
+        `<span class="winery-variedad-tag">${this.escapeHtml(v)}</span>`
+      ).join('');
+      if (data.variedades.length > 3) {
+        html += `<span class="winery-more-tag">+${data.variedades.length - 3}</span>`;
+      }
+      html += '</div>';
+    }
+
+    // Tipos de vino
+    if (data.tipos.length > 0) {
+      html += '<div class="winery-tipos-section">';
+      html += '<span class="winery-dos-label">🍷 Tipos:</span> ';
+      html += data.tipos.slice(0, 3).map(t => 
+        `<span class="winery-tipo-tag">${this.escapeHtml(t)}</span>`
+      ).join('');
+      if (data.tipos.length > 3) {
+        html += `<span class="winery-more-tag">+${data.tipos.length - 3}</span>`;
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    return html;
   }
 }
 

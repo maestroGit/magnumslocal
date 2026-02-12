@@ -170,11 +170,41 @@ export const getUsers = async (req, res) => {
       order: [['fecha_registro', 'DESC']]
     };
 
+    // ✅ NUEVO: Incluir relaciones de DO para bodegas
+    const includes = [];
+    
     if (includeWallets === 'true') {
-      options.include = [{
+      includes.push({
         model: Wallet,
         as: 'wallets'
-      }];
+      });
+    }
+
+    // Si el rol es 'winery', incluir denominaciones, variedades y tipos de vino
+    if (role === 'winery') {
+      const { DenominacionOrigen, Variedad, TipoVino } = await import('../models/index.js');
+      
+      includes.push({
+        model: DenominacionOrigen,
+        as: 'denominaciones',
+        through: { attributes: [] }, // No mostrar tabla puente
+        include: [
+          {
+            model: Variedad,
+            as: 'variedades',
+            through: { attributes: [] }
+          },
+          {
+            model: TipoVino,
+            as: 'tipos_vino',
+            through: { attributes: [] }
+          }
+        ]
+      });
+    }
+
+    if (includes.length > 0) {
+      options.include = includes;
     }
 
     const { count, rows } = await User.findAndCountAll(options);

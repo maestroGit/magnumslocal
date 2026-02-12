@@ -105,31 +105,18 @@
             </select>
           </div>
 
-          <!-- Categorías (solo para bodegas) -->
-          <div class="form-group hidden-category" id="categorias-group">
-            <label for="categorias">Categorías de Interés</label>
-            <div class="checkbox-group">
-              <label class="checkbox-label">
-                <input type="checkbox" name="categorias" value="vino-tinto">
-                Vino Tinto
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="categorias" value="vino-blanco">
-                Vino Blanco
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="categorias" value="reserva">
-                Reserva
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="categorias" value="ecologico">
-                Ecológico
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="categorias" value="innovacion">
-                Innovación
-              </label>
-            </div>
+          <!-- Denominaciones de Origen (solo para bodegas) -->
+          <div class="form-group hidden-category" id="do-group">
+            <select id="denominaciones" name="denominaciones" class="single-select">
+              <option value="" disabled selected>Selecciona una DO...</option>
+            </select>
+          </div>
+
+          <!-- Continentes (solo para bodegas) -->
+          <div class="form-group hidden-category" id="continentes-group">
+            <select id="continentes" name="continentes" class="single-select">
+              <option value="" disabled selected>Selecciona un continente...</option>
+            </select>
           </div>
 
           <!-- Password -->

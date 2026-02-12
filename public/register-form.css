@@ -345,21 +345,15 @@
   color: #f44336;
 }
 
-/* Categories group */
-#categorias-group {
-  transition: all 0.3s ease;
-}
-
-#categorias-group.visible {
-  display: block !important;
-}
-
-#categorias-group.hidden-category {
+/* Mostrar/ocultar campos de DO y continentes */
+#do-group.hidden-category,
+#continentes-group.hidden-category {
   display: none !important;
 }
 
-#categorias-group.visible-category {
-  display: flex !important;
+#do-group.visible-category,
+#continentes-group.visible-category {
+  display: block !important;
 }
 
 /* Validation color classes */
@@ -392,4 +386,36 @@
     padding: 10px 12px;
     font-size: 16px;
   }
+}
+
+/* Multi-select styling (para DO, Variedades, Tipos) */
+.multi-select {
+  cursor: pointer;
+  background-image: none !important;
+  padding: 8px 12px !important;
+  appearance: auto;
+  max-height: 150px;
+}
+
+.multi-select option {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.multi-select option:checked {
+  background: linear-gradient(0deg, rgba(247, 147, 26, 0.3) 0%, rgba(247, 147, 26, 0.3) 100%);
+  color: #fff;
+}
+
+.multi-select option:hover {
+  background: rgba(247, 147, 26, 0.15);
+}
+
+/* Form hint (texto de ayuda) */
+.form-hint {
+  color: #888;
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: -2px;
+  display: block;
 }
