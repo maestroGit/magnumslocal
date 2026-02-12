@@ -29,15 +29,20 @@ export const postAuthLogin = async (req, res) => {
       return res.status(400).json({ error: 'Usuario y contraseña son requeridos' });
     }
 
-    const user = await User.findOne({
+    // Usar unscoped() para ignorar defaultScope
+    const user = await User.unscoped().findOne({
       where: { email: username }
     });
+
+    console.log('[AUTH] User found:', !!user);
+    console.log('[AUTH] Has password_hash:', !!user?.password_hash);
 
     if (!user || !user.password_hash) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     const isValid = await bcrypt.compare(password, user.password_hash);
+    console.log('[AUTH] Password match:', isValid);
     if (!isValid) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }

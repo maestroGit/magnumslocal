@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com https://developers.google.com;">
+    <title>winery - BlocksWine</title>
+
+    <link rel="stylesheet" type="text/css" href="header-custom.css" />
+    <link rel="stylesheet" type="text/css" href="keystore.css" />
+    <link rel="stylesheet" type="text/css" href="button.css" />
+    <link rel="stylesheet" type="text/css" href="base.css" />
+    <link rel="stylesheet" type="text/css" href="modal.css" />
+    <link rel="stylesheet" type="text/css" href="toast.css" />
+    <link rel="stylesheet" href="list-winery.css" />
+  </head>
+  <body>
+    <!-- Cabecera de navegación a ancho completo (estilo BlocksWine) -->
+    <header class="site-header">
+      <div class="container">
+        <h1 class="logo">
+          <img
+            src="images/iconoBWred.png"
+            alt="BlocksWine logo"
+            class="logo-icon rotatable white"
+          />BlocksWine
+        </h1>
+        <button
+          id="hamburger-menu-btn"
+          class="btn hide-hamburger"
+          aria-label="Abrir menú"
+          aria-haspopup="true"
+          aria-expanded="false"
+          type="button"
+        >
+          <span class="hamburger-icon">☰</span>
+        </button>
+        <nav class="nav">
+          <a class="btn" href="view.html"
+            ><span class="metric-value">Panel</span></a
+          >
+          <a class="btn" href="https://web-d5l049wewz07.up-de-fra1-k8s-1.apps.run-on-seenode.com/" target="_blank" rel="noopener noreferrer"
+            ><span class="metric-value">Map</span></a
+          >
+          <a class="btn" href="keystore.html" target="_blank" rel="noopener noreferrer"
+            ><span class="metric-value">Wallet</span></a
+          >
+          <a class="btn active" href="list-winery.html"
+            ><span class="metric-value">Winery</span></a
+          >
+          <a class="btn" href="login.html"
+            ><span class="metric-value">Login</span></a
+          >
+          <a class="btn" href="register.html"
+            ><span class="metric-value">Registro</span></a
+          >
+        </nav>
+        <script src="js/hamburger-menu.js"></script>
+      </div>
+    </header>
+
+    <main class="winery-main">
+      <div class="winery-container">
+        <!-- Header de la sección -->
+        <div class="winery-header-section">
+          <div class="winery-header-card">
+            <h1>🍇 Winery</h1>
+            <p class="winery-subtitle">Consulta todas las boegas en la red BlocksWine</p>
+          </div>
+        </div>
+
+        <!-- Filtros avanzados -->
+        <div class="winery-filters-panel">
+          <div class="winery-filters-grid">
+            <!-- Búsqueda por nombre/email -->
+            <div class="filter-group">
+              <label for="searchWinery">🔍 Buscar</label>
+              <input 
+                type="text" 
+                id="searchWinery" 
+                class="winery-filter-input"
+                placeholder="Nombre o email..."
+                aria-label="Buscar bodega por nombre o email"
+              />
+            </div>
+
+            <!-- Filtro KYC Status -->
+            <div class="filter-group">
+              <label for="kycStatus">Estado KYC</label>
+              <select id="kycStatus" class="winery-filter-select" aria-label="Filtrar por estado KYC">
+                <option value="">Todos</option>
+                <option value="none">Por verificar</option>
+                <option value="verified">Verificado</option>
+                <option value="rejected">Rechazado</option>
+                <option value="pending">En proceso</option>
+              </select>
+            </div>
+
+            <!-- Filtro Suscripción -->
+            <div class="filter-group">
+              <label for="subscriptionStatus">Suscripción</label>
+              <select id="subscriptionStatus" class="winery-filter-select" aria-label="Filtrar por estado de suscripción">
+                <option value="">Todos</option>
+                <option value="active">Activa</option>
+                <option value="inactive">Inactiva</option>
+                <option value="cancelled">Cancelada</option>
+              </select>
+            </div>
+
+            <!-- Filtro DO -->
+            <div class="filter-group">
+              <label for="doFilter">DO</label>
+              <select id="doFilter" class="winery-filter-select" multiple size="1" aria-label="Filtrar por denominacion de origen">
+                <option value="" disabled selected>Selecciona DO</option>
+                <option value="do_rioja">DO Rioja</option>
+                <option value="doca_rioja">DOCa Rioja</option>
+                <option value="do_ribera_duero">DO Ribera del Duero</option>
+                <option value="do_ribeiro">DO Ribeiro</option>
+                <option value="do_rueda">DO Rueda</option>
+                <option value="do_ribera_sacra">DO Ribeira Sacra</option>
+                <option value="do_priorat">DO Priorat</option>
+                <option value="do_penedes">DO Penedes</option>
+                <option value="do_rias_baixas">DO Rias Baixas</option>
+                <option value="do_jerez">DO Jerez</option>
+              </select>
+            </div>
+
+            <!-- Filtro Uva -->
+            <div class="filter-group">
+              <label for="uvaFilter">Uva</label>
+              <select id="uvaFilter" class="winery-filter-select" multiple size="1" aria-label="Filtrar por variedad de uva">
+                <option value="" disabled selected>Selecciona uva</option>
+                <option value="uva_tempranillo">Uva Tempranillo</option>
+                <option value="uva_garnacha">Uva Garnacha</option>
+                <option value="uva_albarino">Uva Albarino</option>
+                <option value="uva_verdejo">Uva Verdejo</option>
+                <option value="uva_mencia">Uva Mencia</option>
+                <option value="uva_cabernet">Uva Cabernet</option>
+                <option value="uva_merlot">Uva Merlot</option>
+                <option value="uva_syrah">Uva Syrah</option>
+                <option value="uva_chardonnay">Uva Chardonnay</option>
+                <option value="uva_sauvignon_blanc">Uva Sauvignon Blanc</option>
+              </select>
+            </div>
+
+            <!-- Filtro Estilo -->
+            <div class="filter-group">
+              <label for="estiloFilter">Estilo</label>
+              <select id="estiloFilter" class="winery-filter-select" multiple size="1" aria-label="Filtrar por estilo">
+                <option value="" disabled selected>Selecciona estilo</option>
+                <option value="estilo_tinto">Estilo Tinto</option>
+                <option value="estilo_blanco">Estilo Blanco</option>
+                <option value="estilo_rosado">Estilo Rosado</option>
+                <option value="estilo_espumoso">Estilo Espumoso</option>
+                <option value="estilo_dulce">Estilo Dulce</option>
+                <option value="estilo_fortificado">Estilo Fortificado</option>
+                <option value="estilo_natural">Estilo Natural</option>
+              </select>
+            </div>
+
+            <!-- Filtro Medalla -->
+            <div class="filter-group">
+              <label for="medallaFilter">Medalla</label>
+              <select id="medallaFilter" class="winery-filter-select" multiple size="1" aria-label="Filtrar por medalla">
+                <option value="" disabled selected>Selecciona medalla</option>
+                <option value="medalla_oro">Medalla Oro</option>
+                <option value="medalla_plata">Medalla Plata</option>
+                <option value="medalla_bronce">Medalla Bronce</option>
+              </select>
+            </div>
+
+            <!-- Ordenamiento -->
+            <div class="filter-group">
+              <label for="sortBy">Ordenar por</label>
+              <select id="sortBy" class="winery-filter-select" aria-label="Ordenar resultados">
+                <option value="name-asc">Nombre (A-Z)</option>
+                <option value="name-desc">Nombre (Z-A)</option>
+                <option value="created-newest">Más recientes</option>
+                <option value="created-oldest">Más antiguos</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="winery-filters-actions">
+            <button id="searchButton" class="keystore-btn primary">Buscar Bodegas</button>
+            <button id="resetButton" class="keystore-btn secondary">Limpiar Filtros</button>
+          </div>
+        </div>
+
+        <!-- Estado de carga -->
+        <div id="loadingState" class="winery-loading hidden">
+          <div class="loader"></div>
+          <p>Cargando bodegas...</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="errorState" class="winery-error hidden">
+          <div class="error-content">
+            <h3>⚠️ Error al cargar bodegas</h3>
+            <p id="errorMessage">No se pudieron cargar las bodegas. Intenta de nuevo.</p>
+            <button id="retryButton" class="keystore-btn primary">Reintentar</button>
+          </div>
+        </div>
+
+        <!-- Lista de bodegas -->
+        <div id="wineryListContainer" class="winery-list-grid">
+          <!-- Se rellenará dinámicamente con JS -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="winery-empty hidden">
+          <div class="empty-content">
+            <h3>📭 No hay bodegas disponibles</h3>
+            <p>No se encontraron bodegas que coincidan con tu búsqueda.</p>
+          </div>
+        </div>
+
+        <!-- Paginación -->
+        <div id="paginationContainer" class="winery-pagination">
+          <!-- Se rellenará dinámicamente con JS -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal de detalles de bodega -->
+    <div id="wineryDetailModal" class="modal hidden">
+      <div class="modal-content winery-modal-content">
+        <button class="modal-close" id="closeWineryModal" aria-label="Cerrar">&times;</button>
+        <div class="winery-detail-header">
+          <h2 id="modalWineryName">Nombre de la Bodega</h2>
+          <p id="modalWineryRole" class="winery-role-badge">Bodega</p>
+        </div>
+        <div class="winery-detail-body">
+          <div class="detail-group">
+            <label>Email:</label>
+            <p id="modalWineryEmail">email@example.com</p>
+          </div>
+          <div class="detail-group">
+            <label>ID de Usuario:</label>
+            <p id="modalWineryId">user_id_123</p>
+          </div>
+          <div class="detail-group">
+            <label>Proveedor:</label>
+            <p id="modalWineryProvider">email</p>
+          </div>
+          <div class="detail-group">
+            <label>Estado KYC:</label>
+            <p id="modalWineryKYC">Por verificar</p>
+          </div>
+          <div class="detail-group">
+            <label>Categorías:</label>
+            <p id="modalWineryCategories">-</p>
+          </div>
+          <div class="detail-group">
+            <label>Badges:</label>
+            <p id="modalWineryBadges">-</p>
+          </div>
+          <div class="detail-group">
+            <label>Estado Suscripción:</label>
+            <p id="modalWinerySubscription">activa</p>
+          </div>
+          <div class="detail-group">
+            <label>Año de Registro:</label>
+            <p id="modalWineryCreated">2026-02-12</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="closeWineryModalBtn" class="keystore-btn primary">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="js/hamburger-menu.js"></script>
+    <script src="js/scrollFooter.js" defer></script>
+    <script type="module" src="js/list-winery.js"></script>
+  </body>
+</html>

@@ -132,6 +132,7 @@ export const getUsers = async (req, res) => {
       provider,
       kyc_status,
       subscription_status,
+      badges,
       search,
       includeWallets
     } = req.query;
@@ -144,6 +145,15 @@ export const getUsers = async (req, res) => {
     if (provider) where.provider = provider;
     if (kyc_status) where.kyc_status = kyc_status;
     if (subscription_status) where.subscription_status = subscription_status;
+    if (badges) {
+      const badgesArray = badges
+        .split(',')
+        .map((badge) => badge.trim())
+        .filter(Boolean);
+      if (badgesArray.length > 0) {
+        where.badges = { [Op.contains]: badgesArray };
+      }
+    }
 
     // Búsqueda por nombre o email
     if (search) {

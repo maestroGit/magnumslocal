@@ -370,14 +370,23 @@ function handleContinue() {
  * Event Listeners
  */
 
-// Actualizar fortaleza de contraseña
+// Actualizar fortaleza de contraseña (sin mostrar modal automáticamente)
 passwordInput.addEventListener('input', () => {
   updatePasswordStrength();
-  // Mostrar modal si contraseña es muy débil (menos de 2 requisitos)
-  const pwd = passwordInput.value;
-  if (pwd && passwordValidator.getStrength(pwd) < 2 && passwordModal) {
+});
+
+// Mostrar/ocultar modal de requisitos al enfocar/desenfoca el password input
+passwordInput.addEventListener('focus', () => {
+  if (passwordModal && passwordInput.value) {
     passwordModal.classList.remove('modal-hidden');
     passwordModal.classList.add('visible');
+  }
+});
+
+passwordInput.addEventListener('blur', () => {
+  if (passwordModal) {
+    passwordModal.classList.add('modal-hidden');
+    passwordModal.classList.remove('visible');
   }
 });
 

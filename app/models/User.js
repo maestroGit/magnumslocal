@@ -17,6 +17,54 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
+const ALLOWED_BADGES = [
+  // Origin and denomination
+  'do_rioja',
+  'doca_rioja',
+  'do_ribera_duero',
+  'do_ribeiro',
+  'do_rueda',
+  'do_ribera_sacra',
+  'do_priorat',
+  'do_penedes',
+  'do_rias_baixas',
+  'do_jerez',
+  // Grapes
+  'uva_tempranillo',
+  'uva_garnacha',
+  'uva_albarino',
+  'uva_verdejo',
+  'uva_mencia',
+  'uva_cabernet',
+  'uva_merlot',
+  'uva_syrah',
+  'uva_chardonnay',
+  'uva_sauvignon_blanc',
+  // Style
+  'estilo_tinto',
+  'estilo_blanco',
+  'estilo_rosado',
+  'estilo_espumoso',
+  'estilo_dulce',
+  'estilo_fortificado',
+  'estilo_natural',
+  // Aging
+  'crianza_joven',
+  'crianza_crianza',
+  'crianza_reserva',
+  'crianza_gran_reserva',
+  // Certifications
+  'cert_ecologico',
+  'cert_biodinamico',
+  'cert_vegano',
+  'cert_sin_sulfitos',
+  // Awards
+  'premiada',
+  'medalla_oro',
+  'medalla_plata',
+  'medalla_bronce',
+];
+
 const User = sequelize.define('User', {
   id: {
     type: DataTypes.STRING(32),
@@ -139,6 +187,15 @@ const User = sequelize.define('User', {
     type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: true,
     defaultValue: [],
+    validate: {
+      isAllowedBadges(value) {
+        if (!value) return;
+        const invalid = value.filter((badge) => !ALLOWED_BADGES.includes(badge));
+        if (invalid.length > 0) {
+          throw new Error(`Invalid badge(s): ${invalid.join(', ')}`);
+        }
+      },
+    },
   },
   role: {
     type: DataTypes.ENUM('admin', 'winery', 'user'),
