@@ -94,7 +94,22 @@ import variedadRoutes from './app/routes/variedadRoutes.js';
 import tipoVinoRoutes from './app/routes/tipoVinoRoutes.js';
 
 // Configurar variables de entorno antes que todo
-dotenv.config();
+// En desarrollo: carga .env o .env.local
+// En producción: intenta cargar .env.production (si existe) o usa variables del OS
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+if (process.env.NODE_ENV !== 'production') {
+  // Solo en dev: intenta cargar explícitamente
+  dotenv.config({ path: envFile });
+  console.log(`[BOOT] Cargando variables de entorno desde: ${envFile}`);
+} else {
+  // En prod: si el archivo existe, cargarlo; si no, usa variables del OS
+  try {
+    dotenv.config({ path: envFile });
+    console.log(`[BOOT] Cargando variables de entorno desde: ${envFile}`);
+  } catch (err) {
+    console.log(`[BOOT] .env.production no encontrado, usando variables del OS`);
+  }
+}
 console.log("[BOOT] Iniciando servidor modular (Refactor completado)...");
 console.log("[BOOT] Variables de entorno cargadas. NODE_ENV:", process.env.NODE_ENV);
 
@@ -201,20 +216,28 @@ app.use(
   })
 );
 
-// CORS: whitelist dinámica por entorno (localhost en dev, app.blockswine.com en prod)
-const allowedPattern = /^(http:\/\/localhost(:\d+)?|https?:\/\/app\.blockswine\.com)$/;
+// CORS: whitelist dinámica por entorno (localhost en dev, blockswine.com en prod)
+// Permite:
+// - localhost:XXXX (dev local)
+// - *.blockswine.com (prod / staging)
+// - undefined (same-origin requests)
+const allowedPattern = /^(http:\/\/localhost(:\d+)?|https?:\/\/([a-zA-Z0-9-]+\.)?blockswine\.com)$/;
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log("[CORS] Origin recibido:", origin);
-    console.log("[CORS] Regex test:", allowedPattern.test(origin));
-    if (!origin || allowedPattern.test(origin)) {
+    const isAllowed = !origin || allowedPattern.test(origin);
+    console.log("[CORS] Origin recibido:", origin || "(undefined - same-origin)");
+    console.log("[CORS] Regex test:", isAllowed);
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.error("[CORS] DENIED -", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 3600,
 };
 
 app.use(cors(corsOptions));

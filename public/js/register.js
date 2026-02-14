@@ -35,7 +35,20 @@ console.log('[REGISTER] Elementos cargados:', {
 });
 
 // Configuration
-const API_BASE_URL = 'http://localhost:6001';
+// Determinar API_BASE_URL dinámicamente según el entorno
+const API_BASE_URL = (() => {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // En desarrollo local
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:6001';
+  }
+  
+  // En producción: usar mismo origin (app.blockswine.com)
+  // El backend en Seenode escucha en puerto 3001
+  return `${protocol}//app.blockswine.com`;
+})();
 
 // Cache de datos
 let denominacionesData = [];

@@ -44,21 +44,12 @@ class WineryListManager {
 
   async populateFilterOptions() {
     try {
-      // Cargar opciones en paralelo
-      const [denominaciones, variedades, tiposVino] = await Promise.all([
-        this.loadDenominaciones(),
-        this.loadVariedades(),
-        this.loadTiposVino()
-      ]);
-
-      // Poblar select de DO
-      this.populateSelect('doFilter', denominaciones, 'Selecciona DO');
+      // Los select de filtros (DO, Uva, Estilo, Medalla) tienen valores hardcodeados en el HTML
+      // que son correctos. NO los reemplazamos dinámicamente para evitar conflictos con los
+      // valores esperados en el servidor (ALLOWED_BADGES).
       
-      // Poblar select de Uva (variedades)
-      this.populateSelect('uvaFilter', variedades, 'Selecciona uva');
-      
-      // Poblar select de Estilo (tipos de vino)
-      this.populateSelect('estiloFilter', tiposVino, 'Selecciona estilo');
+      // NOTA: Si necesitas actualizar las etiquetas dinámicamente, puedes hacerlo sin 
+      // cambiar los values.
       
     } catch (error) {
       console.error('Error cargando opciones de filtros:', error);
@@ -138,6 +129,13 @@ class WineryListManager {
   setupEventListeners() {
     // Botón Buscar
     document.getElementById('searchButton')?.addEventListener('click', () => {
+      // Actualizar badges desde los select antes de buscar
+      this.badges = [
+        ...this.getSelectValues('doFilter'),
+        ...this.getSelectValues('uvaFilter'),
+        ...this.getSelectValues('estiloFilter'),
+        ...this.getSelectValues('medallaFilter'),
+      ];
       this.currentPage = 1;
       this.hasSearched = true;
       this.updateURLFilters();
@@ -177,6 +175,12 @@ class WineryListManager {
         ...this.getSelectValues('estiloFilter'),
         ...this.getSelectValues('medallaFilter'),
       ];
+      // Si ya se ha hecho una búsqueda, actualizar resultados en tiempo real
+      if (this.hasSearched) {
+        this.currentPage = 1;
+        this.filterAndSort();
+        this.render();
+      }
     };
 
     document.getElementById('doFilter')?.addEventListener('change', updateBadgesFromLists);
@@ -291,6 +295,13 @@ class WineryListManager {
 
       const url = `/users?${params.toString()}`;
       
+      console.log('🔍 Filtros enviados al servidor:', {
+        badges: this.badges,
+        kyc_status: this.kycStatus,
+        subscription_status: this.subscriptionStatus,
+        url: url
+      });
+      
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -316,6 +327,21 @@ class WineryListManager {
         this.wineries = data || [];
       }
 
+      console.log('📊 Bodegas recibidas del servidor:', this.wineries.length);
+      
+      if (this.wineries.length > 0) {
+        const first = this.wineries[0];
+        console.log('   ✅ Primera bodega:', first.nombre);
+        console.log('   📍 Tiene denominaciones?:', !!first.denominaciones, 'cantidad:', first.denominaciones?.length || 0);
+        if (first.denominaciones && first.denominaciones.length > 0) {
+          const do1 = first.denominaciones[0];
+          console.log('   📌 Primera DO:', do1.nombre, '| Variedades:', do1.variedades?.length || 0, '| Tipos:', do1.tipos_vino?.length || 0);
+          if (do1.tipos_vino && do1.tipos_vino.length > 0) {
+            console.log('   🍷 Tipos de vino de la DO:', do1.tipos_vino.map(t => t.nombre).join(', '));
+          }
+        }
+      }
+
       if (this.wineries.length === 0) {
         console.warn('No se encontraron bodegas con los filtros especificados');
       }
@@ -335,11 +361,33 @@ class WineryListManager {
   }
 
   filterAndSort() {
-    // Filtrar por búsqueda
+    // Filtrar por búsqueda y badges
     this.filteredWineries = this.wineries.filter(winery => {
+      // Filtrar por búsqueda
       const nameMatch = (winery.nombre || '').toLowerCase().includes(this.searchQuery);
       const emailMatch = (winery.email || '').toLowerCase().includes(this.searchQuery);
-      return nameMatch || emailMatch;
+      const searchPass = this.searchQuery === '' || nameMatch || emailMatch;
+
+      // Filtrar por badges (ESTILO, MEDALLA, DO, UVAS)
+      if (this.badges.length === 0) {
+        return searchPass;
+      }
+
+      // Generar badges dinámicamente desde las denominaciones de la bodega
+      const wineryBadges = this.generateBadgesFromWinery(winery);
+      
+      // Si hay badges seleccionados, la bodega debe tener AL MENOS UNO de los badges
+      const badgesPass = this.badges.some(selectedBadge => 
+        wineryBadges.includes(selectedBadge)
+      );
+
+      return searchPass && badgesPass;
+    });
+
+    console.log('🎯 Filtrado en cliente:', {
+      badgesSeleccionados: this.badges,
+      boedegasAntes: this.wineries.length,
+      boedegasDespues: this.filteredWineries.length
     });
 
     // Ordenar
@@ -357,6 +405,58 @@ class WineryListManager {
           return 0;
       }
     });
+  }
+
+  /**
+   * Genera badges dinámicamente desde las denominaciones de una bodega
+   * @param {Object} winery - Bodega con sus denominaciones
+   * @returns {Array} - Array de badges generados
+   */
+  generateBadgesFromWinery(winery) {
+    const badges = [];
+
+    if (!winery.denominaciones || !Array.isArray(winery.denominaciones)) {
+      return badges;
+    }
+
+    winery.denominaciones.forEach(do_ => {
+      // Badge de denominación (do_rioja, doca_rioja, etc.) - usar ID
+      if (do_.id) {
+        badges.push(`do_${do_.id}`);
+      }
+
+      // Badges de variedades (uva_tempranillo, etc.) - usar NOMBRE normalizado
+      if (do_.variedades && Array.isArray(do_.variedades)) {
+        do_.variedades.forEach(v => {
+          if (v.nombre) {
+            // Normalizar nombre: "Tempranillo" → "tempranillo"
+            const normalizedName = v.nombre.toLowerCase().replace(/\s+/g, '_');
+            badges.push(`uva_${normalizedName}`);
+          }
+        });
+      }
+
+      // Badges de tipos de vino (estilo_tinto, estilo_blanco, etc.) - usar NOMBRE normalizado
+      if (do_.tipos_vino && Array.isArray(do_.tipos_vino)) {
+        do_.tipos_vino.forEach(t => {
+          if (t.nombre) {
+            // Normalizar nombre: "Tinto" → "tinto"
+            const normalizedName = t.nombre.toLowerCase().replace(/\s+/g, '_');
+            badges.push(`estilo_${normalizedName}`);
+          }
+        });
+      }
+    });
+
+    // Log de depuración para la primera bodega
+    if (winery === this.wineries[0]) {
+      console.log('🔍 DEBUG generateBadgesFromWinery para', winery.nombre + ':', {
+        denominacionesCount: winery.denominaciones.length,
+        badgesGenerados: badges
+      });
+    }
+
+    return badges;
   }
 
   render() {

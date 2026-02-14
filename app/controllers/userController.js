@@ -145,15 +145,18 @@ export const getUsers = async (req, res) => {
     if (provider) where.provider = provider;
     if (kyc_status) where.kyc_status = kyc_status;
     if (subscription_status) where.subscription_status = subscription_status;
-    if (badges) {
-      const badgesArray = badges
-        .split(',')
-        .map((badge) => badge.trim())
-        .filter(Boolean);
-      if (badgesArray.length > 0) {
-        where.badges = { [Op.contains]: badgesArray };
-      }
-    }
+    
+    // TODO: Implementar filtro de badges basado en denominaciones
+    // Por ahora, ignoramos el filtro de badges y lo procesamos en cliente
+    // if (badges) {
+    //   const badgesArray = badges
+    //     .split(',')
+    //     .map((badge) => badge.trim())
+    //     .filter(Boolean);
+    //   if (badgesArray.length > 0) {
+    //     where.badges = { [Op.contains]: badgesArray };
+    //   }
+    // }
 
     // Búsqueda por nombre o email
     if (search) {
@@ -162,6 +165,9 @@ export const getUsers = async (req, res) => {
         { email: { [Op.iLike]: `%${search}%` } }
       ];
     }
+
+    // Filtrar solo usuarios activos
+    where.registrado = true;
 
     const options = {
       where,
@@ -184,34 +190,68 @@ export const getUsers = async (req, res) => {
     if (role === 'winery') {
       const { DenominacionOrigen, Variedad, TipoVino } = await import('../models/index.js');
       
-      includes.push({
-        model: DenominacionOrigen,
-        as: 'denominaciones',
-        through: { attributes: [] }, // No mostrar tabla puente
-        include: [
-          {
-            model: Variedad,
-            as: 'variedades',
-            through: { attributes: [] }
-          },
-          {
-            model: TipoVino,
-            as: 'tipos_vino',
-            through: { attributes: [] }
-          }
-        ]
-      });
-    }
-
-    if (includes.length > 0) {
-      options.include = includes;
+      console.log('[USER] Cargando bodegas sin includes primero...');
+      
+      // CAMBIO: No incluir denominaciones en el query principal para evitar duplicados
+      // Las cargaremos después por separado
+    } else {
+      if (includes.length > 0) {
+        options.include = includes;
+      }
     }
 
     const { count, rows } = await User.findAndCountAll(options);
 
+    console.log('[USER] Bodegas devueltas sin denominaciones:', rows.length);
+
+    // NUEVO: Si es winery, cargar denominaciones por separado para cada bodega
+    let data = rows.map(r => r.toJSON());
+    
+    if (role === 'winery') {
+      const { DenominacionOrigen } = await import('../models/index.js');
+      
+      // Cargar denominaciones para cada bodega
+      data = await Promise.all(data.map(async (bodega) => {
+        const denominaciones = await DenominacionOrigen.findAll({
+          include: [
+            {
+              model: (await import('../models/index.js')).Variedad,
+              as: 'variedades',
+              through: { attributes: [] }
+            },
+            {
+              model: (await import('../models/index.js')).TipoVino,
+              as: 'tipos_vino',
+              through: { attributes: [] }
+            }
+          ],
+          joinTableAttributes: []
+        });
+
+        // Filtrar: solo DOs asociadas a esta bodega
+        const bodegaDOs = await sequelize.query(`
+          SELECT do_id FROM do_bodegas WHERE bodega_id = :bodegaId
+        `, {
+          replacements: { bodegaId: bodega.id },
+          type: sequelize.QueryTypes.SELECT,
+          raw: true
+        });
+
+        const doIds = bodegaDOs.map(r => r.do_id);
+        bodega.denominaciones = denominaciones.filter(do_ => doIds.includes(do_.id)).map(do_ => do_.toJSON ? do_.toJSON() : do_);
+
+        return bodega;
+      }));
+    }
+
+    console.log('[USER] Datos finales:', data.length, '| Primera bodega:', data.length > 0 ? {
+      nombre: data[0].nombre,
+      denominacionesCount: data[0].denominaciones?.length || 0
+    } : 'N/A');
+
     return res.json({
       success: true,
-      data: rows,
+      data: data,
       pagination: {
         total: count,
         page: parseInt(page),
