@@ -7,6 +7,26 @@ import { Op } from 'sequelize';
 import sequelize from '../config/database.js';
 
 /**
+ * Transforma campos usercard_* a formato camelCase userCard
+ */
+const transformUserData = (userData) => {
+  if (!userData) return userData;
+  
+  const data = typeof userData.toJSON === 'function' ? userData.toJSON() : userData;
+  
+  // Transformar usercard_img y usercard_name a userCard
+  if (data.usercard_img || data.usercard_name) {
+    data.userCard = {};
+    if (data.usercard_img) data.userCard.img = data.usercard_img;
+    if (data.usercard_name) data.userCard.name = data.usercard_name;
+    delete data.usercard_img;
+    delete data.usercard_name;
+  }
+  
+  return data;
+};
+
+/**
  * POST /users - Crear nuevo usuario
  */
 export const createUser = async (req, res) => {
@@ -108,7 +128,7 @@ export const getUserById = async (req, res) => {
 
     return res.json({
       success: true,
-      data: user
+      data: transformUserData(user)
     });
   } catch (error) {
     console.error('[USER] Error obteniendo usuario:', error);
@@ -205,7 +225,7 @@ export const getUsers = async (req, res) => {
     console.log('[USER] Bodegas devueltas sin denominaciones:', rows.length);
 
     // NUEVO: Si es winery, cargar denominaciones por separado para cada bodega
-    let data = rows.map(r => r.toJSON());
+    let data = rows.map(r => transformUserData(r));
     
     if (role === 'winery') {
       const { DenominacionOrigen } = await import('../models/index.js');

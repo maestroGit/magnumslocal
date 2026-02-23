@@ -11,7 +11,7 @@ const Wallet = sequelize.define('Wallet', {
     allowNull: false,
   },
   address: {
-    type: DataTypes.STRING(120),
+    type: DataTypes.STRING(160),
     allowNull: false,
     unique: true,
   },

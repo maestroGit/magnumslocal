@@ -75,6 +75,9 @@ import { ensureWalletOnStartup } from './app/services/walletLoaderService.js';
 import { startServerWhenReady } from './app/services/serverStartupService.js';
 import { initLogCapture } from './app/services/logService.js';
 
+// Importaciones de modelos ORM
+import User from './app/models/User.js';
+
 // Importaciones de routers modulares
 import adminRoutes from './app/routes/adminRoutes.js';
 import authRoutes from './app/routes/authRoutes.js';
@@ -140,9 +143,46 @@ passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: "/auth/google/callback"
-}, (accessToken, refreshToken, profile, done) => {
-  // Aquí puedes guardar el usuario en la base de datos si lo deseas
-  return done(null, profile);
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    // Extraer datos del perfil de Google
+    const googleId = profile.id;
+    const email = profile.emails?.[0]?.value;
+    const nombre = profile.displayName;
+    const googlePhotoUrl = profile.photos?.[0]?.value;
+
+    if (!email) {
+      return done(new Error('Email no disponible en perfil de Google'));
+    }
+
+    // Buscar o crear usuario en BD
+    const [user, created] = await User.findOrCreate({
+      where: { email },
+      defaults: {
+        id: `google_${googleId}`,
+        provider: 'google',
+        nombre: nombre || 'Usuario Google',
+        email: email,
+        email_verified: true, // Google verifica emails
+        usercard_img: googlePhotoUrl, // Guardar foto de Google
+        registrado: true,
+        fecha_registro: new Date(),
+        role: 'user'
+      }
+    });
+
+    // Si el usuario ya existía pero no tiene usercard_img, actualizar con foto de Google
+    if (!created && googlePhotoUrl && !user.usercard_img) {
+      await user.update({ usercard_img: googlePhotoUrl });
+      console.log(`[AUTH] Foto de Google agregada a usuario: ${user.email}`);
+    }
+
+    console.log(`[AUTH] Usuario Google ${created ? 'creado' : 'existente'}: ${user.id}`);
+    return done(null, user);
+  } catch (error) {
+    console.error('[AUTH] Error en Google Strategy callback:', error);
+    return done(error);
+  }
 }));
 
 passport.serializeUser((user, done) => {
@@ -294,10 +334,16 @@ function syncUTXOManagerWithBlockchain() {
         console.log(`[SYNC][RETURN] updateWithBlock finalizado para bloque #${idx}. Total UTXOs ahora:`, totalUtxos);
       });
     }
-    // Mostrar todos los UTXOs después de sincronizar
-    const allUtxos = Object.entries(utxoManager.utxoSet).flatMap(([address, arr]) => arr.map(u => ({...u, address})));
-    console.log('[SYNC][DEBUG] utxoManager.utxoSet después de sincronizar:', JSON.stringify(allUtxos, null, 2));
-    console.log('[SYNC] UTXOManager sincronizado con la blockchain. Total UTXOs:', allUtxos.length);
+    // Mostrar resumen de UTXOs después de sincronizar
+    const totalAddresses = Object.keys(utxoManager.utxoSet).length;
+    const totalUtxos = Object.values(utxoManager.utxoSet).reduce((acc, arr) => acc + arr.length, 0);
+    console.log(`[SYNC][DEBUG] utxoManager.utxoSet sinc: ${totalAddresses} dir, ${totalUtxos} UTXOs`);
+    // Mostrar resumen por dirección
+    Object.entries(utxoManager.utxoSet).forEach(([addr, utxos]) => {
+      const balance = utxos.reduce((sum, u) => sum + u.amount, 0);
+      const addrShort = addr.substring(0, 20) + '...';
+      console.log(`  ${addrShort}: ${utxos.length} UTXOs, balance=${balance}`);
+    });
   } else {
     console.error('[SYNC][ERROR] bc o bc.chain no definidos en syncUTXOManagerWithBlockchain');
   }

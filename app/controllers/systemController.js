@@ -20,7 +20,15 @@ export const getSystemInfo = async (req, res) => {
       .filter(net => net && net.family === "IPv4" && !net.internal)
       .map(net => net.address);
 
-    // Blockchain info (mocked, replace with actual global references if needed)
+    // Blockchain info (mejorada con datos P2P reales)
+    const p2pServer = global.p2pServer;
+    const p2pConnections = p2pServer && Array.isArray(p2pServer.sockets) ? p2pServer.sockets.length : 0;
+    const p2pPeers = p2pServer && Array.isArray(p2pServer.peers) ? p2pServer.peers.map(p => ({
+      nodeId: p.nodeId,
+      httpUrl: p.httpUrl,
+      lastSeen: p.lastSeen
+    })) : [];
+    const networkStatus = p2pConnections > 0 ? 'connected' : 'standalone';
     const blockchainInfo = {
       server: {
         httpPort: process.env.HTTP_PORT || 6001,
@@ -30,6 +38,9 @@ export const getSystemInfo = async (req, res) => {
       },
       network: {
         pendingTransactions: global.tp ? global.tp.transactions.length : 0,
+        p2pConnections,
+        p2pPeers,
+        networkStatus
       },
     };
 

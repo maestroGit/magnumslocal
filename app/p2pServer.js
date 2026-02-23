@@ -282,9 +282,13 @@ class P2PServer {
               this.blockchain.chain.forEach((block) => global.utxoManager.updateWithBlock(block));
               console.log("[P2P][CHAIN][SYNC] utxoManager sincronizado tras replaceChain");
             }
+            const chainLength = this.blockchain.chain.length;
+            const firstBlock = this.blockchain.chain[0];
+            const lastBlock = this.blockchain.chain[chainLength - 1];
             console.log(
-              "[P2P][CHAIN][FINAL] Cadena local actual:",
-              JSON.stringify(this.blockchain.chain, null, 2)
+              `[P2P][CHAIN][FINAL] Cadena local actualizada: ${chainLength} bloques`,
+              `\n  Genesis: ${firstBlock?.hash?.substring(0, 16)}...`,
+              `\n  Último: ${lastBlock?.hash?.substring(0, 16)}... (height: ${chainLength})`
             );
           })();
           break;
