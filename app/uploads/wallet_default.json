@@ -2,16 +2,16 @@
   "keystoreVersion": 1,
   "kdf": "pbkdf2",
   "kdfParams": {
-    "salt": "1DhyWMEJscGURN/HcGhdDQ==",
+    "salt": "Fhiar1HnrgNLIJ8dh9zhhA==",
     "iterations": 100000,
     "keylen": 32,
     "digest": "sha256"
   },
   "cipher": "aes-256-gcm",
   "cipherParams": {
-    "iv": "bEGu1ahAUKp5ljVo"
+    "iv": "+Bc/V/SfHj8/TMiR"
   },
-  "tag": "BeRiGF59ScCBEXCJ/LQ0Dg==",
-  "publicKey": "04325e339641e1def136cfa8ab904f88e8ffaa46a692b4992d71e6048a1ba964272c28a00490d39fbcef990093998a3717d9a6b8e16f7ab430af40f8cd158438cd",
-  "encryptedPrivateKey": "92FJjuQfb6v8CqFkiKK8DjKdchfcRZ244jZq9qvNp5M="
+  "tag": "RziPKtcR4rMrDy81nOhxpw==",
+  "publicKey": "043f14f599f54c51c1527b212729fb306a22c8d3c11b108296e718368295fab236271b8eea088d908054d2c5c9a6af2031b11e3bf2664ae4dece226f08338646ba",
+  "encryptedPrivateKey": "/sRpHrjNr0/3bhKm740RYjbsb3EPC3b5w6qwWgV9JPI="
 }

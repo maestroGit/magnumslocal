@@ -130,6 +130,10 @@ const HTTP_PORT = process.env.HTTP_PORT || 6001;
 const server = http.createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// Wallet global disponible en todos los controladores y módulos
+global.Wallet = Wallet;
+// __dirname global para uso en controladores
+global.__dirname = __dirname;
 
 // ============================================================================
 // SECCIÓN 3: CONFIGURACIÓN DE PASSPORT Y OAUTH2
