@@ -40,11 +40,13 @@ export class AuthComponent {
       console.log('[AuthComponent] Render usuario:', { name, photo, user: this.user });
       this.container.innerHTML = `
         <div id="auth-logout" class="auth-logout">
-          <span id="auth-user-label" class="auth-user-label">User</span>
+          <span id="auth-user-label" class="auth-user-label"></span>
           ${photo ? `<img src="${photo}" alt="Avatar" class="auth-avatar">` : ''}
           <button id="logoutBtn" class="auth-logout-btn">Cerrar sesión</button>
         </div>
       `;
+      const userLabel = this.container.querySelector('#auth-user-label');
+      if (userLabel) userLabel.textContent = name;
       this.addListeners();
       return;
     }

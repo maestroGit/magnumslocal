@@ -501,22 +501,13 @@ function handleContinue() {
 // Actualizar fortaleza de contraseña (sin mostrar modal automáticamente)
 passwordInput.addEventListener('input', () => {
   updatePasswordStrength();
-});
-
-// Mostrar/ocultar modal de requisitos al enfocar/desenfoca el password input
-passwordInput.addEventListener('focus', () => {
-  if (passwordModal && passwordInput.value) {
-    passwordModal.classList.remove('modal-hidden');
-    passwordModal.classList.add('visible');
+  if (registerError.classList.contains('visible')) {
+    clearError();
   }
 });
 
-passwordInput.addEventListener('blur', () => {
-  if (passwordModal) {
-    passwordModal.classList.add('modal-hidden');
-    passwordModal.classList.remove('visible');
-  }
-});
+// No abrir modal de requisitos automáticamente en focus/blur para evitar bucles de UX.
+// La corrección se guía por la barra de fortaleza y el mensaje de validación del formulario.
 
 // Validar coincidencia de passwords
 confirmPasswordInput.addEventListener('input', validatePasswordMatch);
