@@ -251,6 +251,7 @@ app.use(
         "img-src": [
           "'self'",
           "data:",
+          "https:",
           PROD_API,
           "https://developers.google.com",
           "https://*.googleusercontent.com"
@@ -304,6 +305,23 @@ const limiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    const ip = String(req.ip || req.connection?.remoteAddress || '').toLowerCase();
+    const origin = String(req.headers.origin || '').toLowerCase();
+
+    const isLoopbackIp =
+      ip.includes('127.0.0.1') ||
+      ip.includes('::1') ||
+      ip.includes('::ffff:127.0.0.1');
+
+    const isLocalOrigin =
+      !origin ||
+      origin.startsWith('http://localhost') ||
+      origin.startsWith('http://127.0.0.1');
+
+    // CartoLMM (y llamadas internas del propio host) no deben consumir rate limit.
+    return isLoopbackIp && isLocalOrigin;
+  }
 });
 app.use(limiter);
 

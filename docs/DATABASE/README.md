@@ -74,6 +74,32 @@ Esta carpeta contiene la documentación completa del sistema de gestión de Deno
 
 ---
 
+#### 5. [ENDPOINTS-TEST-MATRIX.md](./ENDPOINTS-TEST-MATRIX.md) 🧪
+**Matriz de Pruebas de Endpoints** - Estado real de cobertura
+
+**Contenido:**
+- Estado por endpoint (Pass/Parcial/Pendiente)
+- Casos cubiertos por endpoint
+- Fecha de última ejecución
+- Evidencias y notas de validación
+
+**Cuándo leerlo:** QA, release readiness, seguimiento de deuda de testing.
+
+---
+
+#### 6. [DOCUMENTATION-STANDARDS.md](./DOCUMENTATION-STANDARDS.md) 📏
+**Estándares Canónicos** - Normalización documental
+
+**Contenido:**
+- Estados KYC canónicos
+- Estructura canónica de ejemplos API
+- Reglas de consistencia terminológica
+- Flujo de actualización documental por cambio de código
+
+**Cuándo leerlo:** Al crear/editar docs de API o preparar un release.
+
+---
+
 ## 🎯 Guía de Lectura por Rol
 
 ### Desarrollador Frontend
@@ -106,7 +132,9 @@ docs/DATABASE/
 ├── ModeloDatos-ampliado.md         # Documento maestro
 ├── QUICKSTART-DO.md                # Guía rápida
 ├── API-REFERENCE-DO.md             # Referencia de API
-└── ARCHITECTURE-DO.md              # Diagramas de arquitectura
+├── ARCHITECTURE-DO.md              # Diagramas de arquitectura
+├── ENDPOINTS-TEST-MATRIX.md        # Matriz de testing por endpoint
+└── DOCUMENTATION-STANDARDS.md      # Estándares canónicos de docs
 ```
 
 ---

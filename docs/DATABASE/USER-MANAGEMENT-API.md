@@ -29,7 +29,7 @@
 | `email` | VARCHAR(255) | UNIQUE, NOT NULL | Email único |
 | `role` | VARCHAR(20) | DEFAULT 'user' | Rol: admin, winery, user |
 | `categorias` | TEXT[] | - | Array de categorías de interés |
-| `kyc_status` | VARCHAR(20) | DEFAULT 'pending' | Estado KYC: pending, verified, rejected |
+| `kyc_status` | VARCHAR(20) | DEFAULT 'none' | Estado KYC: none, pending, approved, rejected |
 | `kyc_date` | TIMESTAMP | - | Fecha de verificación KYC |
 | `kyc_doc_type` | VARCHAR(50) | - | Tipo de documento (dni, passport, etc.) |
 | `kyc_doc_id` | VARCHAR(100) | - | Número de documento |
@@ -86,8 +86,8 @@ export default (sequelize) => {
     },
     categorias: { type: DataTypes.ARRAY(DataTypes.TEXT) },
     kyc_status: { 
-      type: DataTypes.ENUM('pending', 'verified', 'rejected'),
-      defaultValue: 'pending'
+      type: DataTypes.ENUM('none', 'pending', 'approved', 'rejected'),
+      defaultValue: 'none'
     },
     // ... más campos
   }, {
@@ -175,7 +175,7 @@ Content-Type: application/json
 ### 2. Listar Usuarios (Paginado)
 
 ```http
-GET /users?page=1&limit=10&role=user&provider=google&kyc_status=verified&search=juan
+GET /users?page=1&limit=10&role=user&provider=google&kyc_status=approved&search=juan
 ```
 
 **Query Parameters:**
@@ -183,7 +183,7 @@ GET /users?page=1&limit=10&role=user&provider=google&kyc_status=verified&search=
 - `limit` (opcional): Resultados por página (default: 10, max: 100)
 - `role` (opcional): Filtrar por rol (admin, winery, user)
 - `provider` (opcional): Filtrar por proveedor (google, apple, email)
-- `kyc_status` (opcional): Filtrar por estado KYC (pending, verified, rejected)
+- `kyc_status` (opcional): Filtrar por estado KYC (none, pending, approved, rejected)
 - `search` (opcional): Búsqueda en nombre y email (case-insensitive)
 
 **Respuesta (200):**
@@ -197,7 +197,7 @@ GET /users?page=1&limit=10&role=user&provider=google&kyc_status=verified&search=
         "nombre": "Juan Pérez",
         "email": "juan.perez@example.com",
         "role": "user",
-        "kyc_status": "verified",
+        "kyc_status": "approved",
         "points": 150
       }
     ],
@@ -231,7 +231,7 @@ GET /users/:id?includeWallets=true
     "nombre": "Juan Pérez",
     "email": "juan.perez@example.com",
     "role": "user",
-    "kyc_status": "verified",
+    "kyc_status": "approved",
     "points": 150,
     "badges": ["early-adopter", "wine-expert"],
     "wallets": [
@@ -379,7 +379,7 @@ PUT /users/:id/kyc
 Content-Type: application/json
 
 {
-  "kyc_status": "verified",
+  "kyc_status": "approved",
   "kyc_doc_type": "dni",
   "kyc_doc_id": "12345678A",
   "kyc_doc_img": "https://storage.example.com/kyc/12345678A.jpg"
@@ -388,8 +388,8 @@ Content-Type: application/json
 
 **Validaciones:**
 - ✅ Usuario debe existir
-- ✅ kyc_status válido: pending, verified, rejected
-- ✅ Si status = verified, requiere doc_type y doc_id
+- ✅ kyc_status válido: none, pending, approved, rejected
+- ✅ Si status = approved, requiere doc_type y doc_id
 
 **Respuesta (200):**
 ```json
@@ -398,7 +398,7 @@ Content-Type: application/json
   "message": "KYC actualizado exitosamente",
   "user": {
     "id": "u_1707577200000",
-    "kyc_status": "verified",
+    "kyc_status": "approved",
     "kyc_date": "2026-02-10T10:30:00.000Z",
     "kyc_doc_type": "dni",
     "kyc_doc_id": "12345678A"
@@ -427,7 +427,7 @@ GET /users/stats
     },
     "byKycStatus": {
       "pending": 380,
-      "verified": 850,
+      "approved": 850,
       "rejected": 20
     },
     "byProvider": {
@@ -477,7 +477,7 @@ curl -X PUT http://localhost:6001/users/u_1707577200000 \
 curl -X PUT http://localhost:6001/users/u_1707577200000/kyc \
   -H "Content-Type: application/json" \
   -d '{
-    "kyc_status": "verified",
+    "kyc_status": "approved",
     "kyc_doc_type": "dni",
     "kyc_doc_id": "87654321B",
     "kyc_doc_img": "https://storage.example.com/kyc/87654321B.jpg"
@@ -499,8 +499,8 @@ curl http://localhost:6001/users/u_1707577200000?includeWallets=true
 ### Búsqueda y filtrado avanzado
 
 ```bash
-# Buscar usuarios verificados de rol winery
-curl "http://localhost:6001/users?role=winery&kyc_status=verified&limit=20"
+# Buscar usuarios aprobados de rol winery
+curl "http://localhost:6001/users?role=winery&kyc_status=approved&limit=20"
 
 # Buscar por nombre o email (case-insensitive)
 curl "http://localhost:6001/users?search=maria&page=1&limit=10"
@@ -527,9 +527,9 @@ curl "http://localhost:6001/users?provider=google&subscription_status=active"
 - ✅ `lng` debe estar entre -180 y 180
 
 ### KYC
-- ✅ Si `kyc_status = verified`, requiere `kyc_doc_type` y `kyc_doc_id`
+- ✅ Si `kyc_status = approved`, requiere `kyc_doc_type` y `kyc_doc_id`
 - ✅ Actualiza automáticamente `kyc_date` al verificar
-- ✅ Estados válidos: pending, verified, rejected
+- ✅ Estados válidos: none, pending, approved, rejected
 
 ### Wallets
 - ✅ Dirección única en toda la base de datos

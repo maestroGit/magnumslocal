@@ -44,13 +44,21 @@ class WineryListManager {
 
   async populateFilterOptions() {
     try {
-      // Los select de filtros (DO, Uva, Estilo, Medalla) tienen valores hardcodeados en el HTML
-      // que son correctos. NO los reemplazamos dinámicamente para evitar conflictos con los
-      // valores esperados en el servidor (ALLOWED_BADGES).
-      
-      // NOTA: Si necesitas actualizar las etiquetas dinámicamente, puedes hacerlo sin 
-      // cambiar los values.
-      
+      const [denominaciones, variedades, tiposVino] = await Promise.all([
+        this.loadDenominaciones(),
+        this.loadVariedades(),
+        this.loadTiposVino()
+      ]);
+
+      this.populateSelect('doFilter', denominaciones, 'Selecciona DO');
+      this.populateSelect('uvaFilter', variedades, 'Selecciona uva');
+      this.populateSelect('estiloFilter', tiposVino, 'Selecciona estilo');
+
+      console.log('✅ Filtros dinámicos cargados:', {
+        denominaciones: denominaciones.length,
+        variedades: variedades.length,
+        tiposVino: tiposVino.length
+      });
     } catch (error) {
       console.error('Error cargando opciones de filtros:', error);
     }
@@ -58,12 +66,14 @@ class WineryListManager {
 
   async loadDenominaciones() {
     try {
-      const response = await fetch('/denominaciones');
+      const response = await fetch('/denominaciones?limit=200');
       if (!response.ok) {
         throw new Error('Error cargando denominaciones');
       }
       const result = await response.json();
-      return result.data.map(do_ => ({
+      const items = Array.isArray(result?.data) ? result.data : [];
+
+      return items.map(do_ => ({
         value: `do_${do_.id}`,
         label: `${do_.tipo || 'DO'} ${do_.nombre}`
       }));
@@ -80,8 +90,10 @@ class WineryListManager {
         throw new Error('Error cargando variedades');
       }
       const result = await response.json();
-      return result.data.map(variedad => ({
-        value: `uva_${variedad.id}`,
+      const items = Array.isArray(result?.data) ? result.data : [];
+
+      return items.map(variedad => ({
+        value: `uva_${this.normalizeBadgeToken(variedad.nombre)}`,
         label: `Uva ${variedad.nombre}`
       }));
     } catch (error) {
@@ -97,9 +109,11 @@ class WineryListManager {
         throw new Error('Error cargando tipos de vino');
       }
       const result = await response.json();
-      return result.data.map(tipo => ({
-        value: `estilo_${tipo.id}`,
-        label: tipo.nombre
+      const items = Array.isArray(result?.data) ? result.data : [];
+
+      return items.map(tipo => ({
+        value: `estilo_${this.normalizeBadgeToken(tipo.nombre)}`,
+        label: `Estilo ${tipo.nombre}`
       }));
     } catch (error) {
       console.error('Error en loadTiposVino:', error);
@@ -429,8 +443,7 @@ class WineryListManager {
       if (do_.variedades && Array.isArray(do_.variedades)) {
         do_.variedades.forEach(v => {
           if (v.nombre) {
-            // Normalizar nombre: "Tempranillo" → "tempranillo"
-            const normalizedName = v.nombre.toLowerCase().replace(/\s+/g, '_');
+            const normalizedName = this.normalizeBadgeToken(v.nombre);
             badges.push(`uva_${normalizedName}`);
           }
         });
@@ -440,8 +453,7 @@ class WineryListManager {
       if (do_.tipos_vino && Array.isArray(do_.tipos_vino)) {
         do_.tipos_vino.forEach(t => {
           if (t.nombre) {
-            // Normalizar nombre: "Tinto" → "tinto"
-            const normalizedName = t.nombre.toLowerCase().replace(/\s+/g, '_');
+            const normalizedName = this.normalizeBadgeToken(t.nombre);
             badges.push(`estilo_${normalizedName}`);
           }
         });
@@ -481,6 +493,7 @@ class WineryListManager {
 
     // Renderizar tarjetas
     container.innerHTML = paginatedWineries.map(winery => this.createWineryCard(winery)).join('');
+    this.attachImageFallbackHandlers(container);
 
     // Agregar event listeners a botones de tarjetas
     document.querySelectorAll('.winery-view-btn').forEach((btn, idx) => {
@@ -517,9 +530,11 @@ class WineryListManager {
     // ✅ NUEVO: Extraer información de DO, variedades y tipos
     const denominacionesData = this.extractDenominacionesInfo(winery);
     const dosHtml = this.createDosSection(denominacionesData);
+    const { primarySrc, fallbackSrc } = this.getWineryImageSources(winery);
 
     return `
       <div class="winery-card">
+        <div class="user-bottle-img-wrapper bodega-img-full"><img src="${primarySrc}" data-fallback-src="${fallbackSrc}" alt="Imagen botella o icono" class="bottle-img-card" onclick="window.showZoomImage && window.showZoomImage(this.currentSrc || this.src)"></div>
         <div class="winery-card-header">
           <h3 class="winery-card-name">${this.escapeHtml(nombre)}</h3>
           <span class="winery-role-badge">Bodega</span>
@@ -572,6 +587,19 @@ class WineryListManager {
       ? new Date(winery.created_at).toLocaleDateString('es-ES')
       : 'N/A';
     document.getElementById('modalWineryCreated').textContent = createdAt;
+
+    // Imagen de la bodega en el modal
+    const { primarySrc, fallbackSrc } = this.getWineryImageSources(winery);
+    let imgHtml = `<div class="user-bottle-img-wrapper bodega-img-full bottle-img-modal"><img src="${primarySrc}" data-fallback-src="${fallbackSrc}" alt="Imagen botella o icono" class="bottle-img" onclick="window.showZoomImage && window.showZoomImage(this.currentSrc || this.src)"></div>`;
+    const modalHeader = document.querySelector('.winery-detail-header');
+    if (modalHeader && !modalHeader.querySelector('img')) {
+      modalHeader.insertAdjacentHTML('afterbegin', imgHtml);
+    } else if (modalHeader && modalHeader.querySelector('img')) {
+      const modalImg = modalHeader.querySelector('img');
+      modalImg.src = primarySrc;
+      modalImg.dataset.fallbackSrc = fallbackSrc;
+    }
+    this.attachImageFallbackHandlers(modalHeader || modal);
 
     // Categorías
     const categoriesHtml = winery.categorias && winery.categorias.length > 0
@@ -727,6 +755,66 @@ class WineryListManager {
     };
 
     return labels[badge] || badge;
+  }
+
+  getWineryImageSources(winery) {
+    const imageFromProfile = winery?.userCard?.img || winery?.usercard_img;
+    const imageFromBottle = winery?.img_bottle || winery?.imgBottle || winery?.['img-bottle'] || winery?.img;
+    const defaultImage = '/images/Icono-Magnum.png';
+
+    const profileValue = typeof imageFromProfile === 'string' ? imageFromProfile.trim() : '';
+    const bottleValue = typeof imageFromBottle === 'string' ? imageFromBottle.trim() : '';
+    const profileLooksLocal = profileValue.startsWith('/images/');
+    const bottleLooksRemote = /^https?:\/\//i.test(bottleValue);
+
+    const selected =
+      profileLooksLocal && bottleLooksRemote
+        ? bottleValue
+        : (profileValue || bottleValue || defaultImage);
+
+    if (typeof selected === 'string' && selected.trim()) {
+      const primarySrc = selected.trim();
+      const fallbackSrc =
+        bottleValue && bottleValue !== primarySrc
+          ? bottleValue
+          : defaultImage;
+
+      return { primarySrc, fallbackSrc };
+    }
+
+    return { primarySrc: defaultImage, fallbackSrc: defaultImage };
+  }
+
+  attachImageFallbackHandlers(rootElement) {
+    if (!rootElement) return;
+
+    rootElement.querySelectorAll('img[data-fallback-src]').forEach((img) => {
+      if (img.dataset.fallbackBound === '1') return;
+      img.dataset.fallbackBound = '1';
+
+      img.addEventListener('error', () => {
+        const fallbackSrc = img.dataset.fallbackSrc || '/images/Icono-Magnum.png';
+        const currentSrc = img.getAttribute('src') || '';
+
+        if (currentSrc === fallbackSrc && fallbackSrc === '/images/Icono-Magnum.png') {
+          return;
+        }
+
+        img.setAttribute('src', fallbackSrc);
+        img.dataset.fallbackSrc = '/images/Icono-Magnum.png';
+      });
+    });
+  }
+
+  normalizeBadgeToken(text) {
+    if (!text) return '';
+
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
   }
 
   /**
