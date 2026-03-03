@@ -94,7 +94,7 @@ class WineryListManager {
 
       return items.map(variedad => ({
         value: `uva_${this.normalizeBadgeToken(variedad.nombre)}`,
-        label: `Uva ${variedad.nombre}`
+        label: variedad.nombre
       }));
     } catch (error) {
       console.error('Error en loadVariedades:', error);
