@@ -54,7 +54,8 @@
     "mcp:test": "./test-mcp.sh",
     "mcp:start": "cd mcp && npm start",
     "mcp:install": "cd mcp && npm install",
-    "start:local": "node -r dotenv/config server.js dotenv_config_path=.env.local"
+    "start:local": "node -r dotenv/config server.js dotenv_config_path=.env.local",
+    "migrate:wallets:cartolmm": "node -r dotenv/config scripts/migrate-wallets-from-carto-users.js dotenv_config_path=.env.local"
   },
   "keywords": [],
   "author": "",
