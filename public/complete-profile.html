@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com;">
+  <title>Completar perfil - BlocksWine</title>
+  <link rel="stylesheet" type="text/css" href="base.css">
+  <link rel="stylesheet" type="text/css" href="button.css">
+  <link rel="stylesheet" type="text/css" href="utilities.css">
+  <link rel="stylesheet" type="text/css" href="header-custom.css">
+  <link rel="stylesheet" type="text/css" href="keystore.css">
+  <link rel="stylesheet" type="text/css" href="register-form.css">
+  <link rel="stylesheet" type="text/css" href="toast.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="logo">
+        <img src="images/iconoBWred.png" alt="BlocksWine icon" class="logo-icon rotatable white">
+        BlocksWine
+      </h1>
+      <nav class="nav">
+        <a class="btn" href="login.html"><span class="metric-value">Login</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="register-main-centered">
+    <div class="keystore-container register-keystore-container">
+      <div class="keystore-card register-card">
+        <div class="keystore-header">
+          <h2>Completa tu perfil</h2>
+        </div>
+        <p>Para continuar con tu cuenta Google necesitamos estos datos.</p>
+
+        <form id="completeProfileForm" class="register-form" autocomplete="off">
+          <div class="form-group">
+            <label for="role">Tipo de cuenta *</label>
+            <select id="role" name="role" required>
+              <option value="">-- Selecciona tipo --</option>
+              <option value="user">WineLover</option>
+              <option value="winery">Winery</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="city">Ciudad *</label>
+            <input type="text" id="city" name="city" placeholder="Ej: Madrid" required autocomplete="address-level2">
+          </div>
+
+          <div class="form-group">
+            <div class="location-actions">
+              <button type="button" class="keystore-btn secondary location-btn" id="useLocationBtn">Usar ubicación exacta *</button>
+              <span id="locationStatus" class="location-status neutral">No compartida</span>
+            </div>
+            <input type="hidden" id="locationLat" name="locationLat" value="">
+            <input type="hidden" id="locationLng" name="locationLng" value="">
+          </div>
+
+          <button type="submit" class="keystore-btn primary register-submit-btn">Guardar y continuar</button>
+          <div id="complete-profile-error" class="register-error"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/complete-profile.js"></script>
+  <script src="js/scrollFooter.js" defer></script>
+</body>
+</html>

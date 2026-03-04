@@ -288,6 +288,64 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "32kb" }));
 
+const isGoogleProfileIncomplete = (user) => {
+  if (!user || user.provider !== 'google') return false;
+
+  const hasRole = ['user', 'winery', 'admin'].includes(user.role);
+  const hasCity = typeof user.localizacion_direccion === 'string' && user.localizacion_direccion.trim().length > 0;
+  const hasLat = user.localizacion_lat !== null && user.localizacion_lat !== undefined;
+  const hasLng = user.localizacion_lng !== null && user.localizacion_lng !== undefined;
+
+  return !(hasRole && hasCity && hasLat && hasLng);
+};
+
+const PUBLIC_HTML_PATHS = new Set([
+  '/login.html',
+  '/register.html',
+  '/complete-profile.html'
+]);
+
+const normalizeHtmlPath = (requestPath) => {
+  if (requestPath === '/' || requestPath === '/view') return '/view.html';
+  return requestPath;
+};
+
+app.use(async (req, res, next) => {
+  try {
+    if (req.method !== 'GET') return next();
+
+    const normalizedPath = normalizeHtmlPath(req.path);
+    const isHtmlLikeRoute = normalizedPath.endsWith('.html');
+
+    if (!isHtmlLikeRoute) return next();
+    if (PUBLIC_HTML_PATHS.has(normalizedPath)) return next();
+
+    const isAuthenticated = (req.isAuthenticated && req.isAuthenticated()) || !!req.session?.user;
+    if (!isAuthenticated) {
+      return res.redirect('/login.html');
+    }
+
+    const userId = req.user?.id || req.session?.user?.id;
+    if (!userId) {
+      return res.redirect('/login.html');
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.redirect('/login.html');
+    }
+
+    if (isGoogleProfileIncomplete(user)) {
+      return res.redirect('/complete-profile.html');
+    }
+
+    return next();
+  } catch (error) {
+    console.error('[AUTH][GUARD] Error en middleware global de perfil:', error);
+    return res.redirect('/login.html');
+  }
+});
+
 // Static files: public/ y app/uploads/ con Content-Type correcto para ESM
 app.use("/js", (req, res, next) => {
   if (req.path.endsWith(".js")) {

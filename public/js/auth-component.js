@@ -17,6 +17,12 @@ export class AuthComponent {
         console.log('[AuthComponent] /auth/user response:', data);
         if (data.user) {
           this.user = data.user;
+          const isCompleteProfilePage = window.location.pathname.endsWith('complete-profile.html');
+          if (data.profileIncomplete && !isCompleteProfilePage) {
+            window.location.href = 'complete-profile.html';
+            return;
+          }
+
           console.log('[AuthComponent] Usuario autenticado:', this.user);
           this.render(true);
         } else {

@@ -3,7 +3,13 @@
 
 import express from "express";
 import passport from "passport";
-import { getAuthUser, getGoogleCallback, postAuthLogin, postAuthLogout } from "../controllers/authController.js";
+import {
+  getAuthUser,
+  getGoogleCallback,
+  postAuthCompleteProfile,
+  postAuthLogin,
+  postAuthLogout
+} from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -48,5 +54,11 @@ router.post("/auth/login", postAuthLogin);
  * Cierra la sesión local
  */
 router.post("/auth/logout", postAuthLogout);
+
+/**
+ * POST /auth/complete-profile
+ * Completa campos obligatorios para cuentas OAuth de Google
+ */
+router.post('/auth/complete-profile', postAuthCompleteProfile);
 
 export default router;

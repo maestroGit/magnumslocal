@@ -22,6 +22,48 @@ export async function renderMonitoring() {
     };
     const formatDate = (timestamp) => timestamp ? new Date(timestamp).toLocaleString() : 'N/A';
 
+    const networkInfo = systemInfo.blockchain?.network || {};
+    const p2pConnections = typeof networkInfo.p2pConnections === 'number' ? networkInfo.p2pConnections : 0;
+    const p2pPeersRaw = Array.isArray(networkInfo.p2pPeers) ? networkInfo.p2pPeers : [];
+
+    const peersDetailed = p2pPeersRaw.map((peer, index) => {
+      const nodeId =
+        typeof peer?.nodeId === 'string' && peer.nodeId.trim().length > 0
+          ? peer.nodeId.trim()
+          : `peer-${index + 1}`;
+      const httpUrl =
+        typeof peer?.httpUrl === 'string' && peer.httpUrl.trim().length > 0
+          ? peer.httpUrl.trim()
+          : null;
+      let host = null;
+      if (httpUrl) {
+        try {
+          host = new URL(httpUrl).hostname;
+        } catch {
+          host = null;
+        }
+      }
+
+      return {
+        nodeId,
+        httpUrl,
+        host,
+        lastSeen: peer?.lastSeen || null,
+      };
+    });
+
+    const uniquePeersDetailed = [];
+    const seenPeerKeys = new Set();
+    for (const peer of peersDetailed) {
+      const key = `${peer.nodeId}|${peer.httpUrl || peer.host || 'unknown'}`;
+      if (!seenPeerKeys.has(key)) {
+        uniquePeersDetailed.push(peer);
+        seenPeerKeys.add(key);
+      }
+    }
+
+    const mismatchP2P = p2pConnections !== uniquePeersDetailed.length;
+
     const monitoringModalContent = `
       <div class="modal-info" style="max-height:60vh;overflow-y:auto;padding-right:8px;box-sizing:border-box;">
         <p><strong>Updated:</strong> ${new Date().toLocaleString()}</p>
@@ -41,8 +83,28 @@ export async function renderMonitoring() {
             <h3 class="monitor-title">🌍 P2P Network</h3>
             <ul class="monitor-list">
               <li><strong>Status:</strong> <span class="${systemInfo.blockchain?.network?.networkStatus === 'connected' ? 'status-online' : 'status-standalone'}">${systemInfo.blockchain?.network?.networkStatus === 'connected' ? '🔗 Connected' : '🔍 Standalone'}</span></li>
-              <li><strong>Active Connections:</strong> ${systemInfo.blockchain?.network?.p2pConnections || 0}</li>
-              <li><strong>Peers:</strong> ${systemInfo.blockchain?.network?.p2pPeers?.length || 0}</li>
+              <li><strong>Active Connections:</strong> ${p2pConnections}</li>
+              <li><strong>Peers:</strong> ${uniquePeersDetailed.length}</li>
+              <li><strong>Peer Details:</strong></li>
+              <li class="monitor-sublist">
+                ${uniquePeersDetailed.length
+                  ? `<ul style="margin-left:12px">${uniquePeersDetailed
+                      .map(
+                        (peer) => `
+                          <li style="margin-bottom:6px">
+                            <strong>${peer.nodeId}</strong><br>
+                            <strong>Host/IP:</strong> ${peer.host || 'N/A'}<br>
+                            <strong>HTTP:</strong> ${peer.httpUrl ? `<a href="${peer.httpUrl}" target="_blank" class="monitor-link">${peer.httpUrl}</a>` : 'N/A'}<br>
+                            <strong>Last Seen:</strong> ${formatDate(peer.lastSeen)}
+                          </li>
+                        `
+                      )
+                      .join('')}</ul>`
+                  : 'N/A'}
+              </li>
+              ${mismatchP2P
+                ? `<li><strong>Alert:</strong> <span style="color:#f59e0b">⚠️ Detail mismatch ${uniquePeersDetailed.length}/${p2pConnections}</span></li>`
+                : ''}
             </ul>
           </div>
           <div class="monitor-card" style="min-width:0;word-break:break-word;">
