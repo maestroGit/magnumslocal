@@ -143,10 +143,11 @@ global.__dirname = __dirname;
 // - Session storage: express-session con secret desde env
 // - Callbacks: serialización/deserialización de usuario
 // Ver app/controllers/authController.js para la lógica de autenticación.
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback";
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "/auth/google/callback"
+  callbackURL: GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Extraer datos del perfil de Google
@@ -204,6 +205,22 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+const ensureUserSocialColumns = async () => {
+  try {
+    await User.sequelize.query(`
+      ALTER TABLE usuarios
+      ADD COLUMN IF NOT EXISTS social_x VARCHAR(300),
+      ADD COLUMN IF NOT EXISTS social_instagram VARCHAR(300),
+      ADD COLUMN IF NOT EXISTS social_youtube VARCHAR(300)
+    `);
+    console.log('[DATABASE] ✅ Columnas sociales verificadas en usuarios (social_x, social_instagram, social_youtube)');
+  } catch (error) {
+    console.error('[DATABASE] ⚠️ No se pudieron verificar/crear columnas sociales en usuarios:', error.message);
+  }
+};
+
+ensureUserSocialColumns();
 // ============================================================================
 // SECCIÓN 4: SISTEMA DE LOGS Y MONITOREO
 // ============================================================================

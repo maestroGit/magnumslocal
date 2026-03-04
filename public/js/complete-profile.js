@@ -2,6 +2,9 @@ const form = document.getElementById('completeProfileForm');
 const errorDiv = document.getElementById('complete-profile-error');
 const roleInput = document.getElementById('role');
 const cityInput = document.getElementById('city');
+const socialXInput = document.getElementById('socialX');
+const socialInstagramInput = document.getElementById('socialInstagram');
+const socialYoutubeInput = document.getElementById('socialYoutube');
 const useLocationBtn = document.getElementById('useLocationBtn');
 const locationStatus = document.getElementById('locationStatus');
 const locationLatInput = document.getElementById('locationLat');
@@ -53,6 +56,18 @@ async function bootstrap() {
     if (authData.user.localizacion_direccion) {
       cityInput.value = authData.user.localizacion_direccion;
     }
+
+    if (socialXInput && authData.user.social_x) {
+      socialXInput.value = authData.user.social_x;
+    }
+
+    if (socialInstagramInput && authData.user.social_instagram) {
+      socialInstagramInput.value = authData.user.social_instagram;
+    }
+
+    if (socialYoutubeInput && authData.user.social_youtube) {
+      socialYoutubeInput.value = authData.user.social_youtube;
+    }
   } catch (error) {
     console.error('[COMPLETE_PROFILE] Error en bootstrap:', error);
     window.location.href = 'login.html';
@@ -97,6 +112,9 @@ if (form) {
 
     const role = roleInput.value;
     const city = cityInput.value.trim();
+    const social_x = socialXInput?.value.trim() || null;
+    const social_instagram = socialInstagramInput?.value.trim() || null;
+    const social_youtube = socialYoutubeInput?.value.trim() || null;
     const lat = Number(locationLatInput.value);
     const lng = Number(locationLngInput.value);
 
@@ -130,6 +148,9 @@ if (form) {
         body: JSON.stringify({
           role,
           city,
+          social_x,
+          social_instagram,
+          social_youtube,
           localizacion_lat: lat,
           localizacion_lng: lng
         })

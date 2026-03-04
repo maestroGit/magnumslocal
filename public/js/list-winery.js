@@ -592,6 +592,9 @@ class WineryListManager {
     const { primarySrc, fallbackSrc } = this.getWineryImageSources(winery);
     let imgHtml = `<div class="user-bottle-img-wrapper bodega-img-full bottle-img-modal"><img src="${primarySrc}" data-fallback-src="${fallbackSrc}" alt="Imagen botella o icono" class="bottle-img" onclick="window.showZoomImage && window.showZoomImage(this.currentSrc || this.src)"></div>`;
     const modalHeader = document.querySelector('.winery-detail-header');
+    if (modalHeader) {
+      modalHeader.classList.add('has-modal-image');
+    }
     if (modalHeader && !modalHeader.querySelector('img')) {
       modalHeader.insertAdjacentHTML('afterbegin', imgHtml);
     } else if (modalHeader && modalHeader.querySelector('img')) {

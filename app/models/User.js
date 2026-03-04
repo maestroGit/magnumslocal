@@ -87,6 +87,18 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(250),
     allowNull: true,
   },
+  social_x: {
+    type: DataTypes.STRING(300),
+    allowNull: true,
+  },
+  social_instagram: {
+    type: DataTypes.STRING(300),
+    allowNull: true,
+  },
+  social_youtube: {
+    type: DataTypes.STRING(300),
+    allowNull: true,
+  },
   email: {
     type: DataTypes.STRING(120),
     allowNull: false,

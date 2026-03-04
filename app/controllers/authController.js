@@ -21,6 +21,41 @@ const getAuthenticatedUserId = (req) => {
   return null;
 };
 
+const normalizeSocialUrl = (rawValue, platform) => {
+  if (rawValue === null || rawValue === undefined) return null;
+
+  const trimmed = String(rawValue).trim();
+  if (!trimmed) return null;
+
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  let parsed;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw new Error(`URL inválida para ${platform}`);
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  if (platform === 'x') {
+    const valid = hostname === 'x.com' || hostname.endsWith('.x.com') || hostname === 'twitter.com' || hostname.endsWith('.twitter.com');
+    if (!valid) throw new Error('La URL de X debe apuntar a x.com o twitter.com');
+  }
+
+  if (platform === 'instagram') {
+    const valid = hostname === 'instagram.com' || hostname.endsWith('.instagram.com');
+    if (!valid) throw new Error('La URL de Instagram debe apuntar a instagram.com');
+  }
+
+  if (platform === 'youtube') {
+    const valid = hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtu.be';
+    if (!valid) throw new Error('La URL de YouTube debe apuntar a youtube.com o youtu.be');
+  }
+
+  return parsed.toString();
+};
+
 export const getAuthUser = (req, res) => {
   try {
     const isAuthenticated = (req.isAuthenticated && req.isAuthenticated()) || !!req.session?.user;
@@ -149,7 +184,15 @@ export const postAuthCompleteProfile = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Este endpoint solo aplica a usuarios Google' });
     }
 
-    const { role, city, localizacion_lat, localizacion_lng } = req.body || {};
+    const {
+      role,
+      city,
+      localizacion_lat,
+      localizacion_lng,
+      social_x,
+      social_instagram,
+      social_youtube
+    } = req.body || {};
 
     if (!role || !['user', 'winery'].includes(role)) {
       return res.status(400).json({ success: false, error: 'role debe ser user o winery' });
@@ -166,11 +209,26 @@ export const postAuthCompleteProfile = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Ubicación exacta requerida (lat/lng válidos)' });
     }
 
+    let socialXNormalized;
+    let socialInstagramNormalized;
+    let socialYoutubeNormalized;
+
+    try {
+      socialXNormalized = normalizeSocialUrl(social_x, 'x');
+      socialInstagramNormalized = normalizeSocialUrl(social_instagram, 'instagram');
+      socialYoutubeNormalized = normalizeSocialUrl(social_youtube, 'youtube');
+    } catch (validationError) {
+      return res.status(400).json({ success: false, error: validationError.message });
+    }
+
     await user.update({
       role,
       localizacion_direccion: city.trim(),
       localizacion_lat: lat,
-      localizacion_lng: lng
+      localizacion_lng: lng,
+      social_x: socialXNormalized,
+      social_instagram: socialInstagramNormalized,
+      social_youtube: socialYoutubeNormalized
     });
 
     if (req.session?.user) {
@@ -179,7 +237,10 @@ export const postAuthCompleteProfile = async (req, res) => {
         role: user.role,
         localizacion_direccion: user.localizacion_direccion,
         localizacion_lat: user.localizacion_lat,
-        localizacion_lng: user.localizacion_lng
+        localizacion_lng: user.localizacion_lng,
+        social_x: user.social_x,
+        social_instagram: user.social_instagram,
+        social_youtube: user.social_youtube
       };
     }
 
@@ -188,6 +249,9 @@ export const postAuthCompleteProfile = async (req, res) => {
       req.user.localizacion_direccion = user.localizacion_direccion;
       req.user.localizacion_lat = user.localizacion_lat;
       req.user.localizacion_lng = user.localizacion_lng;
+      req.user.social_x = user.social_x;
+      req.user.social_instagram = user.social_instagram;
+      req.user.social_youtube = user.social_youtube;
     }
 
     return res.json({

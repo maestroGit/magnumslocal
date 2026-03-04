@@ -632,6 +632,33 @@ body {
   flex: 0 0 auto;
 }
 
+.winery-detail-header.has-modal-image {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.winery-detail-header.has-modal-image .user-bottle-img-wrapper.bodega-img-full.bottle-img-modal {
+  width: min(100%, 320px);
+  max-width: 320px;
+  height: 190px;
+  max-height: 190px;
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+.winery-detail-header.has-modal-image h2 {
+  flex: 0 1 auto;
+  width: 100%;
+  margin-top: 4px;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.winery-detail-header.has-modal-image .winery-role-badge {
+  align-self: center;
+}
+
 .winery-detail-body {
   display: flex;
   flex-direction: column;
