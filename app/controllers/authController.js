@@ -156,7 +156,12 @@ export const getGoogleCallback = (req, res) => {
       return res.redirect('/complete-profile.html');
     }
 
-    return res.redirect('/');
+    const role = String(req.user.role || '').toLowerCase();
+    const redirectPath = (role === 'user' || role === 'winelover' || role === 'wine_lover')
+      ? '/keystore.html'
+      : '/view.html';
+
+    return res.redirect(redirectPath);
   } catch (error) {
     console.error("[authController] Error en getGoogleCallback:", error);
     res.status(500).json({ error: "Authentication failed" });

@@ -12,6 +12,11 @@ import {
 	linkWalletToAuthenticatedUser,
 	unlinkWalletFromAuthenticatedUser,
 } from '../controllers/walletController.js';
+import {
+	requireAuth,
+	requireRole,
+	requireGlobalWalletOwnership,
+} from '../middlewares/walletOwnershipMiddleware.js';
 
 const router = express.Router();
 
@@ -35,7 +40,7 @@ router.get('/public-key', getPublicKey);
 router.post('/address-balance', addressBalance);
 
 // GET /balance
-router.get('/balance', getBalance);
+router.get('/balance', requireAuth, requireRole('admin', 'winery'), requireGlobalWalletOwnership, getBalance);
 
 // POST /wallet/link
 router.post('/link', linkWalletToAuthenticatedUser);

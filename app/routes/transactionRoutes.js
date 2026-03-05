@@ -8,6 +8,11 @@
 
 import express from 'express';
 import { createTransaction, getTransactionsPool } from '../controllers/transactionController.js';
+import {
+	requireAuth,
+	requireRole,
+	requireGlobalWalletOwnershipForTransaction,
+} from '../middlewares/walletOwnershipMiddleware.js';
 
 const router = express.Router();
 
@@ -22,6 +27,6 @@ router.get('/transactionsPool', getTransactionsPool);
 // Acepta dos flujos:
 // 1. FLUJO USUARIO: { signedTransaction: {...} }
 // 2. FLUJO BODEGA: { mode: 'bodega', recipient, amount, passphrase, keystore? }
-router.post('/transaction', createTransaction);
+router.post('/transaction', requireAuth, requireRole('admin', 'winery', 'user'), requireGlobalWalletOwnershipForTransaction, createTransaction);
 
 export default router;

@@ -293,6 +293,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .auth-user-label,
@@ -301,7 +302,10 @@
   font-weight: 700 !important;
   text-shadow: 0 1px 2px #000a !important;
   display: inline-block;
-  max-width: 220px;
+  min-width: 0;
+  max-width: min(220px, 24vw);
+  font-size: clamp(0.72rem, 0.9vw, 0.95rem);
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -342,6 +346,7 @@
   align-items: center !important;
   justify-content: center !important;
   white-space: nowrap !important;
+  min-width: 108px !important;
   flex-shrink: 0 !important;
   position: relative !important;
   z-index: 1202 !important;
