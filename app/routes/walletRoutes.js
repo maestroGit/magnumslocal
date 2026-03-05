@@ -9,6 +9,8 @@ import {
 	getPublicKey,
 	addressBalance,
 	getBalance,
+	linkWalletToAuthenticatedUser,
+	unlinkWalletFromAuthenticatedUser,
 } from '../controllers/walletController.js';
 
 const router = express.Router();
@@ -34,5 +36,11 @@ router.post('/address-balance', addressBalance);
 
 // GET /balance
 router.get('/balance', getBalance);
+
+// POST /wallet/link
+router.post('/link', linkWalletToAuthenticatedUser);
+
+// POST /wallet/unlink
+router.post('/unlink', unlinkWalletFromAuthenticatedUser);
 
 export default router;

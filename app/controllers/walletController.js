@@ -6,6 +6,27 @@
 import { check, validationResult } from 'express-validator';
 import fs from 'fs';
 import path from 'path';
+import { User, Wallet as UserWallet } from '../models/index.js';
+
+const HEX_KEY_REGEX = /^[a-fA-F0-9]+$/;
+
+const getAuthenticatedUserId = (req) => {
+  if (req.user?.id) return req.user.id;
+  if (req.session?.user?.id) return req.session.user.id;
+  return null;
+};
+
+const normalizeWalletHex = (value) => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const isValidWalletHex = (value) => {
+  if (!value || !HEX_KEY_REGEX.test(value)) return false;
+  // Soportamos claves publicas comprimidas (33 bytes = 66 hex)
+  // y no comprimidas (65 bytes = 130 hex).
+  return value.length === 66 || value.length === 130;
+};
 
 const loadGlobalWallet = async (req, res) => {
   const errors = validationResult(req);
@@ -237,6 +258,189 @@ const getBalance = (req, res) => {
   }
 };
 
+// POST /wallet/link (alias: /wallets/link)
+// Vincula una wallet al usuario autenticado sin requerir creacion de cuenta nueva.
+const linkWalletToAuthenticatedUser = async (req, res) => {
+  try {
+    const authenticatedUserId = getAuthenticatedUserId(req);
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Debes iniciar sesion para vincular una wallet'
+      });
+    }
+
+    const user = await User.findByPk(authenticatedUserId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuario autenticado no encontrado'
+      });
+    }
+
+    const rawPublicKey = normalizeWalletHex(req.body?.publicKey);
+    const rawAddress = normalizeWalletHex(req.body?.address);
+    const walletAddress = (rawAddress || rawPublicKey).toLowerCase();
+    const requestedType = typeof req.body?.type === 'string' ? req.body.type.trim().toLowerCase() : 'internal';
+    const requestedStatus = typeof req.body?.status === 'string' ? req.body.status.trim().toLowerCase() : 'active';
+
+    if (!walletAddress) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debes enviar publicKey o address'
+      });
+    }
+
+    if ((rawPublicKey && !isValidWalletHex(rawPublicKey)) || (rawAddress && !isValidWalletHex(rawAddress))) {
+      return res.status(400).json({
+        success: false,
+        error: 'Formato de wallet invalido. Se espera hex de 66 o 130 caracteres'
+      });
+    }
+
+    if (rawPublicKey && rawAddress && rawPublicKey.toLowerCase() !== rawAddress.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        error: 'publicKey y address no coinciden'
+      });
+    }
+
+    const existingWallet = await UserWallet.findOne({ where: { address: walletAddress } });
+
+    if (existingWallet) {
+      if (existingWallet.usuario_id && existingWallet.usuario_id !== authenticatedUserId) {
+        return res.status(409).json({
+          success: false,
+          error: 'Esta wallet ya esta vinculada a otra cuenta'
+        });
+      }
+
+      if (existingWallet.usuario_id === authenticatedUserId) {
+        return res.status(200).json({
+          success: true,
+          data: existingWallet,
+          message: 'La wallet ya estaba vinculada a tu cuenta'
+        });
+      }
+
+      await existingWallet.update({
+        usuario_id: authenticatedUserId,
+        type: requestedType || existingWallet.type || 'internal',
+        status: requestedStatus || existingWallet.status || 'active',
+        fecha_vinculacion: existingWallet.fecha_vinculacion || new Date()
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: existingWallet,
+        message: 'Wallet vinculada exitosamente'
+      });
+    }
+
+    const newWallet = await UserWallet.create({
+      id: `w_${Date.now()}`,
+      address: walletAddress,
+      status: requestedStatus || 'active',
+      type: requestedType || 'internal',
+      usuario_id: authenticatedUserId,
+      fecha_vinculacion: new Date()
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: newWallet,
+      message: 'Wallet creada y vinculada exitosamente'
+    });
+  } catch (error) {
+    console.error('[WALLET] Error en linkWalletToAuthenticatedUser:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error al vincular wallet',
+      details: error.message
+    });
+  }
+};
+
+// POST /wallet/unlink (alias: /wallets/unlink)
+// Desvincula una wallet del usuario autenticado sin eliminar la fila.
+const unlinkWalletFromAuthenticatedUser = async (req, res) => {
+  try {
+    const authenticatedUserId = getAuthenticatedUserId(req);
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Debes iniciar sesion para desvincular una wallet'
+      });
+    }
+
+    const rawPublicKey = normalizeWalletHex(req.body?.publicKey);
+    const rawAddress = normalizeWalletHex(req.body?.address);
+    const walletAddress = (rawAddress || rawPublicKey).toLowerCase();
+
+    if (!walletAddress) {
+      return res.status(400).json({
+        success: false,
+        error: 'Debes enviar publicKey o address'
+      });
+    }
+
+    if ((rawPublicKey && !isValidWalletHex(rawPublicKey)) || (rawAddress && !isValidWalletHex(rawAddress))) {
+      return res.status(400).json({
+        success: false,
+        error: 'Formato de wallet invalido. Se espera hex de 66 o 130 caracteres'
+      });
+    }
+
+    if (rawPublicKey && rawAddress && rawPublicKey.toLowerCase() !== rawAddress.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        error: 'publicKey y address no coinciden'
+      });
+    }
+
+    const wallet = await UserWallet.findOne({ where: { address: walletAddress } });
+    if (!wallet) {
+      return res.status(404).json({
+        success: false,
+        error: 'Wallet no encontrada'
+      });
+    }
+
+    if (!wallet.usuario_id) {
+      return res.status(200).json({
+        success: true,
+        data: wallet,
+        message: 'La wallet ya estaba desvinculada'
+      });
+    }
+
+    if (wallet.usuario_id !== authenticatedUserId) {
+      return res.status(403).json({
+        success: false,
+        error: 'No puedes desvincular una wallet que no pertenece a tu cuenta'
+      });
+    }
+
+    await wallet.update({
+      usuario_id: null,
+      status: 'inactive'
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: wallet,
+      message: 'Wallet desvinculada exitosamente'
+    });
+  } catch (error) {
+    console.error('[WALLET] Error en unlinkWalletFromAuthenticatedUser:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error al desvincular wallet',
+      details: error.message
+    });
+  }
+};
+
 export {
   loadGlobalWallet,
   generateWallet,
@@ -245,4 +449,6 @@ export {
   getPublicKey,
   addressBalance,
   getBalance,
+  linkWalletToAuthenticatedUser,
+  unlinkWalletFromAuthenticatedUser,
 };

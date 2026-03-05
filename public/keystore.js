@@ -9,6 +9,17 @@ console.log('[keystore.js] secp importado:', typeof secp);
 let keystoreData = null;
 let passphrase = '';
 
+function getWalletInputValue() {
+  const el = document.getElementById('walletPublicKeyInput');
+  return (el?.value || '').trim();
+}
+
+function setWalletInputValue(value) {
+  const el = document.getElementById('walletPublicKeyInput');
+  if (!el) return;
+  el.value = typeof value === 'string' ? value : '';
+}
+
 function hexRandom(len) {
   const arr = crypto.getRandomValues(new Uint8Array(len));
   console.log('[hexRandom] Generando hex aleatorio:', arr);
@@ -93,10 +104,49 @@ async function generateKeystore(pass) {
       publicKey: pubHex,
       encryptedPrivateKey
     };
+    setWalletInputValue(pubHex);
     document.getElementById('keystoreStatus').textContent = 'Wallet created successfully.';
     document.getElementById('downloadKeystore').disabled = false;
     console.log('[keystore.js] Keystore generado:', keystoreData);
   });
+}
+
+async function callWalletAssociation(pathname) {
+  const publicKey = getWalletInputValue() || keystoreData?.publicKey || '';
+  if (!publicKey) {
+    document.getElementById('keystoreStatus').textContent = 'Indica una public key valida.';
+    return;
+  }
+
+  try {
+    const res = await fetch(pathname, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ publicKey, type: 'internal', status: 'active' })
+    });
+
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      document.getElementById('keystoreStatus').textContent = payload.error || 'Operacion no completada.';
+      return;
+    }
+
+    document.getElementById('keystoreStatus').textContent = payload.message || 'Operacion completada.';
+  } catch (err) {
+    console.error('[keystore.js] Error en callWalletAssociation:', err);
+    document.getElementById('keystoreStatus').textContent = 'Error de red al contactar con el servidor.';
+  }
+}
+
+async function linkWallet() {
+  await callWalletAssociation('/wallets/link');
+}
+
+async function unlinkWallet() {
+  await callWalletAssociation('/wallets/unlink');
 }
 
 function downloadKeystore() {
@@ -117,6 +167,8 @@ function downloadKeystore() {
 
 document.getElementById('generateKeystore').addEventListener('click', showPassphraseModal);
 document.getElementById('downloadKeystore').addEventListener('click', downloadKeystore);
+document.getElementById('linkWalletBtn')?.addEventListener('click', linkWallet);
+document.getElementById('unlinkWalletBtn')?.addEventListener('click', unlinkWallet);
 document.getElementById('passphraseForm').addEventListener('submit', handlePassphraseSubmit);
 document.getElementById('cancelPassphrase').addEventListener('click', handleCancelPassphrase);
 

@@ -587,6 +587,8 @@ app.use('/token', tokenRoutes);
 
 // ✅ Wallet routes - MIGRADO (GET /wallet/balance, POST /wallet/address-balance)
 app.use('/wallet', walletRoutes);
+// Alias en plural para contratos de frontend (/wallets/link)
+app.use('/wallets', walletRoutes);
 
 // ✅ User routes (PostgreSQL) - Gestión de usuarios
 app.use('/users', userRoutes);
