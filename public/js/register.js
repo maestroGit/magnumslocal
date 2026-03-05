@@ -203,27 +203,49 @@ function toggleCategoriesGroup() {
  */
 async function loadDenominaciones() {
   try {
-    const response = await fetch(`${API_BASE_URL}/denominaciones`);
-    if (!response.ok) throw new Error('Error cargando denominaciones');
-    
-    const result = await response.json();
-    const denominaciones = result.data || [];
+    const perPage = 200;
+    let page = 1;
+    let totalPages = 1;
+    const denominaciones = [];
+
+    while (page <= totalPages) {
+      const endpoint = `${API_BASE_URL}/denominaciones?page=${page}&limit=${perPage}`;
+      const response = await fetch(endpoint);
+      if (!response.ok) throw new Error('Error cargando denominaciones');
+
+      const result = await response.json();
+      const pageData = Array.isArray(result.data) ? result.data : [];
+      denominaciones.push(...pageData);
+
+      const apiTotalPages = Number(result?.pagination?.totalPages);
+      if (Number.isFinite(apiTotalPages) && apiTotalPages > 0) {
+        totalPages = apiTotalPages;
+      } else if (pageData.length < perPage) {
+        totalPages = page;
+      }
+
+      page += 1;
+    }
+
+    const uniqueDenominaciones = Array.from(
+      new Map(denominaciones.map((do_) => [do_.id, do_])).values()
+    );
     
     denominacionesSelect.innerHTML = '<option value="" disabled selected>Selecciona una DO...</option>';
     
-    if (denominaciones.length === 0) {
+    if (uniqueDenominaciones.length === 0) {
       denominacionesSelect.innerHTML = '<option value="" disabled>No hay denominaciones disponibles</option>';
       return;
     }
     
-    denominaciones.forEach(do_ => {
+    uniqueDenominaciones.forEach(do_ => {
       const option = document.createElement('option');
       option.value = do_.id;
       option.textContent = `${do_.tipo || 'DO'} ${do_.nombre} (${do_.region})`;
       denominacionesSelect.appendChild(option);
     });
     
-    console.log('[REGISTER] Denominaciones cargadas:', denominaciones.length);
+    console.log('[REGISTER] Denominaciones cargadas:', uniqueDenominaciones.length);
   } catch (error) {
     console.error('[REGISTER] Error cargando denominaciones:', error);
     denominacionesSelect.innerHTML = '<option value="" disabled>Error al cargar</option>';
@@ -383,6 +405,7 @@ async function submitRegister(event) {
       nombre,
       email,
       role,
+      categorias: role === 'winery' ? ['bodega'] : ['wine_lover'],
       localizacion_direccion: localizacionDireccion,
       localizacion_lat: Number.isFinite(latValue) ? latValue : null,
       localizacion_lng: Number.isFinite(lngValue) ? lngValue : null,
