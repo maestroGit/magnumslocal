@@ -511,8 +511,9 @@ class WineryListManager {
     const email = winery.email || 'No especificado';
     const kycStatus = winery.kyc_status || 'pendiente';
     const subscribStatus = winery.subscription_status || 'activa';
-    const createdAt = winery.created_at 
-      ? new Date(winery.created_at).toLocaleDateString('es-ES') 
+    const registrationDate = winery.fecha_registro || winery.created_at;
+    const createdAt = registrationDate
+      ? new Date(registrationDate).toLocaleDateString('es-ES') 
       : 'N/A';
     
     const categoriesHtml = winery.categorias && winery.categorias.length > 0
@@ -583,8 +584,9 @@ class WineryListManager {
     document.getElementById('modalWineryKYC').textContent = winery.kyc_status || 'pendiente';
     document.getElementById('modalWinerySubscription').textContent = winery.subscription_status || 'activa';
     
-    const createdAt = winery.created_at 
-      ? new Date(winery.created_at).toLocaleDateString('es-ES')
+    const registrationDate = winery.fecha_registro || winery.created_at;
+    const createdAt = registrationDate
+      ? new Date(registrationDate).toLocaleDateString('es-ES')
       : 'N/A';
     document.getElementById('modalWineryCreated').textContent = createdAt;
 

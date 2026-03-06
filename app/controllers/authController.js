@@ -103,7 +103,19 @@ export const postAuthLogin = async (req, res) => {
     console.log('[AUTH] User found:', !!user);
     console.log('[AUTH] Has password_hash:', !!user?.password_hash);
 
-    if (!user || !user.password_hash) {
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    if (!user.password_hash) {
+      const provider = String(user.provider || '').toLowerCase();
+      if (provider && provider !== 'local') {
+        return res.status(400).json({
+          error: `Esta cuenta usa acceso con ${provider}. Usa el inicio de sesión social.`,
+          code: 'OAUTH_ACCOUNT_NO_PASSWORD',
+          provider
+        });
+      }
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
