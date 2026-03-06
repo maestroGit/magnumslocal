@@ -276,8 +276,11 @@ const ensureWalletUtxoSummaryTable = async () => {
 
 const getRuntimeWalletSummary = (address) => {
   const { utxoManager } = global;
-  const normalizedAddress = String(address || '').trim().toLowerCase();
-  const utxos = utxoManager?.getUTXOs(normalizedAddress) || [];
+  const normalizedAddress = String(address || '').trim();
+  let utxos = utxoManager?.getUTXOs(normalizedAddress) || [];
+  if ((!Array.isArray(utxos) || utxos.length === 0) && normalizedAddress.toLowerCase() !== normalizedAddress) {
+    utxos = utxoManager?.getUTXOs(normalizedAddress.toLowerCase()) || [];
+  }
 
   const utxosDisponibles = Array.isArray(utxos) ? utxos.length : 0;
   const balanceDisponible = (Array.isArray(utxos) ? utxos : []).reduce((sum, utxo) => {
@@ -314,7 +317,7 @@ const upsertWalletUtxoSummary = async ({ walletAddress, utxosDisponibles, balanc
 const getWalletUtxoSummary = async (req, res) => {
   try {
     const rawAddress = normalizeWalletHex(req.params?.address || '');
-    const walletAddress = rawAddress.toLowerCase();
+    const walletAddress = rawAddress;
 
     if (!walletAddress) {
       return res.status(400).json({ success: false, error: 'Address is required' });
@@ -326,25 +329,38 @@ const getWalletUtxoSummary = async (req, res) => {
 
     await ensureWalletUtxoSummaryTable();
 
-    // Recalcula desde el UTXO set en runtime y persiste el resumen para lectura rapida.
-    const runtimeSummary = getRuntimeWalletSummary(walletAddress);
-    await upsertWalletUtxoSummary(runtimeSummary);
-
     const [rows] = await UserWallet.sequelize.query(`
       SELECT wallet_address, utxos_disponibles, balance_disponible, updated_at
       FROM wallet_utxo_summary
-      WHERE wallet_address = :walletAddress
+      WHERE LOWER(wallet_address) = LOWER(:walletAddress)
       LIMIT 1
     `, {
       replacements: { walletAddress },
     });
 
-    const row = rows?.[0] || {
-      wallet_address: walletAddress,
-      utxos_disponibles: 0,
-      balance_disponible: 0,
-      updated_at: new Date().toISOString(),
-    };
+    let row = rows?.[0] || null;
+
+    // Solo si no hay registro en BD, recalcular y persistir para inicializar el summary.
+    if (!row) {
+      const runtimeSummary = getRuntimeWalletSummary(walletAddress);
+      await upsertWalletUtxoSummary(runtimeSummary);
+
+      const [freshRows] = await UserWallet.sequelize.query(`
+        SELECT wallet_address, utxos_disponibles, balance_disponible, updated_at
+        FROM wallet_utxo_summary
+        WHERE LOWER(wallet_address) = LOWER(:walletAddress)
+        LIMIT 1
+      `, {
+        replacements: { walletAddress },
+      });
+
+      row = freshRows?.[0] || {
+        wallet_address: walletAddress,
+        utxos_disponibles: 0,
+        balance_disponible: 0,
+        updated_at: new Date().toISOString(),
+      };
+    }
 
     return res.json({
       success: true,
