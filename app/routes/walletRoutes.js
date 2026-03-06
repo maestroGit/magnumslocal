@@ -9,6 +9,7 @@ import {
 	getPublicKey,
 	addressBalance,
 	getBalance,
+	getWalletUtxoSummary,
 	linkWalletToAuthenticatedUser,
 	unlinkWalletFromAuthenticatedUser,
 } from '../controllers/walletController.js';
@@ -41,6 +42,9 @@ router.post('/address-balance', addressBalance);
 
 // GET /balance
 router.get('/balance', requireAuth, requireRole('admin', 'winery'), requireGlobalWalletOwnership, getBalance);
+
+// GET /wallet/:address/utxo-summary
+router.get('/:address/utxo-summary', getWalletUtxoSummary);
 
 // POST /wallet/link
 router.post('/link', linkWalletToAuthenticatedUser);

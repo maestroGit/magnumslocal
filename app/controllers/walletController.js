@@ -9,6 +9,7 @@ import path from 'path';
 import { User, Wallet as UserWallet } from '../models/index.js';
 
 const HEX_KEY_REGEX = /^[a-fA-F0-9]+$/;
+let walletUtxoSummaryTableReady = false;
 
 const getAuthenticatedUserId = (req) => {
   if (req.user?.id) return req.user.id;
@@ -258,6 +259,112 @@ const getBalance = (req, res) => {
   }
 };
 
+const ensureWalletUtxoSummaryTable = async () => {
+  if (walletUtxoSummaryTableReady) return;
+
+  await UserWallet.sequelize.query(`
+    CREATE TABLE IF NOT EXISTS wallet_utxo_summary (
+      wallet_address VARCHAR(160) PRIMARY KEY,
+      utxos_disponibles INTEGER NOT NULL DEFAULT 0 CHECK (utxos_disponibles >= 0),
+      balance_disponible NUMERIC(18,8) NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  walletUtxoSummaryTableReady = true;
+};
+
+const getRuntimeWalletSummary = (address) => {
+  const { utxoManager } = global;
+  const normalizedAddress = String(address || '').trim().toLowerCase();
+  const utxos = utxoManager?.getUTXOs(normalizedAddress) || [];
+
+  const utxosDisponibles = Array.isArray(utxos) ? utxos.length : 0;
+  const balanceDisponible = (Array.isArray(utxos) ? utxos : []).reduce((sum, utxo) => {
+    const amount = Number(utxo?.amount || 0);
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+
+  return {
+    walletAddress: normalizedAddress,
+    utxosDisponibles,
+    balanceDisponible,
+  };
+};
+
+const upsertWalletUtxoSummary = async ({ walletAddress, utxosDisponibles, balanceDisponible }) => {
+  await UserWallet.sequelize.query(`
+    INSERT INTO wallet_utxo_summary (wallet_address, utxos_disponibles, balance_disponible, updated_at)
+    VALUES (:walletAddress, :utxosDisponibles, :balanceDisponible, NOW())
+    ON CONFLICT (wallet_address)
+    DO UPDATE SET
+      utxos_disponibles = EXCLUDED.utxos_disponibles,
+      balance_disponible = EXCLUDED.balance_disponible,
+      updated_at = NOW()
+  `, {
+    replacements: {
+      walletAddress,
+      utxosDisponibles,
+      balanceDisponible,
+    },
+  });
+};
+
+// GET /wallet/:address/utxo-summary
+const getWalletUtxoSummary = async (req, res) => {
+  try {
+    const rawAddress = normalizeWalletHex(req.params?.address || '');
+    const walletAddress = rawAddress.toLowerCase();
+
+    if (!walletAddress) {
+      return res.status(400).json({ success: false, error: 'Address is required' });
+    }
+
+    if (!isValidWalletHex(rawAddress)) {
+      return res.status(400).json({ success: false, error: 'Invalid wallet address format' });
+    }
+
+    await ensureWalletUtxoSummaryTable();
+
+    // Recalcula desde el UTXO set en runtime y persiste el resumen para lectura rapida.
+    const runtimeSummary = getRuntimeWalletSummary(walletAddress);
+    await upsertWalletUtxoSummary(runtimeSummary);
+
+    const [rows] = await UserWallet.sequelize.query(`
+      SELECT wallet_address, utxos_disponibles, balance_disponible, updated_at
+      FROM wallet_utxo_summary
+      WHERE wallet_address = :walletAddress
+      LIMIT 1
+    `, {
+      replacements: { walletAddress },
+    });
+
+    const row = rows?.[0] || {
+      wallet_address: walletAddress,
+      utxos_disponibles: 0,
+      balance_disponible: 0,
+      updated_at: new Date().toISOString(),
+    };
+
+    return res.json({
+      success: true,
+      data: {
+        address: row.wallet_address,
+        utxosDisponibles: Number(row.utxos_disponibles || 0),
+        balanceDisponible: Number(row.balance_disponible || 0),
+        updatedAt: row.updated_at,
+      },
+    });
+  } catch (error) {
+    console.error('[WALLET] Error en getWalletUtxoSummary:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Error fetching wallet UTXO summary',
+      details: error.message,
+    });
+  }
+};
+
 // POST /wallet/link (alias: /wallets/link)
 // Vincula una wallet al usuario autenticado sin requerir creacion de cuenta nueva.
 const linkWalletToAuthenticatedUser = async (req, res) => {
@@ -449,6 +556,7 @@ export {
   getPublicKey,
   addressBalance,
   getBalance,
+  getWalletUtxoSummary,
   linkWalletToAuthenticatedUser,
   unlinkWalletFromAuthenticatedUser,
 };
