@@ -113,6 +113,12 @@
   <!-- Fondo SVG repetitivo aplicado por CSS, bloque wine-background eliminado -->
   <!-- Dashboard Principal -->
   <div class="dashboard">
+    <!-- Panel fijo de notificaciones BURN -->
+    <div id="burnNotificationPanel" style="display:none;position:relative;margin:0 0 18px 0;padding:12px 18px;background:#2d0c0c;color:#fff;border-radius:10px;border:2px solid #b71c1c;box-shadow:0 2px 8px rgba(183,28,28,0.08);font-size:1.05em;z-index:1000;">
+      <strong>🔥 BURN Notification</strong>
+      <button id="closeBurnNotificationPanel" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#fff;font-size:1.3em;cursor:pointer;line-height:1;">&times;</button>
+      <div id="burnNotificationContent" style="margin-top:6px;font-family:monospace;font-size:0.98em;"></div>
+    </div>
     
 
     <div class="dashboard-grid">
@@ -308,4 +314,74 @@
       </div>
     </div>
   </div>
+  <script type="module">
+    // --- BURN Notification WebSocket Client ---
+    import { getCurrentPublicKey } from './js/core/walletUtils.js';
+    // Determinar URL ws según entorno
+    let wsUrl = '';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      wsUrl = 'ws://localhost:6001';
+    } else if (window.location.hostname.includes('app.blockswine.com')) {
+      wsUrl = 'wss://app.blockswine.com';
+    } else if (window.location.hostname.includes('apps.run-on-seenode.com')) {
+      wsUrl = 'wss://web-sdzlt1djuiql.up-de-fra1-k8s-1.apps.run-on-seenode.com';
+    }
+
+    let currentWallet = null;
+    // Actualiza la wallet activa al cargar/cambiar
+    async function updateCurrentWallet() {
+      currentWallet = await getCurrentPublicKey();
+    }
+    updateCurrentWallet();
+    // También refrescar si cambia la wallet global (evento personalizado si lo tienes)
+    window.addEventListener('walletChanged', updateCurrentWallet);
+
+    // Inicializar WebSocket
+    let ws;
+    function connectWS() {
+      if (!wsUrl) return;
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => console.log('[BURN][WS] Connected to', wsUrl);
+      ws.onclose = () => { console.warn('[BURN][WS] Disconnected. Reconnecting in 3s...'); setTimeout(connectWS, 3000); };
+      ws.onerror = err => console.error('[BURN][WS] Error:', err);
+      ws.onmessage = async (msg) => {
+        try {
+          const data = JSON.parse(msg.data);
+          if (data.type === 'BURN_NOTIFICATION' || data.type === 'burn_notification') {
+            // Filtrar por wallet activa si corresponde
+            await updateCurrentWallet();
+            if (!currentWallet) return;
+            if (data.wineloverWallet && data.wineloverWallet !== currentWallet) return;
+            mostrarBurnNotification(data);
+          }
+        } catch (e) { console.warn('[BURN][WS] Mensaje no válido', e); }
+      };
+    }
+    connectWS();
+
+    // Mostrar notificación en el panel fijo
+    function mostrarBurnNotification({ txId, bodegaId, wineloverWallet, amount, fecha }) {
+      const panel = document.getElementById('burnNotificationPanel');
+      const content = document.getElementById('burnNotificationContent');
+      if (!panel || !content) return;
+      content.innerHTML =
+        `<b>Tx:</b> <span style='color:#ffb74d'>${txId}</span><br>`+
+        `<b>Bodega:</b> <span style='color:#fbc02d'>${bodegaId}</span><br>`+
+        `<b>Wallet:</b> <span style='color:#b2ff59'>${wineloverWallet}</span><br>`+
+        `<b>Amount:</b> <span style='color:#ff5252'>${amount}</span><br>`+
+        `<b>Date:</b> <span style='color:#fff'>${new Date(fecha).toLocaleString()}</span>`;
+      panel.style.display = 'block';
+    }
+
+    // Botón de cierre manual para el panel
+    document.addEventListener('DOMContentLoaded', () => {
+      const closeBtn = document.getElementById('closeBurnNotificationPanel');
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          const panel = document.getElementById('burnNotificationPanel');
+          if (panel) panel.style.display = 'none';
+        };
+      }
+    });
+  </script>
   </body>

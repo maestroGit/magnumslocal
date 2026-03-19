@@ -25,12 +25,32 @@ const MESSAGE_TYPES = {
   transaction: "TRANSACTION",
   clear_transactions: "CLEAR_TRANSACTIONS",
   handshake: "HANDSHAKE_HTTP_URL",
+  burn_notification: "BURN_NOTIFICATION",
 };
 
 const P2P_PORT = process.env.P2P_PORT || 5001;
 
 // Clase que representa el servidor P2P
 class P2PServer {
+    // Difunde una notificación de BURN a todos los peers conectados
+    broadcastBurnNotification = ({ txId, bodegaId, wineloverWallet, amount, fecha }) => {
+      const payload = {
+        type: MESSAGE_TYPES.burn_notification,
+        txId,
+        bodegaId,
+        wineloverWallet,
+        amount,
+        fecha
+      };
+      this.sockets.forEach((socket) => {
+        try {
+          socket.send(JSON.stringify(payload));
+        } catch (err) {
+          console.warn('[P2P][BURN_NOTIFICATION] Error enviando notificación:', err);
+        }
+      });
+      console.log('[P2P][BURN_NOTIFICATION] Notificación enviada:', payload);
+    };
   constructor(blockchain, transactionsPool) {
     this.blockchain = blockchain;
     this.transactionsPool = transactionsPool;

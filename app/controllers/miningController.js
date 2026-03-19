@@ -110,7 +110,7 @@ export const mineBlock = async (req, res) => {
       utxoManager.updateWithBlock(block);
     }
 
-    // Registrar eventos BURN en la base de datos
+    // Registrar eventos BURN en la base de datos y emitir notificación ws
     if (block && Array.isArray(block.data)) {
       for (const tx of block.data) {
         if (!tx || !Array.isArray(tx.outputs)) continue;
@@ -126,6 +126,22 @@ export const mineBlock = async (req, res) => {
                 amount: output.amount
               });
               console.log(`[BURN][DB] Evento registrado para tx ${tx.id}, address ${output.address}, amount ${output.amount}`);
+              // Emitir notificación ws a todos los peers
+              // Extraer bodegaId del sufijo de la dirección burn
+              const bodegaId = output.address.slice(42); // 42 = longitud del prefijo 0x000...0000
+              // Extraer wallet del winelover del primer input
+              const wineloverWallet = tx.inputs && tx.inputs[0] ? tx.inputs[0].address : null;
+              const amount = output.amount;
+              const fecha = block.timestamp || new Date().toISOString();
+              if (typeof global.p2pServer?.broadcastBurnNotification === 'function') {
+                global.p2pServer.broadcastBurnNotification({
+                  txId: tx.id,
+                  bodegaId,
+                  wineloverWallet,
+                  amount,
+                  fecha
+                });
+              }
             } catch (err) {
               console.error('[BURN][DB] Error registrando evento BURN:', err);
             }

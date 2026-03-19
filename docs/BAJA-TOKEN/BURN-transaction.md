@@ -226,3 +226,341 @@ El uso del prefijo largo `0x0000000000000000000000000000000000000000` seguido de
 El único "costo" es que el sufijo (id de bodega) se recorta a 20 caracteres, pero normalmente los IDs relevantes caben en ese espacio. El formato actual es seguro, robusto y compatible con buenas prácticas de blockchain.
 ---
 
+---
+## Notificación en tiempo real de BURN (frontend)
+
+Desde marzo 2026, el frontend implementa un sistema de notificación visual en tiempo real para eventos BURN minados, usando WebSocket:
+
+- **Dónde:**
+  - El panel fijo aparece en la vista principal (`public/view.html`), sobre el dashboard.
+  - El código relevante está embebido en un `<script type="module">` al final de ese archivo.
+
+- **Cómo funciona:**
+  1. Al cargar la página, el frontend abre una conexión WebSocket al backend (`ws://localhost:6001` en desarrollo, `wss://app.blockswine.com` en producción).
+  2. Escucha mensajes de tipo `BURN_NOTIFICATION` (o `burn_notification`).
+  3. Cada mensaje contiene: `txId`, `bodegaId`, `wineloverWallet`, `amount`, `fecha`.
+  4. El frontend filtra y solo muestra la notificación si el campo `wineloverWallet` coincide con la wallet actualmente activa/importada.
+  5. Cuando llega una notificación relevante:
+      - Se muestra un panel fijo en la parte superior del dashboard con los datos del evento (Tx, Bodega, Wallet, Amount, Date).
+      - El panel permanece visible hasta que el usuario lo cierre manualmente (botón “X”).
+      - Si llega otra notificación, el panel se actualiza con los nuevos datos.
+
+- **Fragmento de código clave:**
+
+```js
+// ...en public/view.html
+<script type="module">
+  import { getCurrentPublicKey } from './js/core/walletUtils.js';
+  let wsUrl = window.location.hostname === 'localhost' ? 'ws://localhost:6001' : 'wss://app.blockswine.com';
+  let currentWallet = null;
+  async function updateCurrentWallet() { currentWallet = await getCurrentPublicKey(); }
+  updateCurrentWallet();
+  window.addEventListener('walletChanged', updateCurrentWallet);
+  let ws;
+  function connectWS() {
+    ws = new WebSocket(wsUrl);
+    ws.onmessage = async (msg) => {
+      const data = JSON.parse(msg.data);
+      if ((data.type === 'BURN_NOTIFICATION' || data.type === 'burn_notification') && data.wineloverWallet === currentWallet) {
+        mostrarBurnNotification(data);
+      }
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+  }
+  connectWS();
+  function mostrarBurnNotification({ txId, bodegaId, wineloverWallet, amount, fecha }) {
+    const panel = document.getElementById('burnNotificationPanel');
+    const content = document.getElementById('burnNotificationContent');
+    if (!panel || !content) return;
+    content.innerHTML =
+      `<b>Tx:</b> <span style='color:#ffb74d'>${txId}</span><br>` +
+      `<b>Bodega:</b> <span style='color:#fbc02d'>${bodegaId}</span><br>` +
+      `<b>Wallet:</b> <span style='color:#b2ff59'>${wineloverWallet}</span><br>` +
+      `<b>Amount:</b> <span style='color:#ff5252'>${amount}</span><br>` +
+      `<b>Date:</b> <span style='color:#fff'>${new Date(fecha).toLocaleString()}</span>`;
+    panel.style.display = 'block';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeBurnNotificationPanel');
+    if (closeBtn) closeBtn.onclick = () => {
+      const panel = document.getElementById('burnNotificationPanel');
+      if (panel) panel.style.display = 'none';
+    };
+  });
+</script>`
+
+- **Comportamiento:**
+  - El panel solo se muestra para la wallet activa/importada.
+  - El usuario debe cerrarlo manualmente (no se oculta solo).
+  - Si se cambia de wallet, el filtro se actualiza automáticamente.
+
+- **Ventajas:**
+  - El usuario es notificado en tiempo real cuando se mina un BURN relevante para su wallet.
+  - No requiere recargar la página ni polling.
+
+- **Ubicación del panel:**
+  - `<div id="burnNotificationPanel">` sobre el dashboard en `view.html`.
+
+- **Personalización:**
+  - El diseño y la lógica pueden adaptarse fácilmente para mostrar todas las notificaciones (sin filtrar) o para cambiar el estilo visual.
+
+---
+````
+This is the description of what the code block changes:
+<changeDescription>
+Agregar sección de documentación sobre la lógica frontend de notificación BURN en tiempo real, panel visual y filtrado por wallet.
+</changeDescription>
+
+This is the code block that represents the suggested code change:
+````markdown
+## Notificación en tiempo real de BURN (frontend)
+
+Desde marzo 2026, el frontend implementa un sistema de notificación visual en tiempo real para eventos BURN minados, usando WebSocket:
+
+- **Dónde:**
+  - El panel fijo aparece en la vista principal (`public/view.html`), sobre el dashboard.
+  - El código relevante está embebido en un `<script type="module">` al final de ese archivo.
+
+- **Cómo funciona:**
+  1. Al cargar la página, el frontend abre una conexión WebSocket al backend (`ws://localhost:6001` en desarrollo, `wss://app.blockswine.com` en producción).
+  2. Escucha mensajes de tipo `BURN_NOTIFICATION` (o `burn_notification`).
+  3. Cada mensaje contiene: `txId`, `bodegaId`, `wineloverWallet`, `amount`, `fecha`.
+  4. El frontend filtra y solo muestra la notificación si el campo `wineloverWallet` coincide con la wallet actualmente activa/importada.
+  5. Cuando llega una notificación relevante:
+      - Se muestra un panel fijo en la parte superior del dashboard con los datos del evento (Tx, Bodega, Wallet, Amount, Date).
+      - El panel permanece visible hasta que el usuario lo cierre manualmente (botón “X”).
+      - Si llega otra notificación, el panel se actualiza con los nuevos datos.
+
+- **Fragmento de código clave:**
+
+```js
+// ...en public/view.html
+<script type="module">
+  import { getCurrentPublicKey } from './js/core/walletUtils.js';
+  let wsUrl = window.location.hostname === 'localhost' ? 'ws://localhost:6001' : 'wss://app.blockswine.com';
+  let currentWallet = null;
+  async function updateCurrentWallet() { currentWallet = await getCurrentPublicKey(); }
+  updateCurrentWallet();
+  window.addEventListener('walletChanged', updateCurrentWallet);
+  let ws;
+  function connectWS() {
+    ws = new WebSocket(wsUrl);
+    ws.onmessage = async (msg) => {
+      const data = JSON.parse(msg.data);
+      if ((data.type === 'BURN_NOTIFICATION' || data.type === 'burn_notification') && data.wineloverWallet === currentWallet) {
+        mostrarBurnNotification(data);
+      }
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+  }
+  connectWS();
+  function mostrarBurnNotification({ txId, bodegaId, wineloverWallet, amount, fecha }) {
+    const panel = document.getElementById('burnNotificationPanel');
+    const content = document.getElementById('burnNotificationContent');
+    if (!panel || !content) return;
+    content.innerHTML =
+      `<b>Tx:</b> <span style='color:#ffb74d'>${txId}</span><br>` +
+      `<b>Bodega:</b> <span style='color:#fbc02d'>${bodegaId}</span><br>` +
+      `<b>Wallet:</b> <span style='color:#b2ff59'>${wineloverWallet}</span><br>` +
+      `<b>Amount:</b> <span style='color:#ff5252'>${amount}</span><br>` +
+      `<b>Date:</b> <span style='color:#fff'>${new Date(fecha).toLocaleString()}</span>`;
+    panel.style.display = 'block';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeBurnNotificationPanel');
+    if (closeBtn) closeBtn.onclick = () => {
+      const panel = document.getElementById('burnNotificationPanel');
+      if (panel) panel.style.display = 'none';
+    };
+  });
+</script>`
+
+- **Comportamiento:**
+  - El panel solo se muestra para la wallet activa/importada.
+  - El usuario debe cerrarlo manualmente (no se oculta solo).
+  - Si se cambia de wallet, el filtro se actualiza automáticamente.
+
+- **Ventajas:**
+  - El usuario es notificado en tiempo real cuando se mina un BURN relevante para su wallet.
+  - No requiere recargar la página ni polling.
+
+- **Ubicación del panel:**
+  - `<div id="burnNotificationPanel">` sobre el dashboard en `view.html`.
+
+- **Personalización:**
+  - El diseño y la lógica pueden adaptarse fácilmente para mostrar todas las notificaciones (sin filtrar) o para cambiar el estilo visual.
+
+---
+````
+This is the description of what the code block changes:
+<changeDescription>
+Agregar sección de documentación sobre la lógica frontend de notificación BURN en tiempo real, panel visual y filtrado por wallet.
+</changeDescription>
+
+This is the code block that represents the suggested code change:
+````markdown
+## Notificación en tiempo real de BURN (frontend)
+
+Desde marzo 2026, el frontend implementa un sistema de notificación visual en tiempo real para eventos BURN minados, usando WebSocket:
+
+- **Dónde:**
+  - El panel fijo aparece en la vista principal (`public/view.html`), sobre el dashboard.
+  - El código relevante está embebido en un `<script type="module">` al final de ese archivo.
+
+- **Cómo funciona:**
+  1. Al cargar la página, el frontend abre una conexión WebSocket al backend (`ws://localhost:6001` en desarrollo, `wss://app.blockswine.com` en producción).
+  2. Escucha mensajes de tipo `BURN_NOTIFICATION` (o `burn_notification`).
+  3. Cada mensaje contiene: `txId`, `bodegaId`, `wineloverWallet`, `amount`, `fecha`.
+  4. El frontend filtra y solo muestra la notificación si el campo `wineloverWallet` coincide con la wallet actualmente activa/importada.
+  5. Cuando llega una notificación relevante:
+      - Se muestra un panel fijo en la parte superior del dashboard con los datos del evento (Tx, Bodega, Wallet, Amount, Date).
+      - El panel permanece visible hasta que el usuario lo cierre manualmente (botón “X”).
+      - Si llega otra notificación, el panel se actualiza con los nuevos datos.
+
+- **Fragmento de código clave:**
+
+```js
+// ...en public/view.html
+<script type="module">
+  import { getCurrentPublicKey } from './js/core/walletUtils.js';
+  let wsUrl = window.location.hostname === 'localhost' ? 'ws://localhost:6001' : 'wss://app.blockswine.com';
+  let currentWallet = null;
+  async function updateCurrentWallet() { currentWallet = await getCurrentPublicKey(); }
+  updateCurrentWallet();
+  window.addEventListener('walletChanged', updateCurrentWallet);
+  let ws;
+  function connectWS() {
+    ws = new WebSocket(wsUrl);
+    ws.onmessage = async (msg) => {
+      const data = JSON.parse(msg.data);
+      if ((data.type === 'BURN_NOTIFICATION' || data.type === 'burn_notification') && data.wineloverWallet === currentWallet) {
+        mostrarBurnNotification(data);
+      }
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+  }
+  connectWS();
+  function mostrarBurnNotification({ txId, bodegaId, wineloverWallet, amount, fecha }) {
+    const panel = document.getElementById('burnNotificationPanel');
+    const content = document.getElementById('burnNotificationContent');
+    if (!panel || !content) return;
+    content.innerHTML =
+      `<b>Tx:</b> <span style='color:#ffb74d'>${txId}</span><br>` +
+      `<b>Bodega:</b> <span style='color:#fbc02d'>${bodegaId}</span><br>` +
+      `<b>Wallet:</b> <span style='color:#b2ff59'>${wineloverWallet}</span><br>` +
+      `<b>Amount:</b> <span style='color:#ff5252'>${amount}</span><br>` +
+      `<b>Date:</b> <span style='color:#fff'>${new Date(fecha).toLocaleString()}</span>`;
+    panel.style.display = 'block';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeBurnNotificationPanel');
+    if (closeBtn) closeBtn.onclick = () => {
+      const panel = document.getElementById('burnNotificationPanel');
+      if (panel) panel.style.display = 'none';
+    };
+  });
+</script>`
+
+- **Comportamiento:**
+  - El panel solo se muestra para la wallet activa/importada.
+  - El usuario debe cerrarlo manualmente (no se oculta solo).
+  - Si se cambia de wallet, el filtro se actualiza automáticamente.
+
+- **Ventajas:**
+  - El usuario es notificado en tiempo real cuando se mina un BURN relevante para su wallet.
+  - No requiere recargar la página ni polling.
+
+- **Ubicación del panel:**
+  - `<div id="burnNotificationPanel">` sobre el dashboard en `view.html`.
+
+- **Personalización:**
+  - El diseño y la lógica pueden adaptarse fácilmente para mostrar todas las notificaciones (sin filtrar) o para cambiar el estilo visual.
+
+---
+````
+This is the description of what the code block changes:
+<changeDescription>
+Agregar sección de documentación sobre la lógica frontend de notificación BURN en tiempo real, panel visual y filtrado por wallet.
+</changeDescription>
+
+This is the code block that represents the suggested code change:
+````markdown
+## Notificación en tiempo real de BURN (frontend)
+
+Desde marzo 2026, el frontend implementa un sistema de notificación visual en tiempo real para eventos BURN minados, usando WebSocket:
+
+- **Dónde:**
+  - El panel fijo aparece en la vista principal (`public/view.html`), sobre el dashboard.
+  - El código relevante está embebido en un `<script type="module">` al final de ese archivo.
+
+- **Cómo funciona:**
+  1. Al cargar la página, el frontend abre una conexión WebSocket al backend (`ws://localhost:6001` en desarrollo, `wss://app.blockswine.com` en producción).
+  2. Escucha mensajes de tipo `BURN_NOTIFICATION` (o `burn_notification`).
+  3. Cada mensaje contiene: `txId`, `bodegaId`, `wineloverWallet`, `amount`, `fecha`.
+  4. El frontend filtra y solo muestra la notificación si el campo `wineloverWallet` coincide con la wallet actualmente activa/importada.
+  5. Cuando llega una notificación relevante:
+      - Se muestra un panel fijo en la parte superior del dashboard con los datos del evento (Tx, Bodega, Wallet, Amount, Date).
+      - El panel permanece visible hasta que el usuario lo cierre manualmente (botón “X”).
+      - Si llega otra notificación, el panel se actualiza con los nuevos datos.
+
+- **Fragmento de código clave:**
+
+```js
+// ...en public/view.html
+<script type="module">
+  import { getCurrentPublicKey } from './js/core/walletUtils.js';
+  let wsUrl = window.location.hostname === 'localhost' ? 'ws://localhost:6001' : 'wss://app.blockswine.com';
+  let currentWallet = null;
+  async function updateCurrentWallet() { currentWallet = await getCurrentPublicKey(); }
+  updateCurrentWallet();
+  window.addEventListener('walletChanged', updateCurrentWallet);
+  let ws;
+  function connectWS() {
+    ws = new WebSocket(wsUrl);
+    ws.onmessage = async (msg) => {
+      const data = JSON.parse(msg.data);
+      if ((data.type === 'BURN_NOTIFICATION' || data.type === 'burn_notification') && data.wineloverWallet === currentWallet) {
+        mostrarBurnNotification(data);
+      }
+    };
+    ws.onclose = () => setTimeout(connectWS, 3000);
+  }
+  connectWS();
+  function mostrarBurnNotification({ txId, bodegaId, wineloverWallet, amount, fecha }) {
+    const panel = document.getElementById('burnNotificationPanel');
+    const content = document.getElementById('burnNotificationContent');
+    if (!panel || !content) return;
+    content.innerHTML =
+      `<b>Tx:</b> <span style='color:#ffb74d'>${txId}</span><br>` +
+      `<b>Bodega:</b> <span style='color:#fbc02d'>${bodegaId}</span><br>` +
+      `<b>Wallet:</b> <span style='color:#b2ff59'>${wineloverWallet}</span><br>` +
+      `<b>Amount:</b> <span style='color:#ff5252'>${amount}</span><br>` +
+      `<b>Date:</b> <span style='color:#fff'>${new Date(fecha).toLocaleString()}</span>`;
+    panel.style.display = 'block';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeBurnNotificationPanel');
+    if (closeBtn) closeBtn.onclick = () => {
+      const panel = document.getElementById('burnNotificationPanel');
+      if (panel) panel.style.display = 'none';
+    };
+  });
+</script>`
+
+- **Comportamiento:**
+  - El panel solo se muestra para la wallet activa/importada.
+  - El usuario debe cerrarlo manualmente (no se oculta solo).
+  - Si se cambia de wallet, el filtro se actualiza automáticamente.
+
+- **Ventajas:**
+  - El usuario es notificado en tiempo real cuando se mina un BURN relevante para su wallet.
+  - No requiere recargar la página ni polling.
+
+- **Ubicación del panel:**
+  - `<div id="burnNotificationPanel">` sobre el dashboard en `view.html`.
+
+- **Personalización:**
+  - El diseño y la lógica pueden adaptarse fácilmente para mostrar todas las notificaciones (sin filtrar) o para cambiar el estilo visual.
+
+---
+```
