@@ -3,12 +3,9 @@ import scrypt from './js/vendor/scrypt-pbkdf2-shim.mjs';
 import * as secp from './vendor/secp256k1.mjs';
 
 
-// Motivos y sufijos centralizados
-const BURN_MOTIVES = {
-  burn: { label: 'Select Cellar', suffix: 'BURN' },
-  pierola: { label: 'Fernández de Piérola', suffix: 'PIEROLA' },
-  traslascuestas: { label: 'Traslascuestas', suffix: 'TRASLASCUESTAS' },
-  chateaubordeaux: { label: 'Château Bordeaux', suffix: 'CHATEAUBORDEAUX' },
+// Motivos y sufijos centralizados (se cargarán dinámicamente desde la API)
+let BURN_MOTIVES = {
+  burn: { label: 'Select Cellar', suffix: 'BURN' }
 };
 
 const statusEl = document.getElementById('burnStatus');
@@ -19,16 +16,49 @@ const modalPassphrase = document.getElementById('modalPassphrase');
 const modalConfirm = document.getElementById('modalConfirm');
 const modalCancel = document.getElementById('modalCancel');
 
-// Poblar el select de motivos de forma robusta
-if (reasonSelect) {
-  reasonSelect.innerHTML = '';
-  Object.entries(BURN_MOTIVES).forEach(([value, { label }]) => {
-    const opt = document.createElement('option');
-    opt.value = value;
-    opt.textContent = label;
-    reasonSelect.appendChild(opt);
-  });
+// Cargar bodegas dinámicamente desde la API
+async function loadBodegas() {
+  try {
+    const res = await fetch('/users?role=winery', { credentials: 'include' });
+    if (!res.ok) {
+      console.warn('[BODEGAS] No se pudo cargar la lista de bodegas:', res.status);
+      return;
+    }
+    const data = await res.json();
+    
+    if (data.success && Array.isArray(data.data)) {
+      // Construir BURN_MOTIVES desde las bodegas
+      BURN_MOTIVES = {
+        burn: { label: 'Select Cellar', suffix: 'BURN' }
+      };
+      
+      data.data.forEach(bodega => {
+        BURN_MOTIVES[bodega.id] = {
+          label: bodega.nombre,
+          suffix: bodega.id.toUpperCase().slice(0, 20) // Limitar a 20 caracteres para la dirección
+        };
+      });
+      
+      console.log('[BODEGAS] Cargadas', Object.keys(BURN_MOTIVES).length - 1, 'bodegas');
+    }
+  } catch (error) {
+    console.error('[BODEGAS] Error cargando bodegas:', error);
+  }
+  
+  // Poblar el select de motivos de forma robusta
+  if (reasonSelect) {
+    reasonSelect.innerHTML = '';
+    Object.entries(BURN_MOTIVES).forEach(([value, { label }]) => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      reasonSelect.appendChild(opt);
+    });
+  }
 }
+
+// Cargar bodegas al iniciar
+await loadBodegas();
 
 let utxos = [];
 let selectedUTXO = null;

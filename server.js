@@ -206,21 +206,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-const ensureUserSocialColumns = async () => {
-  try {
-    await User.sequelize.query(`
-      ALTER TABLE usuarios
-      ADD COLUMN IF NOT EXISTS social_x VARCHAR(300),
-      ADD COLUMN IF NOT EXISTS social_instagram VARCHAR(300),
-      ADD COLUMN IF NOT EXISTS social_youtube VARCHAR(300)
-    `);
-    console.log('[DATABASE] ✅ Columnas sociales verificadas en usuarios (social_x, social_instagram, social_youtube)');
-  } catch (error) {
-    console.error('[DATABASE] ⚠️ No se pudieron verificar/crear columnas sociales en usuarios:', error.message);
-  }
-};
 
-ensureUserSocialColumns();
 // ============================================================================
 // SECCIÓN 4: SISTEMA DE LOGS Y MONITOREO
 // ============================================================================

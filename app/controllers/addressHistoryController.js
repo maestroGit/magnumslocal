@@ -15,6 +15,7 @@ const getAddressHistory = (req, res) => {
           history.push({
             txId: tx.id,
             type: "recibido",
+            origin: tx.origin || null,
             amount: output.amount,
             blockHash: block.hash,
             blockTimestamp: block.timestamp,
@@ -43,6 +44,7 @@ const getAddressHistory = (req, res) => {
           history.push({
             txId: tx.id,
             type: tipoOperacion,
+            origin: tx.origin || null,
             amount: input.amount,
             blockHash: block.hash,
             blockTimestamp: block.timestamp,
@@ -63,6 +65,7 @@ const getAddressHistory = (req, res) => {
         history.push({
           txId: tx.id,
           type: "recibido",
+          origin: tx.origin || null,
           amount: output.amount,
           blockHash: null,
           timestamp: tx.timestamp,
@@ -89,6 +92,7 @@ const getAddressHistory = (req, res) => {
         history.push({
           txId: tx.id,
           type: tipoOperacion,
+          origin: tx.origin || null,
           amount: input.amount,
           blockHash: null,
           timestamp: tx.timestamp,

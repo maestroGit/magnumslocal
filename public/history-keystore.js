@@ -177,10 +177,16 @@ function renderItem(item) {
   const dateSpan = document.createElement('span');
   dateSpan.style.lineHeight = '1.2';
   dateSpan.textContent = ts ? ts.toLocaleString() : '';
+
+  const originSpan = document.createElement('span');
+  originSpan.style.lineHeight = '1.2';
+  originSpan.style.color = '#f3b26f';
+  originSpan.textContent = item.origin ? `Origin: ${shortId(item.origin)}` : '';
   
   meta.appendChild(whoSpan);
   meta.appendChild(txidSpan);
   meta.appendChild(dateSpan);
+  if (item.origin) meta.appendChild(originSpan);
   main.appendChild(top);
   main.appendChild(meta);
   row.appendChild(main);

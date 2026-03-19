@@ -13,7 +13,7 @@
  * Response (on success):
  *   200 JSON con datos del bloque minado
  */
-export const mineBlock = (req, res) => {
+export const mineBlock = async (req, res) => {
   try {
     // Acceder a instancias globales
     const { tp, miner, p2pServer, utxoManager } = global;
@@ -71,7 +71,7 @@ export const mineBlock = (req, res) => {
     // Usar el miner para procesar transacciones pendientes
     let block;
     try {
-      block = miner.mine();
+      block = await miner.mine();
     } catch (err) {
       console.error("[MINER] Error interno en miner.mine():", err);
       return res.status(500).json({
@@ -110,6 +110,30 @@ export const mineBlock = (req, res) => {
       utxoManager.updateWithBlock(block);
     }
 
+    // Registrar eventos BURN en la base de datos
+    if (block && Array.isArray(block.data)) {
+      for (const tx of block.data) {
+        if (!tx || !Array.isArray(tx.outputs)) continue;
+        for (const output of tx.outputs) {
+          if (
+            typeof output.address === 'string' &&
+            output.address.startsWith('0x0000000000000000000000000000000000000000')
+          ) {
+            try {
+              await BurnEvent.create({
+                tx_id: tx.id,
+                burn_address: output.address,
+                amount: output.amount
+              });
+              console.log(`[BURN][DB] Evento registrado para tx ${tx.id}, address ${output.address}, amount ${output.amount}`);
+            } catch (err) {
+              console.error('[BURN][DB] Error registrando evento BURN:', err);
+            }
+          }
+        }
+      }
+    }
+
     res.json({
       success: true,
       message: "Bloque minado exitosamente",
@@ -146,7 +170,7 @@ export const mineBlock = (req, res) => {
  *   - Éxito: redirección HTTP a /blocks.
  *   - Error: 4xx/5xx con JSON.
  */
-export const mineTransactionsLegacy = (req, res) => {
+export const mineTransactionsLegacy = async (req, res) => {
   try {
     const { tp, miner } = global;
 
@@ -159,7 +183,7 @@ export const mineTransactionsLegacy = (req, res) => {
       });
     }
 
-    const block = miner.mine();
+    const block = await miner.mine();
     if (!block) {
       return res.status(500).json({ 
         success: false, 

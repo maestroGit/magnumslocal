@@ -10,6 +10,34 @@ import { Transaction } from '../../wallet/transactions.js';
 import { Wallet } from '../../wallet/wallet.js';
 import { INITIAL_BALANCE } from '../../config/constantConfig.js';
 
+const findTransactionById = (txId, bc, tp) => {
+  if (!txId || !bc || !Array.isArray(bc.chain)) return null;
+  for (const block of bc.chain) {
+    if (!block || !Array.isArray(block.data)) continue;
+    const tx = block.data.find((candidate) => candidate && candidate.id === txId);
+    if (tx) return tx;
+  }
+  if (tp && Array.isArray(tp.transactions)) {
+    return tp.transactions.find((candidate) => candidate && candidate.id === txId) || null;
+  }
+  return null;
+};
+
+const inferOriginFromInputs = (signedTransaction, bc, tp) => {
+  if (!signedTransaction || !Array.isArray(signedTransaction.inputs)) return null;
+
+  for (const input of signedTransaction.inputs) {
+    const parentTx = findTransactionById(input.txId, bc, tp);
+    if (!parentTx) continue;
+
+    // Regla de negocio: el origen se propaga solo por metadato explícito.
+    // No se infiere desde direcciones burn, porque esos UTXOs no deben reutilizarse.
+    if (parentTx.origin) return parentTx.origin;
+  }
+
+  return null;
+};
+
 // ============================================================================
 // FUNCIÓN: getTransactionsPool
 // ============================================================================
@@ -48,7 +76,7 @@ export const createTransaction = async (req, res) => {
   console.log("[POST /transaction] req.body:", JSON.stringify(req.body, null, 2));
 
   // Deserializar variables del request body
-  const { signedTransaction, recipient, amount, passphrase, keystore, inputs, mode } = req.body;
+  const { signedTransaction, recipient, amount, passphrase, keystore, inputs, mode, origin } = req.body;
 
   // ============================================================================
   // FLUJO 1: USUARIO - Transacción Pre-firmada
@@ -109,6 +137,13 @@ export const createTransaction = async (req, res) => {
           success: false, 
           error: "Invalid transaction signature" 
         });
+      }
+
+      // Enriquecer metadata opcional de trazabilidad sin tocar hash/firma.
+      // 'origin' del payload se prioriza para flujo burn; en transfer se intenta heredar del UTXO origen.
+      const inferredOrigin = origin || inferOriginFromInputs(signedTransaction, bc, tp);
+      if (inferredOrigin) {
+        signedTransaction.origin = inferredOrigin;
       }
 
       // Añadir a la mempool y propagar
