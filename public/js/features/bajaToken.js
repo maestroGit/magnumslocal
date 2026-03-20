@@ -2,6 +2,7 @@
 // Exports: openBajaTransactionModal, submitBajaToken
 
 import { safeModal, showModal, showToast, showProgressModal, closeCurrentModal } from '../ui/modals.js';
+import { showBurnNotification } from './burnNotification.js';
 import { fetchData } from '../core/api.js';
 
 export function openBajaTransactionModal() {
@@ -93,6 +94,9 @@ export async function submitBajaToken({ transactionId, ownerPublicKey, motivo, u
       body: JSON.stringify({ transactionId, ownerPublicKey, motivo, utxoTxId, utxoOutputIndex })
     });
     closeCurrentModal && closeCurrentModal();
+    if (motivo === 'burn') {
+      showBurnNotification(`BURN realizado: txId=${transactionId}, owner=${ownerPublicKey}`);
+    }
     if (result?.success) {
       showModal && showModal(`✅ ${result.message}<br>ID: <code>${result.transactionId}</code><br>Destination: <code>${result.destino}</code>`, 'Token Removal Successful');
       showToast && showToast('Removal completed successfully', 'success');

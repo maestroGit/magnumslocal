@@ -1,0 +1,36 @@
+/* BURN Notification Panel Styles */
+.burn-notification-panel {
+  display: none;
+  position: relative;
+  margin: 0 0 18px 0;
+  padding: 12px 18px;
+  background: #2d0c0c;
+  color: #fff;
+  border-radius: 10px;
+  border: 2px solid #b71c1c;
+  box-shadow: 0 2px 8px rgba(183,28,28,0.08);
+  font-size: 1.05em;
+  z-index: 1000;
+}
+
+.burn-notification-panel strong {
+  font-weight: bold;
+}
+
+.close-burn-notification-panel {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.3em;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.burn-notification-content {
+  margin-top: 6px;
+  font-family: monospace;
+  font-size: 0.98em;
+}

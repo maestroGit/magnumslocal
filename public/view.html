@@ -18,6 +18,7 @@
   <link rel="stylesheet" type="text/css" href="wallet.css">
   <link rel="stylesheet" type="text/css" href="utilities.css">
   <link rel="stylesheet" type="text/css" href="transaction.css">
+  <link rel="stylesheet" type="text/css" href="burn-notification.css">
   <!-- Unify UI behavior with blocksWine: metric-value and compact header nav -->
   <link rel="stylesheet" type="text/css" href="header-custom.css">
     <link rel="stylesheet" type="text/css" href="styles.css">
@@ -114,10 +115,10 @@
   <!-- Dashboard Principal -->
   <div class="dashboard">
     <!-- Panel fijo de notificaciones BURN -->
-    <div id="burnNotificationPanel" style="display:none;position:relative;margin:0 0 18px 0;padding:12px 18px;background:#2d0c0c;color:#fff;border-radius:10px;border:2px solid #b71c1c;box-shadow:0 2px 8px rgba(183,28,28,0.08);font-size:1.05em;z-index:1000;">
+    <div id="burnNotificationPanel" class="burn-notification-panel">
       <strong>🔥 BURN Notification</strong>
-      <button id="closeBurnNotificationPanel" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#fff;font-size:1.3em;cursor:pointer;line-height:1;">&times;</button>
-      <div id="burnNotificationContent" style="margin-top:6px;font-family:monospace;font-size:0.98em;"></div>
+      <button id="closeBurnNotificationPanel" class="close-burn-notification-panel">&times;</button>
+      <div id="burnNotificationContent" class="burn-notification-content"></div>
     </div>
     
 
