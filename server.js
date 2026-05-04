@@ -81,6 +81,7 @@ import User from './app/models/User.js';
 // Importaciones de routers modulares
 import adminRoutes from './app/routes/adminRoutes.js';
 import authRoutes from './app/routes/authRoutes.js';
+import localAuthRoutes from './app/routes/localAuth.js';
 import loteRoutes from './app/routes/loteRoutes.js';
 import blockchainRoutes from './app/routes/blockchainRoutes.js';
 import createLogRouter from './app/routes/logRoutes.js';
@@ -568,6 +569,9 @@ global.miner = miner;
 // ✅ Auth routes (OAuth Google) - MIGRADO FASE 1
 app.use('/', authRoutes);
 
+// ✅ Local auth routes (forgot/reset password)
+app.use('/local', localAuthRoutes);
+
 // ✅ Token routes (baja-token) - MIGRADO
 app.use('/token', tokenRoutes);
 
@@ -594,6 +598,11 @@ app.get("/view", (req, res) => {
 app.get("/", (req, res) => {
   const viewPath = path.join(__dirname, "public", "view.html");
   res.sendFile(viewPath);
+});
+
+app.get('/reset-password', (req, res) => {
+  const resetPath = path.join(__dirname, 'public', 'reset-password.html');
+  res.sendFile(resetPath);
 });
 
 // ✅ UTXO routes - MIGRADO

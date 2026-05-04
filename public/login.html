@@ -54,10 +54,13 @@
         </div>
         <form id="authForm" autocomplete="on" class="auth-form">
           <label for="auth-username">email registrado</label>
-          <input type="text" id="auth-username" name="username" required autocomplete="username">
+          <input type="email" id="auth-username" name="username" required autocomplete="username">
           <label for="auth-password">Contraseña</label>
           <input type="password" id="auth-password" name="password" required autocomplete="current-password">
           <button type="submit" class="keystore-btn primary">Iniciar sesión</button>
+          <div class="login-register-link" style="margin-top:8px; text-align:right; font-size:0.92rem;">
+            <a href="/forgot-password.html" class="link">¿Olvidaste tu contraseña?</a>
+          </div>
           <div id="auth-error" class="auth-error"></div>
         </form>
         <div class="google-login-container">
