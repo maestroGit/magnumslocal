@@ -267,23 +267,74 @@ const ensureWalletUtxoSummaryTable = async () => {
       wallet_address VARCHAR(160) PRIMARY KEY,
       utxos_disponibles INTEGER NOT NULL DEFAULT 0 CHECK (utxos_disponibles >= 0),
       balance_disponible NUMERIC(18,8) NOT NULL DEFAULT 0,
+      utxos_pendientes INTEGER NOT NULL DEFAULT 0 CHECK (utxos_pendientes >= 0),
+      balance_pendiente NUMERIC(18,8) NOT NULL DEFAULT 0,
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
+  `);
+
+  await UserWallet.sequelize.query(`
+    ALTER TABLE wallet_utxo_summary
+    ADD COLUMN IF NOT EXISTS utxos_pendientes INTEGER NOT NULL DEFAULT 0 CHECK (utxos_pendientes >= 0)
+  `);
+
+  await UserWallet.sequelize.query(`
+    ALTER TABLE wallet_utxo_summary
+    ADD COLUMN IF NOT EXISTS balance_pendiente NUMERIC(18,8) NOT NULL DEFAULT 0
   `);
 
   walletUtxoSummaryTableReady = true;
 };
 
 const getRuntimeWalletSummary = (address) => {
-  const { utxoManager } = global;
+  const { utxoManager, tp } = global;
   const normalizedAddress = String(address || '').trim();
   let utxos = utxoManager?.getUTXOs(normalizedAddress) || [];
   if ((!Array.isArray(utxos) || utxos.length === 0) && normalizedAddress.toLowerCase() !== normalizedAddress) {
     utxos = utxoManager?.getUTXOs(normalizedAddress.toLowerCase()) || [];
   }
 
-  const utxosDisponibles = Array.isArray(utxos) ? utxos.length : 0;
-  const balanceDisponible = (Array.isArray(utxos) ? utxos : []).reduce((sum, utxo) => {
+  utxos = (Array.isArray(utxos) ? utxos : []).map((utxo) => ({ ...utxo, address: normalizedAddress }));
+
+  const mempoolInputs = (tp?.transactions || []).flatMap((tx) => tx.inputs || []);
+  const mempoolOutputs = (tp?.transactions || []).flatMap((tx) =>
+    (tx.outputs || []).map((output, idx) => ({
+      ...output,
+      txId: tx.id,
+      outputIndex: idx,
+      status: 'pending-mempool',
+    }))
+  );
+
+  const utxosPendientesSpend = utxos.filter((utxo) =>
+    mempoolInputs.some((input) =>
+      input.txId === utxo.txId &&
+      input.outputIndex === utxo.outputIndex &&
+      input.address === utxo.address &&
+      input.amount === utxo.amount
+    )
+  );
+
+  const utxosPendientesMempool = mempoolOutputs.filter((output) => output.address === normalizedAddress);
+
+  const utxosDisponiblesList = utxos.filter((utxo) =>
+    !mempoolInputs.some((input) =>
+      input.txId === utxo.txId &&
+      input.outputIndex === utxo.outputIndex &&
+      input.address === utxo.address &&
+      input.amount === utxo.amount
+    )
+  );
+
+  const utxosPendientesList = [...utxosPendientesSpend, ...utxosPendientesMempool];
+
+  const utxosDisponibles = utxosDisponiblesList.length;
+  const balanceDisponible = utxosDisponiblesList.reduce((sum, utxo) => {
+    const amount = Number(utxo?.amount || 0);
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+  const utxosPendientes = utxosPendientesList.length;
+  const balancePendiente = utxosPendientesList.reduce((sum, utxo) => {
     const amount = Number(utxo?.amount || 0);
     return sum + (Number.isFinite(amount) ? amount : 0);
   }, 0);
@@ -292,23 +343,36 @@ const getRuntimeWalletSummary = (address) => {
     walletAddress: normalizedAddress,
     utxosDisponibles,
     balanceDisponible,
+    utxosPendientes,
+    balancePendiente,
   };
 };
 
-const upsertWalletUtxoSummary = async ({ walletAddress, utxosDisponibles, balanceDisponible }) => {
+const upsertWalletUtxoSummary = async ({ walletAddress, utxosDisponibles, balanceDisponible, utxosPendientes, balancePendiente }) => {
   await UserWallet.sequelize.query(`
-    INSERT INTO wallet_utxo_summary (wallet_address, utxos_disponibles, balance_disponible, updated_at)
-    VALUES (:walletAddress, :utxosDisponibles, :balanceDisponible, NOW())
+    INSERT INTO wallet_utxo_summary (
+      wallet_address,
+      utxos_disponibles,
+      balance_disponible,
+      utxos_pendientes,
+      balance_pendiente,
+      updated_at
+    )
+    VALUES (:walletAddress, :utxosDisponibles, :balanceDisponible, :utxosPendientes, :balancePendiente, NOW())
     ON CONFLICT (wallet_address)
     DO UPDATE SET
       utxos_disponibles = EXCLUDED.utxos_disponibles,
       balance_disponible = EXCLUDED.balance_disponible,
+      utxos_pendientes = EXCLUDED.utxos_pendientes,
+      balance_pendiente = EXCLUDED.balance_pendiente,
       updated_at = NOW()
   `, {
     replacements: {
       walletAddress,
       utxosDisponibles,
       balanceDisponible,
+      utxosPendientes,
+      balancePendiente,
     },
   });
 };
@@ -329,8 +393,11 @@ const getWalletUtxoSummary = async (req, res) => {
 
     await ensureWalletUtxoSummaryTable();
 
+    const runtimeSummary = getRuntimeWalletSummary(walletAddress);
+    await upsertWalletUtxoSummary(runtimeSummary);
+
     const [rows] = await UserWallet.sequelize.query(`
-      SELECT wallet_address, utxos_disponibles, balance_disponible, updated_at
+      SELECT wallet_address, utxos_disponibles, balance_disponible, utxos_pendientes, balance_pendiente, updated_at
       FROM wallet_utxo_summary
       WHERE LOWER(wallet_address) = LOWER(:walletAddress)
       LIMIT 1
@@ -338,29 +405,14 @@ const getWalletUtxoSummary = async (req, res) => {
       replacements: { walletAddress },
     });
 
-    let row = rows?.[0] || null;
-
-    // Solo si no hay registro en BD, recalcular y persistir para inicializar el summary.
-    if (!row) {
-      const runtimeSummary = getRuntimeWalletSummary(walletAddress);
-      await upsertWalletUtxoSummary(runtimeSummary);
-
-      const [freshRows] = await UserWallet.sequelize.query(`
-        SELECT wallet_address, utxos_disponibles, balance_disponible, updated_at
-        FROM wallet_utxo_summary
-        WHERE LOWER(wallet_address) = LOWER(:walletAddress)
-        LIMIT 1
-      `, {
-        replacements: { walletAddress },
-      });
-
-      row = freshRows?.[0] || {
-        wallet_address: walletAddress,
-        utxos_disponibles: 0,
-        balance_disponible: 0,
-        updated_at: new Date().toISOString(),
-      };
-    }
+    const row = rows?.[0] || {
+      wallet_address: walletAddress,
+      utxos_disponibles: runtimeSummary.utxosDisponibles,
+      balance_disponible: runtimeSummary.balanceDisponible,
+      utxos_pendientes: runtimeSummary.utxosPendientes,
+      balance_pendiente: runtimeSummary.balancePendiente,
+      updated_at: new Date().toISOString(),
+    };
 
     return res.json({
       success: true,
@@ -368,6 +420,8 @@ const getWalletUtxoSummary = async (req, res) => {
         address: row.wallet_address,
         utxosDisponibles: Number(row.utxos_disponibles || 0),
         balanceDisponible: Number(row.balance_disponible || 0),
+        utxosPendientes: Number(row.utxos_pendientes || 0),
+        balancePendiente: Number(row.balance_pendiente || 0),
         updatedAt: row.updated_at,
       },
     });
