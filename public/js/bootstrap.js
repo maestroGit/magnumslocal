@@ -23,12 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initDomEvents(); } catch (e) { console.debug('DOM events init skipped', e); }
   // Verification feature doesn't need explicit init; function exposed globally.
 
-  // Mostrar la clave pública global en el header
-  import('./core/walletUtils.js').then(({ getCurrentPublicKey }) => {
+  // Mostrar la clave pública global en el header o, si falla, el motivo exacto.
+  import('./core/walletUtils.js').then(({ getCurrentPublicKeyInfo }) => {
     const pubKeySpan = document.getElementById('walletGlobalPubKeyValue');
     if (pubKeySpan) {
-      getCurrentPublicKey().then(pk => {
-        pubKeySpan.textContent = pk ? pk : 'No disponible';
+      getCurrentPublicKeyInfo().then(({ publicKey, error }) => {
+        pubKeySpan.textContent = publicKey || error || 'No disponible';
       });
     }
   });

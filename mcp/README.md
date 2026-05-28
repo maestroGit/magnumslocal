@@ -500,6 +500,40 @@ grep "error" mcp.log | jq .
 
 ---
 
+## 🏁 Uso recomendado y estructura consolidada (2026)
+
+### Ejecución estándar (Claude Desktop o integración IA)
+
+```bash
+npm start
+```
+Esto ejecuta `server.js`, el servidor MCP completo y oficial.
+
+### Smoke test rápido
+
+```bash
+npm run smoke
+```
+Esto ejecuta `server-simple.js` para comprobar canal MCP y conectividad básica.
+
+### Test programático
+
+```bash
+npm run test:mcp
+```
+Esto ejecuta `test-mcp-vscode.js` para validar respuesta MCP desde código.
+
+### Extensión VS Code
+
+La extensión está en `mcp/vscode-extension/` y se instala con el script `install.sh` o empaqueta con `create-vsix.sh`. Es independiente del servidor MCP y sirve para UI local y pruebas visuales.
+
+### Scripts y documentación legacy
+
+- Scripts de prueba antiguos y documentación desactualizada han sido movidos a `mcp/docs-legacy/`.
+- Consulta solo este README para el flujo actualizado.
+
+---
+
 **🍷 Del Terruño al Ciberespacio - La revolución de la IA en blockchain vitivinícola 2025**
 
 > Este MCP Server marca el inicio de una nueva era donde la gestión blockchain se vuelve conversacional e inteligente. El futuro del vino está en la intersección entre tradición milenaria y tecnología de vanguardia.

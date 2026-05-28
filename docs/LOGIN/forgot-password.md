@@ -277,3 +277,75 @@ try {
 1. Si se rota `JWT_SECRET`, los tokens emitidos previamente dejan de ser validos.
 2. Para produccion, activar rate limiting dedicado por endpoint `/local/forgot-password`.
 3. Revisar deliverability SMTP (SPF/DKIM/DMARC) para mejorar llegada de correos.
+
+
+Ya confirmé que esa cuenta sí es elegible para recuperación local (provider: email y password_hash presente). Ahora verifico el punto exacto: si el envío SMTP falla por falta de variables.
+
+Correcto: ahora mismo te falta la parte de envío real de email en local.
+
+Lo verifiqué en tu entorno:
+
+La cuenta sí es válida para reset local.
+El envío SMTP falla por configuración ausente:
+SMTP_ERR: Falta configurar SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS
+Además, para generar el token también necesitas JWT_SECRET activo (en tu .env está comentado).
+Por eso ves el mensaje genérico aunque no se envíe correo:
+
+Ese endpoint responde siempre 200 con texto genérico por seguridad (anti-enumeración), incluso si falla el envío.
+Dónde está validado esto:
+
+app/utils/sendEmail.js
+app/controllers/localAuthController.js
+app/utils/generateResetToken.js
+.env
+Qué te falta añadir en .env:
+
+JWT_SECRET
+SMTP_HOST
+SMTP_PORT
+SMTP_USER
+SMTP_PASS
+SMTP_FROM
+APP_URL
+RESET_TOKEN_TTL_MINUTES
+Ejemplo mínimo:
+JWT_SECRET=un_secreto_largo_y_aleatorio
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu_correo
+SMTP_PASS=tu_app_password
+SMTP_FROM=BlocksWine no-reply@blockswine.com
+APP_URL=http://localhost:6001
+RESET_TOKEN_TTL_MINUTES=15
+
+Después:
+
+Reinicia servidor: npm run start:local
+Repite forgot-password
+Revisa logs del servidor: si SMTP está bien, no verás error y llegará el correo.
+Si quieres, en el siguiente paso te dejo una configuración exacta para Gmail (App Password) o para tu proveedor SMTP.
+
+
+50 x 10
+4
+yes
+
+Voy a reintentar el cambio en magnumslocal/.env ahora mismo y luego te dejo el siguiente paso para probar el envío real.
+
+Implementado en magnumslocal/.env.
+
+Añadí este bloque:
+
+JWT_SECRET=un_secreto_largo_y_aleatorio
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu_correo
+SMTP_PASS=tu_app_password
+SMTP_FROM=BlocksWine <no-reply@blockswine.com>no-reply@blockswine.com
+APP_URL=http://localhost:6001
+RESET_TOKEN_TTL_MINUTES=15
+Siguiente paso obligatorio:
+
+Sustituir SMTP_USER y SMTP_PASS por credenciales reales (en Gmail, SMTP_PASS debe ser App Password).
+Reiniciar servidor (npm run start:local).
+Probar otra vez “Enviar enlace”.
