@@ -13,23 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'view.html';
   };
 
-  const redirectAuthenticatedUser = async () => {
-    try {
-      const authResponse = await fetch('/auth/user', { credentials: 'include' });
-      if (!authResponse.ok) return;
-
-      const authData = await authResponse.json().catch(() => ({}));
-      if (!authData.user) return;
-
-      window.location.href = getPostLoginPath(authData.user.role);
-    } catch (error) {
-      console.warn('[LOGIN] No se pudo verificar sesion existente:', error);
-    }
-  };
-
   if (!form) return;
-
-  redirectAuthenticatedUser();
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

@@ -306,7 +306,9 @@ const isGoogleProfileIncomplete = (user) => {
 const PUBLIC_HTML_PATHS = new Set([
   '/login.html',
   '/register.html',
-  '/complete-profile.html'
+  '/complete-profile.html',
+  '/forgot-password.html',
+  '/reset-password.html'
 ]);
 
 const normalizeHtmlPath = (requestPath) => {

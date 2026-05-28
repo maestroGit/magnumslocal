@@ -56,6 +56,11 @@
 	gap: 12px;
 	max-width: 320px;
 }
+.login-forgot-link {
+	margin-top: 8px;
+	text-align: right;
+	font-size: 0.92rem;
+}
 .auth-error {
 	color: #b00;
 	display: none;
