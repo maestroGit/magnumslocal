@@ -86,12 +86,12 @@ export function renderTransactionsPool(transactionsPool) {
         const inputsDetail = tx.inputs && Array.isArray(tx.inputs) && tx.inputs.length > 0
           ? `<ul>${tx.inputs.map(input => `
               <li>
-                <strong>txId:</strong> <span class="tx-id">${input.txId || ''}</span><br>
+                <strong>txId:</strong><br><code class="tx-id tx-id-full tx-id-block">${input.txId || ''}</code><br>
                 <strong>outputIndex:</strong> ${input.outputIndex ?? ''}<br>
-                <strong>Address:</strong> <span class="tx-id">${input.address || ''}</span><br>
+                <strong>Address:</strong><br><code class="tx-id tx-id-full tx-id-block">${input.address || ''}</code><br>
                 <strong>Amount:</strong> ${input.amount ?? ''}<br>
-                <strong>Signature R:</strong> <span class="tx-id">${input.signature?.r || ''}</span><br>
-                <strong>Signature S:</strong> <span class="tx-id">${input.signature?.s || ''}</span><br>
+                <strong>Signature R:</strong><br><code class="tx-id tx-id-full tx-id-block">${input.signature?.r || ''}</code><br>
+                <strong>Signature S:</strong><br><code class="tx-id tx-id-full tx-id-block">${input.signature?.s || ''}</code><br>
                 <strong>Signature Recovery Param:</strong> ${input.signature?.recoveryParam ?? ''}
               </li>`).join('')}</ul>`
           : '<em>No inputs</em>';
@@ -99,7 +99,7 @@ export function renderTransactionsPool(transactionsPool) {
           ? `<ul>${tx.outputs.map(output => `
               <li>
                 <strong>Amount:</strong> ${output.amount}<br>
-                <strong>Address:</strong> <span class="tx-id">${output.address}</span>
+                <strong>Address:</strong><br><code class="tx-id tx-id-full tx-id-block">${output.address}</code>
               </li>`).join('')}</ul>`
           : '<em>No outputs</em>';
         return `
@@ -107,7 +107,7 @@ export function renderTransactionsPool(transactionsPool) {
             <ul>
               <li>
                 <strong>Transfer #${index + 1}</strong><br>
-                <strong>ID:</strong> <span class="tx-id">${tx.id}</span><br>
+                <strong>ID:</strong><br><code class="tx-id tx-id-full tx-id-block">${tx.id}</code><br>
                 <strong>Inputs:</strong> ${inputCount} | <strong>Outputs:</strong> ${outputCount}<br>
                 <strong>Amount:</strong> ${txAmountDisplay}<br>
                 <details><summary>View Input Details</summary>${inputsDetail}</details>

@@ -33,24 +33,24 @@ export function showBlockTransactions(blockIndex) {
               <ul>\n\
                 <li>\n\
                   <strong>Transfer #${i + 1}</strong><br>\n\
-                  <strong>ID:</strong> <span class=\"tx-id\">${txId}</span><br>\n\
+                  <strong>ID:</strong><br><code class=\"tx-id tx-id-full tx-id-block\">${txId}</code><br>\n\
                   <strong>Inputs:</strong> ${inputs.length} | <strong>Outputs:</strong> ${outputs.length}<br>\n\
                   <strong>Amount:</strong> ${tx.amount !== undefined ? tx.amount : ''}<br>\n\
                   <details><summary>View Input Details</summary><ul>\n\
                     ${inputs.map(input => `<li>\n\
-                      <strong>txId:</strong> <span class=\"tx-id\">${input.txId || ''}</span><br>\n\
+                      <strong>txId:</strong><br><code class=\"tx-id tx-id-full tx-id-block\">${input.txId || ''}</code><br>\n\
                       <strong>outputIndex:</strong> ${input.outputIndex !== undefined ? input.outputIndex : ''}<br>\n\
-                      <strong>Address:</strong> <span class=\"tx-id\">${input.address || ''}</span><br>\n\
+                      <strong>Address:</strong><br><code class=\"tx-id tx-id-full tx-id-block\">${input.address || ''}</code><br>\n\
                       <strong>Amount:</strong> ${input.amount !== undefined ? input.amount : ''}<br>\n\
-                      <strong>Signature R:</strong> <span class=\"tx-id\">${input.signatureR || ''}</span><br>\n\
-                      <strong>Signature S:</strong> <span class=\"tx-id\">${input.signatureS || ''}</span><br>\n\
+                      <strong>Signature R:</strong><br><code class=\"tx-id tx-id-full tx-id-block\">${input.signatureR || ''}</code><br>\n\
+                      <strong>Signature S:</strong><br><code class=\"tx-id tx-id-full tx-id-block\">${input.signatureS || ''}</code><br>\n\
                       <strong>Signature Recovery Param:</strong> ${input.signatureRecovery !== undefined ? input.signatureRecovery : ''}\n\
                     </li>`).join('')}\n\
                   </ul></details>\n\
                   <details><summary>View Output Details</summary><ul>\n\
                     ${outputs.map(output => `<li>\n\
                       <strong>Amount:</strong> ${output.amount !== undefined ? output.amount : ''}<br>\n\
-                      <strong>Address:</strong> <span class=\"tx-id\">${output.address || ''}</span>\n\
+                      <strong>Address:</strong><br><code class=\"tx-id tx-id-full tx-id-block\">${output.address || ''}</code>\n\
                     </li>`).join('')}\n\
                   </ul></details>\n\
                 </li>\n\
@@ -103,16 +103,20 @@ export function renderBlocks(blocks, options = {}) {
     </div>
     <div class="modal-body">
       <ul>
-        ${blocks.map((block, index) => `
+        ${blocks
+          .map((block, index) => ({ block, index }))
+          .reverse()
+          .map(({ block, index }) => `
           <li>
             <strong>Block #${index}</strong><br>
-            Hash: ${String(block.hash).substring(0,20)}...<br>
+            Hash: ${String(block.hash)}<br>
             Timestamp: ${new Date(block.timestamp).toLocaleString()}<br>
             Transfers: ${Array.isArray(block.data) ? block.data.length : 0}
             <div class=\"tx-actions\">
               <button class=\"dashboard-btn secondary show-block-txs-btn\" type=\"button\" data-block-index=\"${index}\">Block</button>
             </div>
-          </li>`).join('')}
+          </li>`)
+          .join('')}
       </ul>
     </div>`;
   if (options.showModal !== false) {

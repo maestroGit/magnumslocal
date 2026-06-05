@@ -29,6 +29,27 @@
     word-break: break-all;
 }
 
+/* In block transaction details, show full critical identifiers (no ellipsis). */
+.transaction-modal-item .tx-id.tx-id-full {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    display: inline;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
+/* Multiline monospace blocks for long critical values in mobile-friendly layout. */
+.transaction-modal-item .tx-id.tx-id-block {
+    display: block;
+    margin: 4px 0 8px;
+    padding: 6px 8px;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
 /* Ajuste específico para transacciones dentro de modales */
 .modal-content .transaction,
 .modal-content .transaction-modal-item,
