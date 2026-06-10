@@ -20,6 +20,59 @@ class Blockchain {
     this._initialized = false;
   }
 
+  filterSpendableTransactions(transactions = []) {
+    const candidates = Array.isArray(transactions) ? transactions : [];
+    const availableUtxos = new Map(
+      (Array.isArray(this.utxoSet) ? this.utxoSet : []).map((utxo) => [
+        `${utxo.txId}:${utxo.outputIndex}`,
+        utxo,
+      ])
+    );
+    const consumedInBlock = new Set();
+
+    return candidates.filter((transaction) => {
+      if (!transaction || !Array.isArray(transaction.outputs) || transaction.outputs.length === 0) {
+        return false;
+      }
+
+      if (!Array.isArray(transaction.inputs) || transaction.inputs.length === 0) {
+        return true;
+      }
+
+      const isSpendable = transaction.inputs.every((input) => {
+        const utxoKey = `${input.txId}:${input.outputIndex}`;
+        const matchingUtxo = availableUtxos.get(utxoKey);
+
+        if (!matchingUtxo) {
+          console.warn(`[BLOCKCHAIN][UTXO] Ignorando tx ${transaction.id}: input ${utxoKey} no existe o ya fue gastado.`);
+          return false;
+        }
+
+        if (consumedInBlock.has(utxoKey)) {
+          console.warn(`[BLOCKCHAIN][UTXO] Ignorando tx ${transaction.id}: input ${utxoKey} ya consumido en este bloque.`);
+          return false;
+        }
+
+        if (matchingUtxo.address !== input.address || matchingUtxo.amount !== input.amount) {
+          console.warn(`[BLOCKCHAIN][UTXO] Ignorando tx ${transaction.id}: input ${utxoKey} no coincide con el UTXO actual.`);
+          return false;
+        }
+
+        return true;
+      });
+
+      if (!isSpendable) {
+        return false;
+      }
+
+      transaction.inputs.forEach((input) => {
+        consumedInBlock.add(`${input.txId}:${input.outputIndex}`);
+      });
+
+      return true;
+    });
+  }
+
   /**
    * Inicializa la blockchain: carga desde archivo binario o crea génesis si no existe.
    */
@@ -75,7 +128,8 @@ class Blockchain {
   async addBlock(data) {
     await this.initialize();
     console.log("Añadiendo nuevo bloque a la cadena...");
-    const newBlock = Block.mineBlock(this.getPreviousBlock(), data);
+    const safeTransactions = this.filterSpendableTransactions(data);
+    const newBlock = Block.mineBlock(this.getPreviousBlock(), safeTransactions);
     this.chain.push(newBlock);
     this.updateUTXOSet(newBlock);
     await writeBlockToFile(this.blockFilePath, newBlock);

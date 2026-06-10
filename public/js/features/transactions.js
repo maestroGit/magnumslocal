@@ -196,7 +196,7 @@ export const openTransactionModal = async () => {
 
   const form = document.getElementById('transactionForm');
   if (!form) return;
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const recipient = document.getElementById('recipientInput').value.trim();
     const amount = parseFloat(document.getElementById('amountInput').value);
@@ -209,9 +209,27 @@ export const openTransactionModal = async () => {
       txId: cb.dataset.txid,
       outputIndex: parseInt(cb.dataset.outputindex),
       amount: parseFloat(cb.dataset.amount),
-      address: cb.dataset.address
+      address: cb.dataset.address || utxoData.address || ''
     }));
     if (selectedUTXOs.length === 0) return showModal('Select at least one UNOPENED for the transfer', 'Coin Control');
+
+    try {
+      const { apiBaseUrl } = await import('../core/config.js');
+      const base = (apiBaseUrl || '').replace(/\/undefined$/,'' );
+      const res = await fetch(`${base}/utxo-balance/global`);
+      const latest = await res.json();
+      const latestSet = new Set(
+        (Array.isArray(latest?.utxos) ? latest.utxos : []).map((u) => `${u.txId}:${u.outputIndex}`)
+      );
+      const staleSelected = selectedUTXOs.filter((u) => !latestSet.has(`${u.txId}:${u.outputIndex}`));
+      if (staleSelected.length > 0) {
+        showModal('Some selected UNOPENED are no longer available. Coin Control will be refreshed.', 'UTXO Updated');
+        setTimeout(() => openTransactionModal(), 400);
+        return;
+      }
+    } catch (error) {
+      console.warn('[COIN CONTROL] Preflight UTXO check failed, continuing with backend validation:', error);
+    }
 
     const transactionData = { recipient, amount, passphrase, inputs: selectedUTXOs, mode: 'bodega' };
     showConfirmModal(`Are you sure you want to transfer ${amount} to:<br><code>${recipient}</code> using ${selectedUTXOs.length} UTXOs?`, () => submitTransaction(transactionData), null, 'Confirm Transaction');

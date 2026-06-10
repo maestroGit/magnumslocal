@@ -68,7 +68,7 @@ export const showQRModal = (qrBase64, loteData) => {
     }
     const modalContent = `
       <div style="text-align:center;">
-        <h2>QR with transaction data</h2>
+        <h2>with transaction data</h2>
         ${advertencia}
         <img id="qrImageModal" src="${src}" alt="QR Blockchain" style="max-width:250px; margin:20px 0;">
         <div style="margin-top:15px; text-align:left;">
@@ -82,7 +82,7 @@ export const showQRModal = (qrBase64, loteData) => {
         </div>
       </div>
     `;
-    safeModal('Datos', modalContent);
+    safeModal('QR', modalContent);
 
     // Asignación de datos (para compatibilidad con antiguo modal clásico)
     setTimeout(() => {

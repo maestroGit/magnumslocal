@@ -1,19 +1,4 @@
-# 🍷 Large Magnum Master - Blockchain Wine System
 
-> **Sistema blockchain completo para trazabilidad de vinos con red P2P, minado distribuido y gestión UTXO avanzada.**
-
-## 🏁 Quick Start
-
-```bash
-# 1. Instalar dependencias
-npm install
-
-# 2. Iniciar servidor blockchain
-npm start
-
-# 3. Acceder al dashboard
-http://localhost:3000
-```
 
 ## 📋 Índice
 
@@ -23,24 +8,6 @@ http://localhost:3000
 - [📚 Documentación](#-documentación)
 - [🛠️ Scripts Disponibles](#️-scripts-disponibles)
 
----
-
-## 🏗️ Arquitectura
-
-### **Estructura Principal**
-```
-magnumsmaster/
-├── server.js           # 🚀 Servidor principal (nuevo estándar)
-├── app/                # 📡 Módulos del servidor
-│   ├── p2pServer.js    #   ↳ Red P2P
-│   ├── miner.js        #   ↳ Sistema de minado
-│   └── validator.js    #   ↳ Validación blockchain
-├── src/                # 🔗 Core blockchain
-│   ├── blockchain.js   #   ↳ Cadena principal
-│   └── block.js        #   ↳ Estructura de bloques
-├── wallet/             # 💰 Sistema de wallets
-└── public/             # 🌐 Frontend web
-```
 
 ### **Componentes Clave**
 - **🔗 Blockchain Core**: Gestión de bloques y transacciones

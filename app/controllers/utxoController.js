@@ -8,7 +8,10 @@ const getGlobalUTXOBalance = (req, res) => {
     return res.status(404).json({ error: "No hay wallet global activa" });
   }
   const address = globalWallet.publicKey;
-  const utxos = utxoManager.getUTXOs(address);
+  const utxos = (utxoManager.getUTXOs(address) || []).map((utxo) => ({
+    ...utxo,
+    address,
+  }));
   const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
   res.json({ address, balance, utxos });
 };

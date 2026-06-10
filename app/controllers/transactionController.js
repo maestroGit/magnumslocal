@@ -38,6 +38,48 @@ const inferOriginFromInputs = (signedTransaction, bc, tp) => {
   return null;
 };
 
+const buildSelectedUtxoSet = ({ requestedInputs, walletPublicKey, bc, tp }) => {
+  if (!Array.isArray(requestedInputs) || requestedInputs.length === 0) {
+    return null;
+  }
+
+  const mempoolInputs = Array.isArray(tp?.transactions)
+    ? tp.transactions.flatMap((tx) => tx?.inputs || [])
+    : [];
+
+  const selectedUtxos = requestedInputs.map((input) => {
+    const matchingUtxo = bc.utxoSet.find(
+      (utxo) =>
+        utxo.txId === input.txId &&
+        utxo.outputIndex === input.outputIndex &&
+        utxo.address === input.address &&
+        utxo.amount === input.amount
+    );
+
+    if (!matchingUtxo) {
+      throw new Error(`Selected UTXO not available: ${input.txId}:${input.outputIndex}`);
+    }
+
+    if (matchingUtxo.address !== walletPublicKey) {
+      throw new Error(`Selected UTXO does not belong to active wallet: ${input.txId}:${input.outputIndex}`);
+    }
+
+    const pendingSpend = mempoolInputs.some(
+      (mempoolInput) =>
+        mempoolInput.txId === input.txId &&
+        mempoolInput.outputIndex === input.outputIndex
+    );
+
+    if (pendingSpend) {
+      throw new Error(`Selected UTXO already pending in mempool: ${input.txId}:${input.outputIndex}`);
+    }
+
+    return matchingUtxo;
+  });
+
+  return selectedUtxos;
+};
+
 // ============================================================================
 // FUNCIÓN: getTransactionsPool
 // ============================================================================
@@ -297,8 +339,15 @@ export const createTransaction = async (req, res) => {
       const tempWallet = new Wallet(walletPublicKey, INITIAL_BALANCE, privateKeyHex);
       console.log("[POST /transaction] tempWallet:", tempWallet);
 
+      const requestedUtxos = buildSelectedUtxoSet({
+        requestedInputs: inputs,
+        walletPublicKey: tempWallet.publicKey,
+        bc,
+        tp,
+      });
+
       // Verificar balance
-      const utxos = bc.utxoSet.filter((utxo) => utxo.address === tempWallet.publicKey);
+      const utxos = requestedUtxos || bc.utxoSet.filter((utxo) => utxo.address === tempWallet.publicKey);
       const balance = utxos.reduce((sum, utxo) => sum + utxo.amount, 0);
 
       if (balance === 0) {
@@ -332,7 +381,7 @@ export const createTransaction = async (req, res) => {
         amount,
         bc,
         tp,
-        bc.utxoSet
+        utxos
       );
       console.log("Creando la transacción en la wallet temporal...", transaction);
 
@@ -372,6 +421,19 @@ export const createTransaction = async (req, res) => {
           success: false,
           error: "Passphrase incorrecta. Verifica tu contraseña e intenta nuevamente.",
           details: err.message,
+        });
+      }
+
+      if (
+        err.message.includes("Selected UTXO not available") ||
+        err.message.includes("Selected UTXO already pending in mempool") ||
+        err.message.includes("Selected UTXO does not belong to active wallet")
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "El UTXO seleccionado ya no está disponible. Actualiza Coin Control y vuelve a intentar.",
+          details: err.message,
+          code: "UTXO_SELECTION_STALE",
         });
       }
 
