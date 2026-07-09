@@ -13,6 +13,8 @@
  * Response (on success):
  *   200 JSON con datos del bloque minado
  */
+import BurnEvent from '../models/BurnEvent.js';
+
 export const mineBlock = async (req, res) => {
   try {
     // Acceder a instancias globales
@@ -121,6 +123,7 @@ export const mineBlock = async (req, res) => {
           ) {
             try {
               await BurnEvent.create({
+                // Persiste el evento en la BD usando el método heradado .create() del ORM Sequelize
                 tx_id: tx.id,
                 burn_address: output.address,
                 amount: output.amount

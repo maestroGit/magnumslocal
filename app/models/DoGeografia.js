@@ -17,7 +17,7 @@ const DoGeografia = sequelize.define('DoGeografia', {
   continente: {
     type: DataTypes.ENUM(
       'Asia',
-      'América',
+      'América Central',
       'África',
       'Antártida',
       'Europa',

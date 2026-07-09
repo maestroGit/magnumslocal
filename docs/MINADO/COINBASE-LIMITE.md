@@ -270,10 +270,7 @@ La dirección de destino es la del minero (por defecto, la wallet global del bac
 No se gasta ningún UTXO previo, se crean nuevas monedas.
 Si quieres ver o cambiar la wallet que recibe el premio, revisa cómo se inicializa el minero en el backend (server.js), normalmente usando la wallet global cargada al arrancar el servidor.
 
-Sí, es una idea muy buena y fácil de implementar. Puedes identificar los UTXOs que provienen de transacciones coinbase (premio de minado, con inputs vacíos) y cambiar el color del div a naranja para diferenciarlos visualmente.
-
-Para hacerlo:
-
+Se identifican los UTXOs que provienen de transacciones coinbase (premio de minado, con inputs vacíos) y cambiar el color del div a naranja para diferenciarlos visualmente.
 Cuando construyas cada div de UTXO, El premio de minado sale de "la nada" (inputs vacíos), es una coinbase.
 La dirección de destino es la del minero (por defecto, la wallet global del backend).
 En tu CSS, define .coinbase-utxo { background-color: orange; } para el color naranja.
