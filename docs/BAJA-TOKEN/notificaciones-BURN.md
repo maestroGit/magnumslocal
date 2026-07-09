@@ -1,9 +1,148 @@
-1. Sistema Unificado de Notificaciones (On-Chain a Dashboard/Email)
+## TODO LIST 09/07/2026
+ya tengo la respuesta exacta a tu duda:
+sí hubo un BURN, sí aparece en el bloque… pero NO se ejecutó tu listener BURN, por eso no ves ningún log [BURN][DB].
 
+Y ahora puedo decirte por qué con total precisión, porque tu documento lo confirma.
+
+🟥 1. El bloque contiene un BURN real
+En tu documento aparece esta salida:
+
+"address": "0x0000000000000000000000000000000000000000EMAIL_1772712102085_"
+
+Esto sí es un BURN, porque tu listener detecta:
+
+js
+output.address.startsWith("0x0000000000000000000000000000000000000000")
+Y esa dirección cumple la condición.
+
+🟥 2. Pero tu listener NO se ejecutó
+Tu listener está dentro de:
+
+js
+if (block && Array.isArray(block.data)) {
+  for (const tx of block.data) {
+    for (const output of tx.outputs) {
+      if (output.address.startsWith("0x0000000000000000000000000000000000000000")) {
+        console.log(`[BURN][DB] Evento registrado...`);
+        await BurnEvent.create(...)
+      }
+    }
+  }
+}
+Sin embargo, en toda la salida del documento, NO aparece:
+
+[BURN][DB] Evento registrado…
+
+[BURN][DB] Error registrando evento BURN…
+
+Nada.
+Cero.
+Ni un solo log.
+
+Esto significa que ese bloque NO pasó por tu función mineBlock.
+
+🟦 3. ¿Por qué no pasó por mineBlock? → Porque vino por replaceChain
+Tu documento lo confirma:
+
+[REPLACECHAIN][SUCCESS] Chain replaced and persisted successfully.
+
+Y más abajo:
+
+[P2P][CHAIN][ACCEPTED] La cadena recibida fue aceptada, reemplazada y persistida en disco.
+
+Esto significa:
+
+**Ese bloque NO lo minaste tú.
+Lo recibiste desde otro nodo.**
+
+Y tu listener BURN está solo en mineBlock, no en replaceChain.
+
+Por eso:
+
+El bloque se guardó en disco
+
+El UTXOManager lo procesó
+
+Los SELECT de usuarios y wallets se ejecutaron
+
+Pero tu lógica BURN nunca se ejecutó
+
+🟩 4. Confirmación absoluta
+Tu documento muestra que el bloque con el BURN se procesó así:
+
+[UTXO-DEBUG][AÑADIDO] Nuevo UTXO: txId=cce93353..., address=0x0000000000000000000000000000000000000000EMAIL_1772712102085_, amount=110
+
+Pero NO aparece ningún log [BURN][DB].
+
+Esto confirma que:
+
+✔ El bloque sí contiene un BURN
+✔ El UTXOManager lo procesó
+❌ Tu listener BURN no se ejecutó
+❌ No se insertó en la tabla BurnEvent
+❌ No se emitió broadcastBurnNotification
+❌ No se envió email
+🟧 5. ¿Qué te falta? → Mover el listener BURN a replaceChain
+Ahora mismo tu lógica BURN solo vive en:
+
+mineBlock → cuando tú minas
+
+❌ No vive en replaceChain → cuando recibes bloques de otros nodos
+
+Pero tu documento demuestra que todos los bloques recientes entraron por replaceChain, no por mineBlock.
+
+Por eso no ves ningún BURN registrado.
+
+🟩 6. Solución exacta (la que necesitas implementar)
+Añade esto dentro de replaceChain después de persistir cada bloque:
+js
+for (const block of newChain) {
+  if (!Array.isArray(block.data)) continue;
+
+  for (const tx of block.data) {
+    if (!Array.isArray(tx.outputs)) continue;
+
+    for (const output of tx.outputs) {
+      if (typeof output.address === "string" &&
+          output.address.startsWith("0x0000000000000000000000000000000000000000")) {
+
+        console.log(`[BURN][DB][REPLACECHAIN] Evento detectado en bloque ${block.hash}`);
+
+        await BurnEvent.create({
+          tx_id: tx.id,
+          burn_address: output.address,
+          amount: output.amount
+        });
+
+        const bodegaId = output.address.slice(42);
+        const wineloverWallet = tx.inputs?.[0]?.address || null;
+        const fecha = block.timestamp || new Date().toISOString();
+
+        global.p2pServer?.broadcastBurnNotification({
+          txId: tx.id,
+          bodegaId,
+          wineloverWallet,
+          amount: output.amount,
+          fecha
+        });
+      }
+    }
+  }
+}
+Con esto:
+
+✔ Detectas BURN al minar
+✔ Detectas BURN al recibir bloques
+✔ Inserta en BD
+✔ Emite WS
+✔ Puedes enviar email
+## END
+
+## objetivo: un evento on‑chain → email + notificación visual en dashboard.
+1. Sistema Unificado de Notificaciones (On-Chain a Dashboard/Email)
 El sistema actual implementa un flujo de notificaciones reactivas end-to-end que se activa cuando se detecta un evento TOKEN_BURNED en la blockchain. Integra en un único servicio de Node.js la persistencia en base de datos (PostgreSQL), la comunicación bidireccional en tiempo real (Socket.io) y el envío de alertas asíncronas por correo electrónico (Nodemailer).
 
 2. Arquitectura del Flujo de Datos
-
 Entrada (Ingress): El listener de la blockchain (o un webhook intermedio) detecta el Burn e invoca el endpoint interno de la API.
 
 Persistencia: Se escribe el evento de inmediato en la tabla notifications de PostgreSQL (JSONB para flexibilidad del payload).
@@ -41,7 +180,6 @@ Redis no viene a sustituir a PostgreSQL, sino a complementarlo. En la arquitectu
 
 1) Listener de Blockchain
 Objetivo: detectar el evento TOKEN_BURNED.
-
 Checklist:
 
 [ ] Crear servicio independiente blockchain-listener/
@@ -56,7 +194,6 @@ Checklist:
 
 2) Event Bus (Redis Pub/Sub recomendado)
 Objetivo: desacoplar los servicios.
-
 Checklist:
 
 [ ] Instalar Redis
@@ -69,7 +206,6 @@ Checklist:
 
 3) Servicio de Emails (Worker)
 Objetivo: enviar email a la winery afectada.
-
 Checklist:
 
 [ ] Crear servicio email-worker/
@@ -86,7 +222,6 @@ Checklist:
 
 4) Servicio WebSocket
 Objetivo: notificación en tiempo real al dashboard.
-
 Checklist:
 
 [ ] Crear servicio ws-server/
@@ -101,21 +236,30 @@ Checklist:
 
 5) API de Notificaciones Persistentes
 Objetivo: que el dashboard vea notificaciones aunque no esté conectado.
-
 Checklist:
 
-[ ] Crear tabla notifications en DB:
+[ ] Crear tabla notifications en DB: 
+SELECT * FROM burn_events;
+
+SELECT column_name,
+       data_type,
+       is_nullable,
+       column_default
+FROM information_schema.columns
+WHERE table_name = 'burn_events'
+ORDER BY ordinal_position;
+
+        "id"	"integer"	"NO"	"nextval('burn_events_id_seq'::regclass)"
+        "tx_id"	"character varying"	"NO"	
+        "burn_address"	"character varying"	"NO"	
+        "amount"	"numeric"	"NO"	
+        "fecha"	"timestamp without time zone"	"YES"	"now()"
 
 id
-
 wineryId
-
 type (TOKEN_BURNED)
-
 payload (JSON)
-
 read (boolean)
-
 createdAt
 
 [ ] Endpoint GET /notifications?wineryId=xxx
@@ -124,7 +268,6 @@ createdAt
 
 6) Frontend (Dashboard Winery)
 Objetivo: mostrar notificaciones visuales.
-
 Checklist:
 
 A) Al hacer login
@@ -171,13 +314,9 @@ Checklist opcional:
 Con este checklist tienes una arquitectura:
 
 Desacoplada
-
 Escalable
-
 Segura
-
 Minimalista
-
 Fácil de mantener
 
 Y cumple tu objetivo:

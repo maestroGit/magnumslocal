@@ -117,6 +117,7 @@ export const mineBlock = async (req, res) => {
       for (const tx of block.data) {
         if (!tx || !Array.isArray(tx.outputs)) continue;
         for (const output of tx.outputs) {
+          // Detectar si la salida es un evento BURN (address que empieza con 0x000...0000)
           if (
             typeof output.address === 'string' &&
             output.address.startsWith('0x0000000000000000000000000000000000000000')
@@ -136,6 +137,7 @@ export const mineBlock = async (req, res) => {
               const wineloverWallet = tx.inputs && tx.inputs[0] ? tx.inputs[0].address : null;
               const amount = output.amount;
               const fecha = block.timestamp || new Date().toISOString();
+              // Emitir notificación a través del servidor P2P global
               if (typeof global.p2pServer?.broadcastBurnNotification === 'function') {
                 global.p2pServer.broadcastBurnNotification({
                   txId: tx.id,
