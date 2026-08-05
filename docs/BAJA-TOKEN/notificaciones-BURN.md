@@ -321,3 +321,60 @@ Fácil de mantener
 
 Y cumple tu objetivo:
 un evento on‑chain → email + notificación visual en dashboard.
+
+## Valoración del estado
+Ahora mismo el flujo está en una fase intermedia y funcional:
+
+- El burn ya se detecta en minado local y en bloques recibidos por replaceChain.
+- El evento se persiste en `burn_events` y deja trazabilidad en consola.
+- La notificación P2P/WS ya sale del proceso principal.
+- El correo SMTP ya tiene trazas de intento y entrega verificables.
+
+Lo que todavía falta para que la arquitectura coincida del todo con la documentación es desacoplar el sistema: hoy sigue siendo un backend monolítico con lógica de notificación embebida, sin `notifications` persistentes, sin `email-worker` independiente y sin `eventBus`/Redis para reintentos y escalado horizontal.
+
+## Siguientes pasos recomendados
+### Fase 1: cerrar la base operativa
+1. Unificar el listener de burn para que use la misma lógica en minado y en `replaceChain` sin duplicar eventos.
+2. Crear la API de notificaciones persistentes sobre `burn_events` o una tabla `notifications` si quieres historial de lectura y estado `read`.
+3. Dejar un único contrato de trazabilidad SMTP con `messageId`, `accepted`, `rejected` y `response` en logs.
+
+### Fase 2: desacoplar y preparar escalado
+1. Mover el envío de email a un `email-worker` con cola BullMQ.
+2. Introducir Redis como `eventBus` para `token_burned`.
+3. Separar el dashboard para consumir `GET /notifications` y escuchar WS por sala `winery_${wineryId}`.
+4. Añadir reintentos automáticos y logs de auditoría del worker.
+
+### Orden práctico de implementación
+1. Persistencia de notificaciones.
+2. Unificación del flujo burn/minado/replaceChain.
+3. Worker SMTP con reintentos.
+4. Redis/BullMQ.
+5. Dashboard en tiempo real.
+
+## Plan concreto por archivo
+### En `magnumslocal`
+1. `app/controllers/miningController.js`
+  - Mantener el burn local con trazas SMTP verificables.
+  - Evitar duplicar lógica que ya existe en `replaceChain`.
+2. `src/blockchain.js`
+  - Consolidar el burn recibido por red.
+  - Registrar `BurnEvent` y emitir WS/email con la misma trazabilidad.
+3. `app/utils/sendEmail.js`
+  - Usar como única puerta de salida SMTP.
+  - Conservar logs `ATTEMPT`, `DELIVERED`, `SKIP` y `messageId`.
+4. `app/models/BurnEvent.js`
+  - Servir como evidencia histórica de cada burn.
+5. `app/routes/`
+  - Añadir, si hace falta, un endpoint de consulta de notificaciones o historial de burns.
+
+### En `magnumsmaster`
+1. Replicar exactamente el mismo contrato SMTP y burn que `magnumslocal`.
+2. Mantener los mismos nombres de logs para que el diagnóstico sea idéntico.
+3. Evitar que una ruta tenga trazabilidad y la otra no.
+
+### Criterio de cierre
+El trabajo estará realmente alineado con la documentación cuando se cumpla todo esto:
+1. Un burn minado o recibido genera el mismo resultado funcional.
+2. El correo tiene trazabilidad SMTP completa y verificable.
+3. La notificación visual se puede reconstruir desde persistencia.
+4. La lógica de negocio ya no depende de una sola ruta de ejecución.

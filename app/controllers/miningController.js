@@ -14,6 +14,7 @@
  *   200 JSON con datos del bloque minado
  */
 import BurnEvent from '../models/BurnEvent.js';
+import { sendBurnEmailNotification } from '../utils/sendEmail.js';
 
 export const mineBlock = async (req, res) => {
   try {
@@ -146,6 +147,23 @@ export const mineBlock = async (req, res) => {
                   amount,
                   fecha
                 });
+              }
+
+              try {
+                const emailTrace = await sendBurnEmailNotification({
+                  txId: tx.id,
+                  bodegaId,
+                  amount,
+                  fecha
+                });
+
+                if (emailTrace?.sent) {
+                  console.log(`[BURN][EMAIL] Email enviado a ${emailTrace.recipientEmail} | messageId=${emailTrace.messageId || 'n/a'}`);
+                } else {
+                  console.log(`[BURN][EMAIL] Envío omitido para tx ${tx.id}: ${emailTrace?.reason || 'unknown'}`);
+                }
+              } catch (emailErr) {
+                console.error(`[BURN][EMAIL] Error enviando email para tx ${tx.id}:`, emailErr);
               }
             } catch (err) {
               console.error('[BURN][DB] Error registrando evento BURN:', err);

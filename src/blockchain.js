@@ -154,25 +154,18 @@ try {
 
           // === Enviar email (opcional) ===
           try {
-            const { sendEmail } = await import("../utils/sendEmail.js");
-            const User = (await import("../models/User.js")).default;
+            const { sendBurnEmailNotification } = await import("../app/utils/sendEmail.js");
+            const emailTrace = await sendBurnEmailNotification({
+              txId: tx.id,
+              bodegaId,
+              amount,
+              fecha
+            });
 
-            const winery = await User.findByPk(bodegaId);
-
-            if (winery?.email) {
-              await sendEmail({
-                to: winery.email,
-                subject: "Nuevo evento BURN detectado",
-                text: `Se ha quemado un token.\nTx: ${tx.id}\nCantidad: ${amount}\nFecha: ${fecha}`,
-                html: `
-                  <p>Se ha quemado un token asociado a tu bodega.</p>
-                  <p><strong>Tx:</strong> ${tx.id}</p>
-                  <p><strong>Cantidad:</strong> ${amount}</p>
-                  <p><strong>Fecha:</strong> ${fecha}</p>
-                `
-              });
-
-              console.log(`[REPLACECHAIN][BURN][EMAIL] Email enviado a ${winery.email}`);
+            if (emailTrace?.sent) {
+              console.log(`[REPLACECHAIN][BURN][EMAIL] Email enviado a ${emailTrace.recipientEmail} | messageId=${emailTrace.messageId || 'n/a'}`);
+            } else {
+              console.log(`[REPLACECHAIN][BURN][EMAIL] Envío omitido para tx ${tx.id}: ${emailTrace?.reason || 'unknown'}`);
             }
           } catch (err) {
             console.error("[REPLACECHAIN][BURN][EMAIL] Error enviando email:", err);
