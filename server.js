@@ -77,6 +77,7 @@ import { initLogCapture } from './app/services/logService.js';
 
 // Importaciones de modelos ORM
 import User from './app/models/User.js';
+import Notification from './app/models/Notification.js';
 
 // Importaciones de routers modulares
 import adminRoutes from './app/routes/adminRoutes.js';
@@ -92,6 +93,7 @@ import transactionRoutes from './app/routes/transactionRoutes.js';
 import utxoRoutes from './app/routes/utxoRoutes.js';
 import addressHistoryRoutes from './app/routes/addressHistoryRoutes.js';
 import systemRoutes from './app/routes/systemRoutes.js';
+import notificationRoutes from './app/routes/notificationRoutes.js';
 import userRoutes from './app/routes/userRoutes.js';
 import denominacionOrigenRoutes from './app/routes/denominacionOrigenRoutes.js';
 import variedadRoutes from './app/routes/variedadRoutes.js';
@@ -443,6 +445,15 @@ bc.initialize().then((result) => {
   console.error('[INIT][Blockchain] Error en bc.initialize():', err);
 });
 
+// Sincronizar tabla notifications al arrancar para que el dashboard no dependa de burn_events
+Notification.sync()
+  .then(() => {
+    console.log('[INIT][Notifications] Tabla notifications sincronizada correctamente');
+  })
+  .catch((err) => {
+    console.warn('[INIT][Notifications] No se pudo sincronizar notifications:', err.message);
+  });
+
 // ============================================================================
 // SECCIÓN 7: GESTIÓN DE WALLET GLOBAL Y CIFRADO
 // ============================================================================
@@ -613,6 +624,8 @@ app.use('/utxo-balance', utxoRoutes);
 app.use('/address-history', addressHistoryRoutes);
 // ✅ System routes - MIGRADO
 app.use('/', systemRoutes);
+// ✅ Notifications routes - nuevo flujo persistente de burns
+app.use('/', notificationRoutes);
 // ✅ Lote routes (QR, Lotes, Propietario) - MIGRADO GRUPO 3
 app.use('/', loteRoutes);
 // ✅ Mining routes - MIGRADO FASE 2
@@ -671,6 +684,7 @@ app.use('/', transactionRoutes);
 //   /logs                     → logRoutes (GET server logs)
 //   /directory-contents       → systemRoutes (GET file tree)
 //   /peers                    → systemRoutes (GET P2P peers)
+//   /notifications            → notificationRoutes (GET burn notifications)
 //   /admin/*                  → adminRoutes (Admin panel)
 //
 // FRONTEND:

@@ -13,6 +13,7 @@ import RegulacionDo from './RegulacionDo.js';
 import DoClima from './DoClima.js';
 import DoGeografia from './DoGeografia.js';
 import BurnEvent from './BurnEvent.js';
+import Notification from './Notification.js';
 
 User.hasMany(Wallet, { foreignKey: 'usuario_id', as: 'wallets' });
 Wallet.belongsTo(User, { foreignKey: 'usuario_id', as: 'user' });
@@ -77,5 +78,6 @@ export {
 	RegulacionDo,
 	DoClima,
 	DoGeografia,
-	BurnEvent
+	BurnEvent,
+	Notification
 };

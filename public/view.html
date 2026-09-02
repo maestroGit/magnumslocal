@@ -282,6 +282,10 @@
 
   <!-- Modal para mostrar QR generado -->
   <script type="module" src="js/features/walletGlobal.js"></script>
+  <script type="module">
+    import { initNotificationsDashboard } from './js/features/notificationsDashboard.js';
+    initNotificationsDashboard();
+  </script>
   <script src="js/scrollFooter.js" defer></script>
   <div id="qrModal" class="modal hidden">
     <div class="modal-content">
@@ -354,6 +358,7 @@
             if (!currentWallet) return;
             if (data.wineloverWallet && data.wineloverWallet !== currentWallet) return;
             mostrarBurnNotification(data);
+            window.dispatchEvent(new CustomEvent('burn-notification-received', { detail: data }));
           }
         } catch (e) { console.warn('[BURN][WS] Mensaje no válido', e); }
       };

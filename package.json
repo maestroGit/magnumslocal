@@ -19,6 +19,7 @@
   },
   "scripts": {
     "test": "jest --watchAll",
+    "test:smtp": "node testing/smtpSmokeTest.js",
     "test:mining": "node testing/miningEndpoints.test.js",
     "test:mining:bash": "bash testing/test-mining-endpoints.sh",
     "test:transactions": "node testing/transactionEndpoints.test.js",
@@ -108,6 +109,8 @@
   },
   "engineStrict": true,
   "overrides": {
-    "semver": ">=7.5.4"
+    "semver": ">=7.5.4",
+    "brace-expansion": "^2.0.1",
+    "minimatch": "^3.1.2"
   }
 }

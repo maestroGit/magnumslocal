@@ -24,9 +24,13 @@ export class AuthComponent {
           }
 
           console.log('[AuthComponent] Usuario autenticado:', this.user);
+          window.currentUser = this.user;
+          window.dispatchEvent(new CustomEvent('auth-user-changed', { detail: this.user }));
           this.render(true);
         } else {
           console.log('[AuthComponent] No hay usuario autenticado');
+          window.currentUser = null;
+          window.dispatchEvent(new CustomEvent('auth-user-changed', { detail: null }));
         }
       } else {
         console.log('[AuthComponent] /auth/user no OK:', res.status);
@@ -119,6 +123,8 @@ export class AuthComponent {
           }
 
           this.user = data.user;
+          window.currentUser = this.user;
+          window.dispatchEvent(new CustomEvent('auth-user-changed', { detail: this.user }));
           this.render(true);
         } catch (error) {
           console.error('[AuthComponent] Error en login local:', error);
@@ -140,6 +146,8 @@ export class AuthComponent {
           console.error('[AuthComponent] Error en logout:', error);
         } finally {
           this.user = null;
+          window.currentUser = null;
+          window.dispatchEvent(new CustomEvent('auth-user-changed', { detail: null }));
           this.render();
           window.location.href = 'login.html';
         }

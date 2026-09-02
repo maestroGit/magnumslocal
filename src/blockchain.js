@@ -152,6 +152,25 @@ try {
             console.error("[REPLACECHAIN][BURN][WS] Error emitiendo notificación BURN:", err);
           }
 
+          // === Persistir notificación para dashboard ===
+          try {
+            const { persistBurnNotification } = await import('../app/services/notificationService.js');
+
+            const persistedNotification = await persistBurnNotification({
+              txId: tx.id,
+              bodegaId,
+              burnAddress: output.address,
+              amount,
+              fecha,
+              wineloverWallet,
+              source: 'replaceChain',
+            });
+
+            console.log(`[REPLACECHAIN][NOTIFICATIONS][CREATE] ${persistedNotification.created ? 'Creada' : 'Ya existente'} notificación para winery ${bodegaId}, tx ${tx.id}`);
+          } catch (err) {
+            console.error("[REPLACECHAIN][NOTIFICATIONS][CREATE] Error persistiendo notificación:", err);
+          }
+
           // === Enviar email (opcional) ===
           try {
             const { sendBurnEmailNotification } = await import("../app/utils/sendEmail.js");

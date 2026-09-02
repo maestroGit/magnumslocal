@@ -15,6 +15,7 @@
  */
 import BurnEvent from '../models/BurnEvent.js';
 import { sendBurnEmailNotification } from '../utils/sendEmail.js';
+import { persistBurnNotification } from '../services/notificationService.js';
 
 export const mineBlock = async (req, res) => {
   try {
@@ -147,6 +148,22 @@ export const mineBlock = async (req, res) => {
                   amount,
                   fecha
                 });
+              }
+
+              try {
+                const persistedNotification = await persistBurnNotification({
+                  txId: tx.id,
+                  bodegaId,
+                  burnAddress: output.address,
+                  amount,
+                  fecha,
+                  wineloverWallet,
+                  source: 'mineBlock',
+                });
+
+                console.log(`[NOTIFICATIONS][CREATE] ${persistedNotification.created ? 'Creada' : 'Ya existente'} notificación para winery ${bodegaId}, tx ${tx.id}`);
+              } catch (notificationErr) {
+                console.error(`[NOTIFICATIONS][CREATE] Error persistiendo notificación para tx ${tx.id}:`, notificationErr);
               }
 
               try {
