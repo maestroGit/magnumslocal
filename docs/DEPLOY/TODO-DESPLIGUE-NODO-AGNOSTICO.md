@@ -123,3 +123,31 @@ Google Developer Console: Registra la URL de Railway en la lista de callbacks pe
 
 Resumen para proceder
 Si quieres evitar añadir URLs en Google Console constantemente: Implementa el Gateway Centralizador en Seenode.Si prefieres mantener cada nodo independiente: Usa la Redirección Dinámica (req.get('host')) y añade el callback de Railway a Google Console.Sincronización: Vincula la respuesta de /auth/user con la dirección pública de la wallet para renderizar el avatar y la clave en view.html.
+
+## Estado de ejecución (alcance mínimo aplicado)
+
+### Cambios aplicados
+- OAuth callback normalizado en ruta relativa: /auth/google/callback.
+- Redirección post-callback usando host/protocolo dinámicos del request.
+- Trust proxy habilitado para resolver correctamente host y https detrás de Railway.
+- CORS dinámico desde ALLOWED_ORIGINS con same-origin permitido y denegación segura mediante callback(null, false).
+- CSP ajustada para evitar dependencia de dominios Seenode fijos.
+- Enlace Map parametrizado por runtime config con MAP_SERVICE_URL.
+
+### Variables requeridas por nodo Railway
+- ALLOWED_ORIGINS
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- JWT_SECRET
+- MAP_SERVICE_URL
+
+### Checklist Google Console por nodo
+1. Registrar URI local: http://localhost:6001/auth/google/callback
+2. Registrar URI Railway del nodo: https://magnumsmaster-production-559b.up.railway.app/auth/google/callback
+3. Guardar y esperar propagación.
+
+### Verificación esperada
+1. Login Google iniciado en Railway vuelve al mismo dominio .up.railway.app.
+2. No hay salto a app.blockswine.com.
+3. CORS denegado no devuelve HTTP 500.
+4. Botón Map usa MAP_SERVICE_URL en runtime.

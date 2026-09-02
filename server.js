@@ -128,7 +128,7 @@ console.log("[BOOT] Variables de entorno cargadas. NODE_ENV:", process.env.NODE_
 // - __dirname: directorio raíz para resolución de paths
 const isProduction = process.env.NODE_ENV === "production";
 const app = express();
-app.set("trust proxy", isProduction ? 1 : false); // Solo activar trust proxy en producción
+app.set("trust proxy", 1);
 const HTTP_PORT = process.env.HTTP_PORT || 6001;
 const server = http.createServer(app);
 const __filename = fileURLToPath(import.meta.url);
@@ -146,11 +146,10 @@ global.__dirname = __dirname;
 // - Session storage: express-session con secret desde env
 // - Callbacks: serialización/deserialización de usuario
 // Ver app/controllers/authController.js para la lógica de autenticación.
-const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback";
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: GOOGLE_CALLBACK_URL
+  callbackURL: "/auth/google/callback"
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Extraer datos del perfil de Google
@@ -230,14 +229,38 @@ console.log("[BOOT] Imports y routers modulares cargados correctamente.");
 // - CORS: whitelist dinámica (localhost + app.blockswine.com)
 // - Rate Limiting: 100 req/15min por IP
 // - Static files: public/ y app/uploads/ servidos con cache
-const PROD_API = process.env.PROD_API || "https://app.blockswine.com";
+const parseAllowedOrigins = (rawValue) => {
+  if (!rawValue || typeof rawValue !== "string") return [];
+  return rawValue
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+};
+
+const allowedOrigins = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
+const allowAnyOrigin = allowedOrigins.includes("*");
+const localhostOrigins = ["http://localhost:3000", "http://localhost:6001"];
+const cspOrigins = Array.from(new Set([...allowedOrigins.filter((o) => o !== "*"), ...localhostOrigins]));
 
 const connectSrc = [
   "'self'",
-  "http://localhost:3000",
+  ...cspOrigins,
   "ws://localhost:6001",
-  "https://app.blockswine.com",
-  "http://app.blockswine.com"
+  "wss:",
+  "https://accounts.google.com",
+  "https://www.googleapis.com",
+  "https://*.googleusercontent.com"
+];
+
+const scriptSrc = ["'self'", "'unsafe-inline'", "'unsafe-eval'", ...cspOrigins];
+const imgSrc = [
+  "'self'",
+  "data:",
+  "https:",
+  ...cspOrigins,
+  "https://developers.google.com",
+  "https://lh3.googleusercontent.com",
+  "https://*.googleusercontent.com"
 ];
 
 app.use(
@@ -247,42 +270,50 @@ app.use(
       directives: {
         "default-src": ["'self'"],
         "connect-src": [
-          ...connectSrc,
-          "https://accounts.google.com",
-          "https://www.googleapis.com",
-          "https://*.googleusercontent.com"
+          ...connectSrc
         ],
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", PROD_API],
+        "script-src": scriptSrc,
         "style-src": ["'self'", "'unsafe-inline'"],
-        "img-src": [
-          "'self'",
-          "data:",
-          "https:",
-          PROD_API,
-          "https://developers.google.com",
-          "https://*.googleusercontent.com"
-        ],
+        "img-src": imgSrc,
       },
     },
   })
 );
 
-// CORS: whitelist dinámica por entorno (localhost en dev, blockswine.com en prod)
-// Permite:
-// - localhost:XXXX (dev local)
-// - *.blockswine.com (prod / staging)
-// - undefined (same-origin requests)
-const allowedPattern = /^(http:\/\/localhost(:\d+)?|https?:\/\/([a-zA-Z0-9-]+\.)?blockswine\.com)$/;
+const isAllowedOrigin = (origin) => {
+  if (allowAnyOrigin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  for (const configuredOrigin of allowedOrigins) {
+    if (!configuredOrigin.includes("*")) continue;
+    const escaped = configuredOrigin.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+    const regexPattern = `^${escaped.replace(/\\\*/g, ".*")}$`;
+    if (new RegExp(regexPattern, "i").test(origin)) {
+      return true;
+    }
+  }
+
+  if (!isProduction && /^https?:\/\/localhost(:\d+)?$/i.test(origin)) {
+    return true;
+  }
+
+  return false;
+};
+
 const corsOptions = {
   origin: function (origin, callback) {
-    const isAllowed = !origin || allowedPattern.test(origin);
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const allowed = isAllowedOrigin(origin);
     console.log("[CORS] Origin recibido:", origin || "(undefined - same-origin)");
-    console.log("[CORS] Regex test:", isAllowed);
-    if (isAllowed) {
+    console.log("[CORS] Allowed:", allowed);
+    if (allowed) {
       callback(null, true);
     } else {
       console.error("[CORS] DENIED -", origin);
-      callback(new Error("Not allowed by CORS"));
+      callback(null, false);
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -293,6 +324,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "32kb" }));
+
+app.get("/runtime-config.js", (req, res) => {
+  const mapServiceUrl = process.env.MAP_SERVICE_URL || "#";
+  res.type("application/javascript");
+  res.send(`window.RUNTIME_CONFIG = { MAP_SERVICE_URL: ${JSON.stringify(mapServiceUrl)} };`);
+});
 
 const isGoogleProfileIncomplete = (user) => {
   if (!user || user.provider !== 'google') return false;

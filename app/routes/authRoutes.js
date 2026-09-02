@@ -12,6 +12,7 @@ import {
 } from "../controllers/authController.js";
 
 const router = express.Router();
+const GOOGLE_CALLBACK_PATH = "/auth/google/callback";
 
 /**
  * GET /auth/google
@@ -30,7 +31,7 @@ router.get("/auth/google",
  * Si éxito → redirige a "/"
  * Si fallo → redirige a "/login"
  */
-router.get("/auth/google/callback",
+router.get(GOOGLE_CALLBACK_PATH,
   passport.authenticate("google", { failureRedirect: "/login" }),
   getGoogleCallback
 );

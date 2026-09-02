@@ -37,7 +37,7 @@
       </button>
       <nav class="nav">
         <a class="btn" href="view.html"><span class="metric-value">Panel</span></a>
-        <a class="btn" href="https://web-d5l049wewz07.up-de-fra1-k8s-1.apps.run-on-seenode.com/" target="_blank" rel="noopener noreferrer"><span class="metric-value">Map</span></a>
+        <a class="btn" id="map-link" href="#" target="_blank" rel="noopener noreferrer"><span class="metric-value">Map</span></a>
         <a class="btn" href="keystore.html" target="_blank" rel="noopener noreferrer"><span class="metric-value">Wallet</span></a>
         <button class="btn" id="go-bodega-wallet" type="button"><span class="metric-value">Winery</span></button>
         <a class="btn active" href="login.html" id="login-btn"><span class="metric-value">Login</span></a>
@@ -52,7 +52,7 @@
         <div class="keystore-header">
           <h2>🔑 Log in</h2>
         </div>
-        <form id="authForm" autocomplete="on" class="auth-form">
+        <form id="authForm" autocomplete="on" class="auth-form" action="/login" method="POST">
           <label for="auth-username">Registered email</label>
           <input type="email" id="auth-username" name="username" required autocomplete="username">
           <label for="auth-password">Password</label>
@@ -76,6 +76,16 @@
       </div>
     </div>
   </main>
+  <script src="/runtime-config.js"></script>
+  <script>
+    (function configureMapLink() {
+      var link = document.getElementById('map-link');
+      if (!link) return;
+      var runtimeUrl = window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.MAP_SERVICE_URL;
+      var fallbackUrl = '#';
+      link.href = runtimeUrl || fallbackUrl;
+    })();
+  </script>
   <script type="module" src="js/login.js"></script>
   <script src="js/scrollFooter.js" defer></script>
 </body>

@@ -48,6 +48,38 @@ Este documento describe los pasos realizados para integrar autenticación OAuth2
 - Publicar la app en Google Cloud para permitir acceso a cualquier usuario de Google.
 - Revisar la pantalla de consentimiento y permisos si se requiere acceso a datos sensibles.
 
+## Nodo Independiente en Railway (Alcance Mínimo)
+
+### Variables requeridas por nodo
+Define estas variables en Railway para cada despliegue independiente:
+
+- ALLOWED_ORIGINS
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- JWT_SECRET
+- MAP_SERVICE_URL
+
+Ejemplo recomendado para Railway:
+
+ALLOWED_ORIGINS=https://magnumsmaster-production-559b.up.railway.app,http://localhost:6001
+MAP_SERVICE_URL=https://tu-servicio-mapa.example
+
+### Checklist de Google Cloud Console
+En Google Cloud Console, cada nodo debe tener registrada su URI exacta de callback:
+
+1. Ir a APIs y servicios > Credenciales > OAuth 2.0 Client ID.
+2. En Authorized redirect URIs añadir:
+  - http://localhost:6001/auth/google/callback
+  - https://magnumsmaster-production-559b.up.railway.app/auth/google/callback
+3. Guardar cambios y esperar propagación.
+
+### Verificación del flujo
+1. Abrir login en el dominio del nodo Railway.
+2. Iniciar con Google y validar que el callback regresa al mismo host .up.railway.app.
+3. Confirmar redirección final a view.html o keystore.html en el mismo dominio.
+4. Confirmar que el enlace Map usa MAP_SERVICE_URL en runtime.
+5. Confirmar que orígenes CORS no autorizados no generan HTTP 500.
+
 ---
 
 **Última actualización:** 5 de febrero de 2026

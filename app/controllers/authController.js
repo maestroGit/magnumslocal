@@ -160,12 +160,16 @@ export const postAuthLogout = (req, res) => {
 
 export const getGoogleCallback = (req, res) => {
   try {
+    const host = req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const baseUrl = `${protocol}://${host}`;
+
     if (!req.user) {
-      return res.redirect('/login.html');
+      return res.redirect(`${baseUrl}/login.html`);
     }
 
     if (isGoogleProfileIncomplete(req.user)) {
-      return res.redirect('/complete-profile.html');
+      return res.redirect(`${baseUrl}/complete-profile.html`);
     }
 
     const role = String(req.user.role || '').toLowerCase();
@@ -173,7 +177,7 @@ export const getGoogleCallback = (req, res) => {
       ? '/keystore.html'
       : '/view.html';
 
-    return res.redirect(redirectPath);
+    return res.redirect(`${baseUrl}${redirectPath}`);
   } catch (error) {
     console.error("[authController] Error en getGoogleCallback:", error);
     res.status(500).json({ error: "Authentication failed" });
