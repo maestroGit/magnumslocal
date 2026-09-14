@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com https://developers.google.com;">
   <title>Login - Blockswine</title>
   <link rel="stylesheet" type="text/css" href="base.css">
   <link rel="stylesheet" type="text/css" href="button.css">
@@ -77,15 +76,7 @@
     </div>
   </main>
   <script src="/runtime-config.js"></script>
-  <script>
-    (function configureMapLink() {
-      var link = document.getElementById('map-link');
-      if (!link) return;
-      var runtimeUrl = window.RUNTIME_CONFIG && window.RUNTIME_CONFIG.MAP_SERVICE_URL;
-      var fallbackUrl = '#';
-      link.href = runtimeUrl || fallbackUrl;
-    })();
-  </script>
+  <script src="js/runtime-map-link.js"></script>
   <script type="module" src="js/login.js"></script>
   <script src="js/scrollFooter.js" defer></script>
 </body>
