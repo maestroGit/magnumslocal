@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 🍷 Large Magnum Master - MCP Server (Versión de Testing)
+ * 🍷 BLOCKSWINE - MCP Server (Versión de Testing)
  * Versión simplificada para pruebas seguras
  */
 
@@ -9,14 +9,14 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 console.error('🍷 ===============================================');
-console.error('🧪 Large Magnum Master - MCP Server TESTING');
+console.error('🧪 BLOCKSWINE - MCP Server TESTING');
 console.error('🌍 Del Terruño al Ciberespacio');
 console.error('🍷 ===============================================');
 
 // Servidor MCP básico para testing
 const server = new Server(
   {
-    name: 'large-magnum-master-test',
+    name: 'blockswine-master-test',
     version: '1.0.0-test'
   },
   {

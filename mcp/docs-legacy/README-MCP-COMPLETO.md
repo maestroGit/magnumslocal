@@ -1,8 +1,8 @@
-# 🍷 Large Magnum Master - MCP Integration Guide
+# 🍷 BLOCKSWINE - MCP Integration Guide
 
 ## 📋 Resumen del Proyecto
 
-**Model Context Protocol (MCP)** implementado para el blockchain Large Magnum Master, proporcionando interacción conversacional con IA desde VS Code.
+**Model Context Protocol (MCP)** implementado para el blockchain BLOCKSWINE, proporcionando interacción conversacional con IA desde VS Code.
 
 ## 🎯 ¿Qué es MCP?
 
@@ -134,5 +134,5 @@ cd vscode-extension/
 ---
 
 📅 **Documentado**: October 8, 2025  
-🍷 **Proyecto**: Large Magnum Master MCP Integration  
+🍷 **Proyecto**: BLOCKSWINE MCP Integration  
 🔬 **Estado**: VS Code Extension ACTIVA y FUNCIONANDO

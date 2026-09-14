@@ -9,14 +9,14 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 console.error('🍷 ===============================================');
-console.error('🔬 Large Magnum Master - MCP Server VS CODE');
+console.error('🔬 BLOCKSWINE - MCP Server VS CODE');
 console.error('🌍 Del Terruño al Ciberespacio - VS Code Mode');
 console.error('🍷 ===============================================');
 
 // Crear servidor MCP simple
 const server = new Server(
   {
-    name: "large-magnum-master-vscode",
+    name: "blockswine-master-vscode",
     version: "1.0.0",
   },
   {
@@ -34,7 +34,7 @@ server.setRequestHandler("tools/list", async () => {
     tools: [
       {
         name: "blockchain_status",
-        description: "Obtener estado del blockchain Large Magnum Master",
+        description: "Obtener estado del blockchain BLOCKSWINE",
         inputSchema: {
           type: "object",
           properties: {},
@@ -64,7 +64,7 @@ server.setRequestHandler("tools/call", async (request) => {
         content: [
           {
             type: "text",
-            text: `🍷 Large Magnum Master Blockchain - Estado Actual
+            text: `🍷 BLOCKSWINE Blockchain - Estado Actual
             
 🟢 Sistema: ACTIVO
 📊 Red: Funcionando
@@ -82,9 +82,9 @@ server.setRequestHandler("tools/call", async (request) => {
         content: [
           {
             type: "text",
-            text: `🍷 Large Magnum Master - Información del Sistema
+            text: `🍷 BLOCKSWINE - Información del Sistema
 
-📋 Proyecto: Sistema Blockchain para Autenticación
+📋 Proyecto: Sistema Blockchain BLOCKSWINE para Autenticación
 🌍 Origen: Del Terruño al Ciberespacio  
 🔬 Tecnología: Node.js + Blockchain Custom
 🎯 Propósito: Trazabilidad y Autenticación
