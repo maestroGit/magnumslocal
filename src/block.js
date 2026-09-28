@@ -176,8 +176,8 @@ static adjustDifficulty(previousBlock, currentTime) {
     let intentos = 0;
     console.log(`[MINERÍA] ⛏️ Iniciando minado de bloque...`);
     // Debug: print previousBlock hashes to trace genesis logic
-    console.log(`[DEBUG] previousBlock.hash: ${previousBlock.hash}`);
-    console.log(`[DEBUG] previousBlock.previousHash: ${previousBlock.previousHash}`);
+    // console.log(`[DEBUG] previousBlock.hash: ${previousBlock.hash}`);
+    // console.log(`[DEBUG] previousBlock.previousHash: ${previousBlock.previousHash}`);
     do {
       nonce++;
       intentos++;

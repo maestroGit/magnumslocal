@@ -348,10 +348,10 @@ global.utxoManager = utxoManager;
 const bc = new Blockchain();
 
 function syncUTXOManagerWithBlockchain() {
-  console.log('[SYNC][DEBUG] syncUTXOManagerWithBlockchain llamada');
+  //console.log('[SYNC][DEBUG] syncUTXOManagerWithBlockchain llamada');
   if (bc && bc.chain) {
     utxoManager.utxoSet = {};
-    console.log('[SYNC][DEBUG] utxoManager.utxoSet limpiado. Keys:', Object.keys(utxoManager.utxoSet).length);
+    //console.log('[SYNC][DEBUG] utxoManager.utxoSet limpiado. Keys:', Object.keys(utxoManager.utxoSet).length);
     console.log(`[SYNC][REF] bc.chain tiene ${bc.chain.length} bloques`);
     if (bc.chain.length === 0) {
       console.warn('[SYNC][REF] bc.chain está vacío.');
@@ -368,12 +368,12 @@ function syncUTXOManagerWithBlockchain() {
     // Mostrar resumen de UTXOs después de sincronizar
     const totalAddresses = Object.keys(utxoManager.utxoSet).length;
     const totalUtxos = Object.values(utxoManager.utxoSet).reduce((acc, arr) => acc + arr.length, 0);
-    console.log(`[SYNC][DEBUG] utxoManager.utxoSet sinc: ${totalAddresses} dir, ${totalUtxos} UTXOs`);
+    //console.log(`[SYNC][DEBUG] utxoManager.utxoSet sinc: ${totalAddresses} dir, ${totalUtxos} UTXOs`);
     // Mostrar resumen por dirección
     Object.entries(utxoManager.utxoSet).forEach(([addr, utxos]) => {
       const balance = utxos.reduce((sum, u) => sum + u.amount, 0);
       const addrShort = addr.substring(0, 20) + '...';
-      console.log(`  ${addrShort}: ${utxos.length} UTXOs, balance=${balance}`);
+      //console.log(`  ${addrShort}: ${utxos.length} UTXOs, balance=${balance}`);
     });
   } else {
     console.error('[SYNC][ERROR] bc o bc.chain no definidos en syncUTXOManagerWithBlockchain');

@@ -340,8 +340,8 @@ try {
   // Reemplaza la cadena actual por una nueva si es más larga y válida, y reconstruye el UTXO Set y el archivo binario
   async replaceChain(newChain) {
     await this.initialize();
-    console.log("[REPLACECHAIN][DEBUG] Received chain length:", newChain.length);
-    console.log("[REPLACECHAIN][DEBUG] Current chain length:", this.chain.length);
+    //console.log("[REPLACECHAIN][DEBUG] Received chain length:", newChain.length);
+    //console.log("[REPLACECHAIN][DEBUG] Current chain length:", this.chain.length);
     if (newChain.length <= this.chain.length) {
       console.log("[REPLACECHAIN][INFO] Received chain is not longer than the current chain.");
       return false;
