@@ -51,7 +51,19 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ssl: { require: true, rejectUnauthorized: false }
     },
-    logging: isProduction ? false : (msg) => console.log(`[DB] ${msg}`),
+    logging: isProduction ? false : (msg, benchmark) => {
+      // Ocultar consultas SELECT rutinarias para evitar saturar los logs
+      if (msg.includes('Executing (default): SELECT')) {
+        return;
+      }
+      // Advertir si cualquier otra operación (INSERT, UPDATE, etc.) es lenta (>300ms)
+      if (typeof benchmark === 'number' && benchmark > 300) {
+        console.warn(`[DB] ⚠️ [SLOW QUERY - ${benchmark}ms] ${msg}`);
+        return;
+      }
+      console.log(`[DB] ${msg}`);
+    },
+    benchmark: true,
     pool: {
       max: 5,
       min: 0,
