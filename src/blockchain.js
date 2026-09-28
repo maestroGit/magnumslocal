@@ -82,122 +82,6 @@ class Blockchain {
     if (this._initialized) return;
     this.chain = [];
     this.utxoSet = [];
-    // === DETECCIÓN DE EVENTOS BURN EN REPLACECHAIN ===
-try {
-  console.log("[REPLACECHAIN][BURN] Escaneando nuevos bloques para detectar eventos BURN...");
-
-  for (const block of newChain) {
-    if (!Array.isArray(block.data)) continue;
-
-    for (const tx of block.data) {
-      if (!Array.isArray(tx.outputs)) continue;
-
-      for (const output of tx.outputs) {
-
-        // Detectar dirección BURN
-        if (
-          typeof output.address === "string" &&
-          output.address.startsWith("0x0000000000000000000000000000000000000000")
-        ) {
-
-          console.log(`[REPLACECHAIN][BURN] Evento BURN detectado en bloque ${block.hash}`);
-
-          // Extraer bodegaId del sufijo de la dirección BURN
-          const bodegaId = output.address.slice(42);
-
-          // Extraer wallet del winelover del primer input
-          const wineloverWallet = tx.inputs?.[0]?.address || null;
-
-          const amount = output.amount;
-          const fecha = block.timestamp || new Date().toISOString();
-
-          // === Registrar en BD ===
-          try {
-            const BurnEvent = (await import("../models/BurnEvent.js")).default;
-
-            // Evitar duplicados
-            const exists = await BurnEvent.findOne({
-              where: { tx_id: tx.id }
-            });
-
-            if (!exists) {
-              await BurnEvent.create({
-                tx_id: tx.id,
-                burn_address: output.address,
-                amount: output.amount
-              });
-
-              console.log(`[REPLACECHAIN][BURN][DB] Evento BURN registrado en BD para tx ${tx.id}`);
-            } else {
-              console.log(`[REPLACECHAIN][BURN][DB] Evento BURN ya existía en BD, no se duplica.`);
-            }
-          } catch (err) {
-            console.error("[REPLACECHAIN][BURN][DB] Error registrando evento BURN:", err);
-          }
-
-          // === Emitir notificación WS ===
-          try {
-            if (typeof global.p2pServer?.broadcastBurnNotification === "function") {
-              global.p2pServer.broadcastBurnNotification({
-                txId: tx.id,
-                bodegaId,
-                wineloverWallet,
-                amount,
-                fecha
-              });
-
-              console.log(`[REPLACECHAIN][BURN][WS] Notificación BURN emitida a peers.`);
-            }
-          } catch (err) {
-            console.error("[REPLACECHAIN][BURN][WS] Error emitiendo notificación BURN:", err);
-          }
-
-          // === Persistir notificación para dashboard ===
-          try {
-            const { persistBurnNotification } = await import('../app/services/notificationService.js');
-
-            const persistedNotification = await persistBurnNotification({
-              txId: tx.id,
-              bodegaId,
-              burnAddress: output.address,
-              amount,
-              fecha,
-              wineloverWallet,
-              source: 'replaceChain',
-            });
-
-            console.log(`[REPLACECHAIN][NOTIFICATIONS][CREATE] ${persistedNotification.created ? 'Creada' : 'Ya existente'} notificación para winery ${bodegaId}, tx ${tx.id}`);
-          } catch (err) {
-            console.error("[REPLACECHAIN][NOTIFICATIONS][CREATE] Error persistiendo notificación:", err);
-          }
-
-          // === Enviar email (opcional) ===
-          try {
-            const { sendBurnEmailNotification } = await import("../app/utils/sendEmail.js");
-            const emailTrace = await sendBurnEmailNotification({
-              txId: tx.id,
-              bodegaId,
-              amount,
-              fecha
-            });
-
-            if (emailTrace?.sent) {
-              console.log(`[REPLACECHAIN][BURN][EMAIL] Email enviado a ${emailTrace.recipientEmail} | messageId=${emailTrace.messageId || 'n/a'}`);
-            } else {
-              console.log(`[REPLACECHAIN][BURN][EMAIL] Envío omitido para tx ${tx.id}: ${emailTrace?.reason || 'unknown'}`);
-            }
-          } catch (err) {
-            console.error("[REPLACECHAIN][BURN][EMAIL] Error enviando email:", err);
-          }
-        }
-      }
-    }
-  }
-
-  console.log("[REPLACECHAIN][BURN] Escaneo completado.");
-} catch (err) {
-  console.error("[REPLACECHAIN][BURN] Error general en detección de BURN:", err);
-}
 
     let loaded = false;
     try {
@@ -341,8 +225,7 @@ try {
   // Reemplaza la cadena actual por una nueva si es más larga y válida, y reconstruye el UTXO Set y el archivo binario
   async replaceChain(newChain) {
     await this.initialize();
-    //console.log("[REPLACECHAIN][DEBUG] Received chain length:", newChain.length);
-    //console.log("[REPLACECHAIN][DEBUG] Current chain length:", this.chain.length);
+    
     if (newChain.length <= this.chain.length) {
       console.log("[REPLACECHAIN][INFO] Received chain is not longer than the current chain.");
       return false;
@@ -351,6 +234,122 @@ try {
       console.log("[REPLACECHAIN][WARN] The received chain is not valid.");
       return false;
     }
+
+    // === DETECCIÓN DE EVENTOS BURN (Movido aquí donde 'newChain' sí existe) ===
+    try {
+      console.log("[REPLACECHAIN][BURN] Escaneando nuevos bloques para detectar eventos BURN...");
+
+      for (const block of newChain) {
+        if (!Array.isArray(block.data)) continue;
+
+        for (const tx of block.data) {
+          if (!Array.isArray(tx.outputs)) continue;
+
+          for (const output of tx.outputs) {
+            // Detectar dirección BURN
+            if (
+              typeof output.address === "string" &&
+              output.address.startsWith("0x0000000000000000000000000000000000000000")
+            ) {
+              console.log(`[REPLACECHAIN][BURN] Evento BURN detectado en bloque ${block.hash}`);
+
+              // Extraer bodegaId del sufijo de la dirección BURN
+              const bodegaId = output.address.slice(42);
+
+              // Extraer wallet del winelover del primer input
+              const wineloverWallet = tx.inputs?.[0]?.address || null;
+
+              const amount = output.amount;
+              const fecha = block.timestamp || new Date().toISOString();
+
+              // === Registrar en BD ===
+              try {
+                const BurnEvent = (await import("../models/BurnEvent.js")).default;
+
+                // Evitar duplicados
+                const exists = await BurnEvent.findOne({
+                  where: { tx_id: tx.id }
+                });
+
+                if (!exists) {
+                  await BurnEvent.create({
+                    tx_id: tx.id,
+                    burn_address: output.address,
+                    amount: output.amount
+                  });
+
+                  console.log(`[REPLACECHAIN][BURN][DB] Evento BURN registrado en BD para tx ${tx.id}`);
+                } else {
+                  console.log(`[REPLACECHAIN][BURN][DB] Evento BURN ya existía en BD, no se duplica.`);
+                }
+              } catch (err) {
+                console.error("[REPLACECHAIN][BURN][DB] Error registrando evento BURN:", err);
+              }
+
+              // === Emitir notificación WS ===
+              try {
+                if (typeof global.p2pServer?.broadcastBurnNotification === "function") {
+                  global.p2pServer.broadcastBurnNotification({
+                    txId: tx.id,
+                    bodegaId,
+                    wineloverWallet,
+                    amount,
+                    fecha
+                  });
+
+                  console.log(`[REPLACECHAIN][BURN][WS] Notificación BURN emitida a peers.`);
+                }
+              } catch (err) {
+                console.error("[REPLACECHAIN][BURN][WS] Error emitiendo notificación BURN:", err);
+              }
+
+              // === Persistir notificación para dashboard ===
+              try {
+                const { persistBurnNotification } = await import('../app/services/notificationService.js');
+
+                const persistedNotification = await persistBurnNotification({
+                  txId: tx.id,
+                  bodegaId,
+                  burnAddress: output.address,
+                  amount,
+                  fecha,
+                  wineloverWallet,
+                  source: 'replaceChain',
+                });
+
+                console.log(`[REPLACECHAIN][NOTIFICATIONS][CREATE] ${persistedNotification.created ? 'Creada' : 'Ya existente'} notificación para winery ${bodegaId}, tx ${tx.id}`);
+              } catch (err) {
+                console.error("[REPLACECHAIN][NOTIFICATIONS][CREATE] Error persistiendo notificación:", err);
+              }
+
+              // === Enviar email (opcional) ===
+              try {
+                const { sendBurnEmailNotification } = await import("../app/utils/sendEmail.js");
+                const emailTrace = await sendBurnEmailNotification({
+                  txId: tx.id,
+                  bodegaId,
+                  amount,
+                  fecha
+                });
+
+                if (emailTrace?.sent) {
+                  console.log(`[REPLACECHAIN][BURN][EMAIL] Email enviado a ${emailTrace.recipientEmail} | messageId=${emailTrace.messageId || 'n/a'}`);
+                } else {
+                  console.log(`[REPLACECHAIN][BURN][EMAIL] Envío omitido para tx ${tx.id}: ${emailTrace?.reason || 'unknown'}`);
+                }
+              } catch (err) {
+                console.error("[REPLACECHAIN][BURN][EMAIL] Error enviando email:", err);
+              }
+            }
+          }
+        }
+      }
+
+      console.log("[REPLACECHAIN][BURN] Escaneo completado.");
+    } catch (err) {
+      console.error("[REPLACECHAIN][BURN] Error general en detección de BURN:", err);
+    }
+
     console.log("[REPLACECHAIN][INFO] Replacing the current chain with the new chain (memoria)");
     this.chain = newChain;
     this.utxoSet = [];
@@ -358,6 +357,7 @@ try {
       console.log(`[REPLACECHAIN][UTXO] Actualizando UTXO con bloque #${idx} (hash: ${block.hash})`);
       this.updateUTXOSet(block);
     });
+
     // Sobrescribe el archivo binario con la nueva cadena
     try {
       const fs = await import('fs');
