@@ -5,8 +5,6 @@
   <script src="js/jsQR.js" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- CSP actualizada para permitir localhost y Seenode subdominios -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:6002 ws://localhost:6001 https://*.apps.run-on-seenode.com http://*.apps.run-on-seenode.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://lh3.googleusercontent.com;">
   <title>Blockswine</title>
   <!-- Enlace al archivo de estilos CSS externo -->
   <link rel="stylesheet" type="text/css" href="base.css">
@@ -66,10 +64,7 @@
     <span id="walletGlobalPubKeyValue" class="wallet-publickey-value">Loading...</span>
     </div>
 
-  <script type="module">
-    import { AuthComponent } from './js/auth-component.js';
-    new AuthComponent('#auth-container');
-  </script>
+  <script type="module" src="js/features/authHeaderBootstrap.js"></script>
   <!-- Modal para incluir lote -->
   <div id="loteModal" class="modal hidden">
     <div class="modal-content">
@@ -255,25 +250,7 @@
     
 </div>  
 </section>
-<script type="module">
-  // Ensure wallet button opens modal in view.html
-  import { showWalletModal, initWalletModalFeature, handleUTXOCheckClick } from './js/features/walletModal.js';
-  try { initWalletModalFeature(); } catch {}
-  const btn = document.getElementById('walletModal');
-  if (btn) {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      try { showWalletModal(); } catch (err) { console.error('[view] wallet modal error', err); }
-    });
-  }
-  const utxoBtn = document.getElementById('utxoSetBtn');
-  if (utxoBtn) {
-    utxoBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      handleUTXOCheckClick();
-    });
-  }
-</script>
+<script type="module" src="js/features/viewWalletModalBootstrap.js"></script>
 
     <!-- Contenedores dinámicos (ocultos inicialmente) -->
     <div id="transactionsContainer" class="hidden"></div>
@@ -282,10 +259,7 @@
 
   <!-- Modal para mostrar QR generado -->
   <script type="module" src="js/features/walletGlobal.js"></script>
-  <script type="module">
-    import { initNotificationsDashboard } from './js/features/notificationsDashboard.js';
-    initNotificationsDashboard();
-  </script>
+  <script type="module" src="js/features/viewNotificationsBootstrap.js"></script>
   <script src="js/scrollFooter.js" defer></script>
   <div id="qrModal" class="modal hidden">
     <div class="modal-content">
@@ -319,75 +293,5 @@
       </div>
     </div>
   </div>
-  <script type="module">
-    // --- BURN Notification WebSocket Client ---
-    import { getCurrentPublicKey } from './js/core/walletUtils.js';
-    // Determinar URL ws según entorno
-    let wsUrl = '';
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      wsUrl = 'ws://localhost:6001';
-    } else if (window.location.hostname.includes('app.blockswine.com')) {
-      wsUrl = 'wss://app.blockswine.com';
-    } else if (window.location.hostname.includes('apps.run-on-seenode.com')) {
-      wsUrl = 'wss://web-sdzlt1djuiql.up-de-fra1-k8s-1.apps.run-on-seenode.com';
-    }
-
-    let currentWallet = null;
-    // Actualiza la wallet activa al cargar/cambiar
-    async function updateCurrentWallet() {
-      currentWallet = await getCurrentPublicKey();
-    }
-    updateCurrentWallet();
-    // También refrescar si cambia la wallet global (evento personalizado si lo tienes)
-    window.addEventListener('walletChanged', updateCurrentWallet);
-
-    // Inicializar WebSocket
-    let ws;
-    function connectWS() {
-      if (!wsUrl) return;
-      ws = new WebSocket(wsUrl);
-      ws.onopen = () => console.log('[BURN][WS] Connected to', wsUrl);
-      ws.onclose = () => { console.warn('[BURN][WS] Disconnected. Reconnecting in 3s...'); setTimeout(connectWS, 3000); };
-      ws.onerror = err => console.error('[BURN][WS] Error:', err);
-      ws.onmessage = async (msg) => {
-        try {
-          const data = JSON.parse(msg.data);
-          if (data.type === 'BURN_NOTIFICATION' || data.type === 'burn_notification') {
-            // Filtrar por wallet activa si corresponde
-            await updateCurrentWallet();
-            if (!currentWallet) return;
-            if (data.wineloverWallet && data.wineloverWallet !== currentWallet) return;
-            mostrarBurnNotification(data);
-            window.dispatchEvent(new CustomEvent('burn-notification-received', { detail: data }));
-          }
-        } catch (e) { console.warn('[BURN][WS] Mensaje no válido', e); }
-      };
-    }
-    connectWS();
-
-    // Mostrar notificación en el panel fijo
-    function mostrarBurnNotification({ txId, bodegaId, wineloverWallet, amount, fecha }) {
-      const panel = document.getElementById('burnNotificationPanel');
-      const content = document.getElementById('burnNotificationContent');
-      if (!panel || !content) return;
-      content.innerHTML =
-        `<b>Tx:</b> <span style='color:#ffb74d'>${txId}</span><br>`+
-        `<b>Bodega:</b> <span style='color:#fbc02d'>${bodegaId}</span><br>`+
-        `<b>Wallet:</b> <span style='color:#b2ff59'>${wineloverWallet}</span><br>`+
-        `<b>Amount:</b> <span style='color:#ff5252'>${amount}</span><br>`+
-        `<b>Date:</b> <span style='color:#fff'>${new Date(fecha).toLocaleString()}</span>`;
-      panel.style.display = 'block';
-    }
-
-    // Botón de cierre manual para el panel
-    document.addEventListener('DOMContentLoaded', () => {
-      const closeBtn = document.getElementById('closeBurnNotificationPanel');
-      if (closeBtn) {
-        closeBtn.onclick = () => {
-          const panel = document.getElementById('burnNotificationPanel');
-          if (panel) panel.style.display = 'none';
-        };
-      }
-    });
-  </script>
+  <script type="module" src="js/features/burnWsClient.js"></script>
   </body>

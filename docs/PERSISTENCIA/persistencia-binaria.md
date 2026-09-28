@@ -1,5 +1,5 @@
 # Persistencia binaria de la blockchain en magnumslocal
-
+TDD (Technical Design Document) o la especificación profunda (spec.md) de una funcionalidad concreta: la persistencia binaria.
 ## Resumen
 Esta implementación permite que la blockchain se almacene y restaure automáticamente desde un archivo binario secuencial (`blk00000.dat`), asegurando que los bloques y el estado de la cadena sobrevivan a reinicios del nodo.
 
