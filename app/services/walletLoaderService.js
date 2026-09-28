@@ -22,27 +22,27 @@ export const loadWalletWithPassphrase = async ({
   INITIAL_BALANCE,
   decryptPrivateKeyFromKeystore,
 }) => {
-  console.log('[FLOW] Leyendo wallet_default.json desde:', walletPath);
+  // console.log('[FLOW] Leyendo wallet_default.json desde:', walletPath);
   const keystoreRaw = fs.readFileSync(walletPath, 'utf8');
-  console.log('[FLOW] Contenido wallet_default.json:', keystoreRaw);
+  // console.log('[FLOW] Contenido wallet_default.json:', keystoreRaw);
   const keystore = JSON.parse(keystoreRaw);
-  console.log('[FLOW] Keystore importado:', keystore);
+  // console.log('[FLOW] Keystore importado:', keystore);
 
   const privateKeyBuf = await decryptPrivateKeyFromKeystore(keystore, passphrase);
-  console.log('[FLOW] Clave privada descifrada (buffer):', privateKeyBuf);
+  //console.log('[FLOW] Clave privada descifrada (buffer):', privateKeyBuf);
 
   const privateKeyHex = normalizePrivateKeyHex(privateKeyBuf);
-  console.log('[FLOW] Clave privada descifrada (hex):', privateKeyHex);
-  console.log('[FLOW] Creando Wallet SOLO desde privateKeyHex derivada...');
+  //console.log('[FLOW] Clave privada descifrada (hex):', privateKeyHex);
+  //console.log('[FLOW] Creando Wallet SOLO desde privateKeyHex derivada...');
 
   const wallet = new Wallet(null, INITIAL_BALANCE, privateKeyHex);
   if (wallet.keyPair) {
     try {
       const pubHex = wallet.keyPair.getPublic().encode('hex');
       const privHex = wallet.keyPair.getPrivate('hex');
-      console.log('[FLOW] keyPair.public (hex) derivada:', pubHex);
-      console.log('[FLOW] keyPair.private (hex):', privHex);
-      console.log('[FLOW] publicKey from keystore:', keystore.publicKey);
+      //console.log('[FLOW] keyPair.public (hex) derivada:', pubHex);
+      //console.log('[FLOW] keyPair.private (hex):', privHex);
+      //console.log('[FLOW] publicKey from keystore:', keystore.publicKey);
       if (pubHex !== keystore.publicKey) {
         console.error('[WALLET-ERROR] La clave publica derivada de la privada NO coincide con la guardada en el keystore!');
         console.error('[WALLET-ERROR] Derivada:', pubHex);

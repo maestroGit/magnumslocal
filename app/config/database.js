@@ -51,7 +51,7 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ssl: { require: true, rejectUnauthorized: false }
     },
-    logging: isProduction ? false : console.log,
+    logging: isProduction ? false : (msg) => console.log(`[DB] ${msg}`),
     pool: {
       max: 5,
       min: 0,

@@ -334,21 +334,22 @@ class P2PServer {
               const { readBlockSeq } = await import('../storage/blockFile.js');
               const blocksEnDisco = [];
               await readBlockSeq(this.blockchain.blockFilePath, (block) => blocksEnDisco.push(block));
-              console.log("[SYNC][P2P][CHAIN][DISCO][ANTES] Cadena en disco:", JSON.stringify(blocksEnDisco, null, 2));
+              // console.log("[SYNC][P2P][CHAIN][DISCO][ANTES] Cadena en disco:", JSON.stringify(blocksEnDisco, null, 2));
             } catch (err) {
               console.error("[SYNC][P2P][CHAIN][DISCO][ANTES] Error leyendo cadena en disco:", err);
             }
             this.transactionsPool.clear();
             // Log después de limpiar la mempool
-            console.log("[SYNC][P2P] Mempool después de limpiar:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
+            // console.log("[SYNC][P2P] Mempool después de limpiar:", Array.isArray(this.transactionsPool.transactions) ? this.transactionsPool.transactions.map(t => t.id) : this.transactionsPool.transactions);
             // Log cadena en memoria después de limpiar
-            console.log("[SYNC][P2P][CHAIN][MEMORIA][DESPUES] Cadena en memoria:", JSON.stringify(this.blockchain.chain, null, 2));
+            // console.log("[SYNC][P2P][CHAIN][MEMORIA][DESPUES] Cadena en memoria:", JSON.stringify(this.blockchain.chain, null, 2));
             // Log cadena en disco después de limpiar
             try {
               const { readBlockSeq } = await import('../storage/blockFile.js');
               const blocksEnDisco = [];
               await readBlockSeq(this.blockchain.blockFilePath, (block) => blocksEnDisco.push(block));
-              console.log("[SYNC][P2P][CHAIN][DISCO][DESPUES] Cadena en disco:", JSON.stringify(blocksEnDisco, null, 2));
+              // [DEBUG]imprime por completo toda la cadena de bloques guardada en disco en formato JSON con indentación
+              //console.log("[SYNC][P2P][CHAIN][DISCO][DESPUES] Cadena en disco:", JSON.stringify(blocksEnDisco, null, 2));
             } catch (err) {
               console.error("[SYNC][P2P][CHAIN][DISCO][DESPUES] Error leyendo cadena en disco:", err);
             }

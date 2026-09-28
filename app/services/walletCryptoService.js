@@ -3,8 +3,8 @@
 import crypto from 'crypto';
 
 export const decryptPrivateKeyFromKeystore = async (keystore, passphrase) => {
-  console.log('[decryptPrivateKeyFromKeystore] keystore:', keystore);
-  console.log('[decryptPrivateKeyFromKeystore] passphrase:', passphrase);
+  //console.log('[decryptPrivateKeyFromKeystore] keystore:', keystore);
+  //console.log('[decryptPrivateKeyFromKeystore] passphrase:', passphrase);
 
   const salt = /^[0-9a-fA-F]+$/.test(keystore.kdfParams.salt)
     ? Buffer.from(keystore.kdfParams.salt, 'hex')

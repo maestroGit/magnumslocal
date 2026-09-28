@@ -14,7 +14,7 @@ class UTXOManager {
   constructor() {
     // Mapa que asocia cada dirección con sus salidas no gastadas (UTXOs)
     this.utxoSet = {};
-    console.log('[UTXO-DEBUG][INIT] UTXOManager inicializado. utxoSet:', JSON.stringify(this.utxoSet));
+    // console.log('[UTXO-DEBUG][INIT] UTXOManager inicializado. utxoSet:', JSON.stringify(this.utxoSet));
   }
 
   /**
@@ -23,7 +23,7 @@ class UTXOManager {
    * Elimina las salidas gastadas y añade las nuevas salidas generadas.
    */
   updateWithBlock(block) {
-    console.log('[UTXO-DEBUG][BLOCK] updateWithBlock llamado para bloque:', block && block.hash ? block.hash : '[sin hash]');
+    //console.log('[UTXO-DEBUG][BLOCK] updateWithBlock llamado para bloque:', block && block.hash ? block.hash : '[sin hash]');
     const transactions = Array.isArray(block?.data)
       ? block.data
       : Array.isArray(block?.data?.transactions)
@@ -38,20 +38,20 @@ class UTXOManager {
             const addressShort = input.address.substring(0, 20) + '...';
             const utxoCount = this.utxoSet[input.address].length;
             const balance = this.utxoSet[input.address].reduce((sum, u) => sum + u.amount, 0);
-            console.log(`[UTXO-DEBUG][ANTES] ${addressShort}: ${utxoCount} UTXOs, balance=${balance}`);
+            //console.log(`[UTXO-DEBUG][ANTES] ${addressShort}: ${utxoCount} UTXOs, balance=${balance}`);
             const prevLength = this.utxoSet[input.address].length;
             this.utxoSet[input.address] = this.utxoSet[input.address].filter(
               (utxo) => !(utxo.txId === input.txId && utxo.outputIndex === input.outputIndex)
             );
             const removed = prevLength - this.utxoSet[input.address].length;
             if (removed > 0) {
-              console.log(`[UTXO-DEBUG][ELIMINADO] UTXO gastado: txId=${input.txId}, outputIndex=${input.outputIndex}, address=${addressShort}`);
+              //console.log(`[UTXO-DEBUG][ELIMINADO] UTXO gastado: txId=${input.txId}, outputIndex=${input.outputIndex}, address=${addressShort}`);
             } else {
-              console.warn(`[UTXO-DEBUG][NO-ELIMINADO] No se encontró UTXO para: txId=${input.txId}, outputIndex=${input.outputIndex}, address=${addressShort}`);
+              //console.warn(`[UTXO-DEBUG][NO-ELIMINADO] No se encontró UTXO para: txId=${input.txId}, outputIndex=${input.outputIndex}, address=${addressShort}`);
             }
             const newUtxoCount = this.utxoSet[input.address].length;
             const newBalance = this.utxoSet[input.address].reduce((sum, u) => sum + u.amount, 0);
-            console.log(`[UTXO-DEBUG][DESPUES] ${addressShort}: ${newUtxoCount} UTXOs, balance=${newBalance}`);
+            //console.log(`[UTXO-DEBUG][DESPUES] ${addressShort}: ${newUtxoCount} UTXOs, balance=${newBalance}`);
           }
         });
       }
@@ -73,7 +73,7 @@ class UTXOManager {
               inputs: tx.inputs || [],
               outputIndex,
             });
-            console.log(`[UTXO-DEBUG][AÑADIDO] Nuevo UTXO: txId=${tx.id}, outputIndex=${outputIndex}, address=${output.address}, amount=${output.amount}`);
+            //console.log(`[UTXO-DEBUG][AÑADIDO] Nuevo UTXO: txId=${tx.id}, outputIndex=${outputIndex}, address=${output.address}, amount=${output.amount}`);
           }
         });
       }
@@ -81,7 +81,7 @@ class UTXOManager {
     // Log final del estado de utxoSet tras procesar el bloque (simplificado)
     const totalAddresses = Object.keys(this.utxoSet).length;
     const totalUTXOs = Object.values(this.utxoSet).reduce((sum, arr) => sum + arr.length, 0);
-    console.log(`[UTXO-DEBUG][BLOCK-END] utxoSet actualizado: ${totalAddresses} direcciones, ${totalUTXOs} UTXOs totales`);
+    //console.log(`[UTXO-DEBUG][BLOCK-END] utxoSet actualizado: ${totalAddresses} direcciones, ${totalUTXOs} UTXOs totales`);
   }
 
   /**

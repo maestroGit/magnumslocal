@@ -266,7 +266,7 @@ try {
             utxo => utxo.txId === input.txId && utxo.outputIndex === input.outputIndex
           );
           if (utxosEliminados.length > 0) {
-            console.log(`[UTXO ELIMINADO]`, utxosEliminados);
+            //console.log(`[UTXO ELIMINADO]`, utxosEliminados);
           }
           this.utxoSet = this.utxoSet.filter(
             utxo =>
@@ -296,7 +296,8 @@ try {
         });
       }
     });
-    console.log("UTXOset actualizado:", this.utxoSet);
+    //console.log("UTXOset actualizado:", this.utxoSet);
+    console.log("UTXOset actualizado:");
   }
 
   // Valida la cadena de bloques

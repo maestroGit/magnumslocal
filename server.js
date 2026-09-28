@@ -357,7 +357,7 @@ function syncUTXOManagerWithBlockchain() {
       console.warn('[SYNC][REF] bc.chain está vacío.');
     } else {
       bc.chain.forEach((block, idx) => {
-        console.log(`[SYNC][REF] Bloque #${idx}:`, JSON.stringify(block, null, 2));
+        // console.log(`[SYNC][REF] Bloque #${idx}:`, JSON.stringify(block, null, 2));
         console.log(`[SYNC][CALL] Llamando updateWithBlock para bloque #${idx} (hash: ${block.hash || 'sin hash'}) con ${(block.data && block.data.length) || 0} transacciones.`);
         utxoManager.updateWithBlock(block);
         // Contar total de UTXOs después de cada bloque
