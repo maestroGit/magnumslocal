@@ -9,119 +9,15 @@ const state = {
 };
 
 const ensureStyles = () => {
-  if (document.getElementById('notifications-dashboard-styles')) return;
-  const style = document.createElement('style');
-  style.id = 'notifications-dashboard-styles';
-  style.textContent = `
-    .notifications-widget {
-      position: fixed;
-      top: 92px;
-      right: 18px;
-      z-index: 26000;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
-      pointer-events: none;
-    }
-    .notifications-bell {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, rgba(255,193,7,0.96), rgba(255,87,34,0.96));
-      color: #111;
-      font-weight: 800;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
-      cursor: pointer;
-    }
-    .notifications-badge {
-      min-width: 20px;
-      height: 20px;
-      border-radius: 999px;
-      background: #111827;
-      color: #fff;
-      font-size: 12px;
-      line-height: 20px;
-      text-align: center;
-      padding: 0 6px;
-    }
-    .notifications-drawer {
-      pointer-events: auto;
-      width: min(92vw, 420px);
-      max-height: 62vh;
-      overflow: hidden;
-      border-radius: 18px;
-      background: rgba(6, 11, 18, 0.96);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 18px 46px rgba(0,0,0,0.35);
-      color: #fff;
-      backdrop-filter: blur(12px);
-    }
-    .notifications-drawer.hidden { display: none; }
-    .notifications-drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .notifications-drawer-header h3 {
-      margin: 0;
-      font-size: 16px;
-    }
-    .notifications-drawer-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .notifications-drawer-actions button {
-      border: 0;
-      border-radius: 999px;
-      padding: 8px 12px;
-      cursor: pointer;
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      font-weight: 700;
-    }
-    .notifications-list {
-      max-height: calc(62vh - 62px);
-      overflow-y: auto;
-    }
-    .notification-item {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      cursor: pointer;
-      transition: background .2s ease;
-    }
-    .notification-item:hover { background: rgba(255,255,255,0.05); }
-    .notification-item.unread { background: rgba(255, 193, 7, 0.08); }
-    .notification-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: baseline;
-      margin-bottom: 6px;
-    }
-    .notification-type { font-weight: 800; color: #ffd166; }
-    .notification-date { font-size: 12px; color: #9ca3af; }
-    .notification-meta, .notification-payload {
-      font-size: 13px;
-      color: #e5e7eb;
-      line-height: 1.45;
-      word-break: break-word;
-    }
-    .notification-empty {
-      padding: 18px 16px;
-      color: #cbd5e1;
-      text-align: center;
-    }
-  `;
-  document.head.appendChild(style);
+  // Styles for the notifications widget and drawer are defined in burn-notification.css
+  // to comply with CSP (style-src 'self'). We ensure the stylesheet is linked if not present.
+  if (document.getElementById('burn-notification-stylesheet') || document.querySelector('link[href*="burn-notification.css"]')) return;
+  const link = document.createElement('link');
+  link.id = 'burn-notification-stylesheet';
+  link.rel = 'stylesheet';
+  link.type = 'text/css';
+  link.href = 'burn-notification.css';
+  document.head.appendChild(link);
 };
 
 const notificationToText = (notification) => {
