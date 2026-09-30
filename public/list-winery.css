@@ -290,8 +290,10 @@ body {
 
 .user-bottle-img-wrapper.bodega-img-full {
   width: 100%;
-  height: 190px;
-  max-height: 190px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 180px;
+  max-height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -306,8 +308,15 @@ body {
   height: 100%;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center center;
   display: block;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.winery-card:hover .bottle-img-card {
+  transform: scale(1.03);
 }
 
 .bottle-img-modal img,
