@@ -57,6 +57,16 @@ describe('XSS Sanitization & HTML Escaping Module', () => {
       expect(clean).toContain('<h3>Title</h3>');
       expect(clean).toContain('<strong>bold</strong>');
     });
+
+    test('preserves form elements, inputs, and data attributes for dynamic modals', () => {
+      const formHtml = `<form id="transactionForm"><div id="utxoSelectList"><input type="checkbox" class="utxo-checkbox" id="utxo_0" data-txid="tx123" data-amount="10"><label for="utxo_0">10 UTXO</label></div><button type="submit">Transfer</button></form>`;
+      const clean = sanitizeHtml(formHtml);
+      expect(clean).toContain('<form id="transactionForm"');
+      expect(clean).toContain('class="utxo-checkbox"');
+      expect(clean).toContain('data-txid="tx123"');
+      expect(clean).toContain('data-amount="10"');
+      expect(clean).toContain('Transfer');
+    });
   });
 
   describe('Modals secure rendering', () => {

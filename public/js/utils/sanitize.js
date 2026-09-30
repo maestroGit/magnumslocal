@@ -35,7 +35,7 @@ export function sanitizeHtml(dirtyHtml) {
 
       const disallowedTags = new Set([
         'script', 'iframe', 'object', 'embed', 'link', 'style',
-        'meta', 'base', 'applet', 'svg', 'math', 'form'
+        'meta', 'base', 'applet', 'svg', 'math'
       ]);
 
       // Remove disallowed elements

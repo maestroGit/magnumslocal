@@ -53,6 +53,10 @@ export function showModalForm(title, bodyContent) {
   }
   modalTitle.textContent = title;
   modalBody.innerHTML = sanitizeHtml(bodyContent);
+  const modalHistorial = document.getElementById('modalHistorial');
+  const modalFooter = document.getElementById('modalFooter');
+  if (modalHistorial) modalHistorial.classList.add('hidden');
+  if (modalFooter) modalFooter.classList.add('hidden');
   // Raise z-index and offset when wallet modal is open to avoid stacking behind
   modal.style.zIndex = '25000';
   modal.classList.remove('hidden');
