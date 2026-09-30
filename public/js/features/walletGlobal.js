@@ -1,4 +1,4 @@
-import { showModal, showModalForm, closeCurrentModal } from '../ui/modals.js';
+import { showModal, showModalForm, closeCurrentModal, escapeHtml } from '../ui/modals.js';
 import { getCurrentPublicKey } from '../core/walletUtils.js';
 // walletGlobal.js: wiring para la herramienta de cifrado/carga de wallet global en el dashboard
 
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = 'Wallet';
             const body = `
               <div class="modal-info">
-                <p>Choose passphrase for ${actionLabel}:</p>
+                <p>Choose passphrase for ${escapeHtml(actionLabel)}:</p>
                 <input type="password" id="passphraseModalInput" placeholder="Choose Passphrase" autocomplete="new-password" />
               </div>
               <div style="text-align:center;margin-top:16px;display:flex;gap:10px;justify-content:center;">
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = 'Wallet';
             const body = `
               <div class="modal-info">
-                <p>Select and enter passphrase to ${actionLabel}:</p>
+                <p>Select and enter passphrase to ${escapeHtml(actionLabel)}:</p>
                 <input type="file" id="walletFileModalInput" accept="application/json" />
                 <input type="password" id="passphraseModalInput" placeholder="Enter Passphrase" autocomplete="new-password" />
               </div>
@@ -167,15 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error descifrando wallet');
-        // Mostrar advertencia y botón para revelar la clave privada
+        // Mostrar advertencia y botón para revelar la clave privada de forma segura
         showModal(`
           <span style='color:#b00;font-weight:bold;'>⚠️ Attention:</span> The private key is secret. Do not share it.<br>
           <button id='show-privkey-btn' style='margin:8px 0 0 0;padding:4px 12px;font-size:1em;'>Show private key</button>
-          <span id='privkey-value' style='display:none;word-break:break-all;background:#f8f8f8;color:#222;padding:6px 10px;border-radius:6px;margin-left:8px;'>${data.privateKey}</span>
+          <span id='privkey-value' style='display:none;word-break:break-all;background:#f8f8f8;color:#222;padding:6px 10px;border-radius:6px;margin-left:8px;'></span>
         `, 'Wallet');
         setTimeout(() => {
           const btn = document.getElementById('show-privkey-btn');
           const privSpan = document.getElementById('privkey-value');
+          if (privSpan) privSpan.textContent = data.privateKey || '';
           if (btn && privSpan) {
             let visible = false;
             btn.addEventListener('click', () => {

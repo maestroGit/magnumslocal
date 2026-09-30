@@ -1,5 +1,7 @@
 // UI Modals & Toasts (ESM)
 // Lightweight extraction; styling relies on existing CSS classes.
+import { escapeHtml, sanitizeHtml } from '../utils/sanitize.js';
+export { escapeHtml, sanitizeHtml };
 
 export function showModal(message, title = 'Información') {
   const modal = document.getElementById('errorModal');
@@ -7,7 +9,7 @@ export function showModal(message, title = 'Información') {
   const closeButton = modal?.querySelector('.close');
   if (!modal || !modalMessage) {
     console.error('Modal base no encontrado');
-    alert(`${title}: ${message}`);
+    if (typeof alert === 'function') alert(`${title}: ${message}`);
     return;
   }
   let titleElement = modal.querySelector('.modal-title');
@@ -17,7 +19,13 @@ export function showModal(message, title = 'Información') {
     modal.querySelector('.modal-content').insertBefore(titleElement, modalMessage);
   }
   titleElement.textContent = title;
-  modalMessage.innerHTML = message;
+  if (typeof Node !== 'undefined' && message instanceof Node) {
+    modalMessage.replaceChildren(message);
+  } else if (typeof message === 'string') {
+    modalMessage.innerHTML = sanitizeHtml(message);
+  } else {
+    modalMessage.textContent = String(message ?? '');
+  }
   // Position this modal side-by-side and above others
   modal.style.zIndex = '25000';
   modal.classList.remove('hidden');
@@ -43,8 +51,8 @@ export function showModalForm(title, bodyContent) {
     console.error('Elementos del modal de formulario no encontrados');
     return;
   }
-  modalTitle.innerHTML = title;
-  modalBody.innerHTML = bodyContent;
+  modalTitle.textContent = title;
+  modalBody.innerHTML = sanitizeHtml(bodyContent);
   // Raise z-index and offset when wallet modal is open to avoid stacking behind
   modal.style.zIndex = '25000';
   modal.classList.remove('hidden');
@@ -66,7 +74,7 @@ export function showModalForm(title, bodyContent) {
 
 export function showConfirmModal(message, onConfirm, onCancel = null, title = 'Confirmación') {
   const confirmContent = `
-    <div class="modal-info"><p>${message}</p></div>
+    <div class="modal-info"><p>${escapeHtml(message)}</p></div>
     <div class="modal-actions">
       <button id="confirmBtn">Confirm</button>
       <button id="cancelBtn" class="cancel-btn">Cancel</button>
@@ -103,14 +111,14 @@ export function showProgressModal(message, title = 'Procesando', steps = []) {
   const progressContent = `
     <div class="progress-container">
       <div class="loading-spinner"></div>
-      <h3>${message}</h3>
+      <h3>${escapeHtml(message)}</h3>
       <div class="progress-steps">
-        ${steps.map((s,i)=>`<div class="progress-step" id="step-${i}"><span class="step-icon">⏳</span><span class="step-text">${s}</span></div>`).join('')}
+        ${steps.map((s,i)=>`<div class="progress-step" id="step-${i}"><span class="step-icon">⏳</span><span class="step-text">${escapeHtml(s)}</span></div>`).join('')}
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <p class="progress-message">This takes a few seconds...</p>
     </div>`;
-  modalMessage.innerHTML = progressContent;
+  modalMessage.innerHTML = sanitizeHtml(progressContent);
   modal.classList.remove('hidden');
   animateProgress(steps.length);
 }
@@ -119,6 +127,10 @@ export function animateProgress(totalSteps) {
   let currentStep = 0;
   const stepDuration = 300;
   const interval = setInterval(() => {
+    if (typeof document === 'undefined') {
+      clearInterval(interval);
+      return;
+    }
     if (currentStep < totalSteps) {
       const el = document.getElementById(`step-${currentStep}`);
       if (el) {
@@ -186,7 +198,7 @@ export function showInlineModal(payload, title = 'Detalle') {
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   } catch (e) {
     console.warn('showInlineModal fallback', e);
-    alert(typeof payload === 'string' ? payload : JSON.stringify(payload,null,2));
+    if (typeof alert === 'function') alert(typeof payload === 'string' ? payload : JSON.stringify(payload,null,2));
   }
 }
 
@@ -195,24 +207,35 @@ export function showInlineModal(payload, title = 'Detalle') {
 // Uses showModalForm when available, otherwise falls back to showModal swapping parameter order.
 export function safeModal(title, htmlContent) {
   try {
-    // Log when safeModal is called, including title and HTML content
-    console.log('[SAFE-MODAL-DEBUG] safeModal called with title:', title);
-    if (typeof htmlContent === 'string' && htmlContent.includes('Clave Pública')) {
-      console.log('[SAFE-MODAL-DEBUG] Modal HTML contains Clave Pública:', htmlContent);
-    }
+    const safeContent = typeof htmlContent === 'string' ? sanitizeHtml(htmlContent) : htmlContent;
     const hasDOM = typeof document !== 'undefined' && !!document.getElementById;
     const hasFormContainer = hasDOM && !!document.getElementById('loteModal');
     const hasErrorContainer = hasDOM && !!document.getElementById('errorModal');
+
     // Prefer the richer form modal when its container exists
-    if (hasFormContainer) return showModalForm(title, htmlContent);
-    if (hasErrorContainer) return showModal(htmlContent, title);
+    if (hasFormContainer) return showModalForm(title, safeContent);
+    if (hasErrorContainer) return showModal(safeContent, title);
+
+    // Support test / decoupled environments with global modal hooks
+    if (typeof globalThis.showModalForm === 'function') return globalThis.showModalForm(title, safeContent);
+    if (typeof globalThis.showModal === 'function') return globalThis.showModal(safeContent, title);
+    if (typeof window !== 'undefined' && typeof window.showModal === 'function') return window.showModal(safeContent, title);
+
     // Last resort
-    alert(`${title}: ${typeof htmlContent === 'string' ? htmlContent : '[contenido]'}`);
+    if (typeof alert === 'function') {
+      alert(`${title}: ${typeof safeContent === 'string' ? safeContent : '[contenido]'}`);
+    }
   } catch (e) {
     console.warn('[safeModal] fallo mostrando modal', e);
-    try { alert(`${title}: (Error mostrando modal)`); } catch {}
+    try { if (typeof alert === 'function') alert(`${title}: (Error mostrando modal)`); } catch {}
   }
 }
 
 // Expose on window for legacy code convenience
-try { window.safeModal = safeModal; window.showSideModal = showSideModal; } catch(e) {}
+try {
+  if (typeof window !== 'undefined') {
+    window.safeModal = safeModal;
+    window.showModal = showModal;
+    window.showModalForm = showModalForm;
+  }
+} catch(e) {}

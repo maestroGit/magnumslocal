@@ -3,7 +3,7 @@
 // Mirrors legacy implementations but isolated for maintainability.
 
 import { fetchData } from '../core/api.js';
-import { safeModal, showModal, showToast, showProgressModal, closeCurrentModal } from '../ui/modals.js';
+import { safeModal, showModal, showToast, showProgressModal, closeCurrentModal, escapeHtml } from '../ui/modals.js';
 
 // 🔐 Genera un QR con prueba blockchain (propiedad / verificación)
 export const generateQRWithProof = async (loteId, transactionId) => {
@@ -28,7 +28,7 @@ export const generateQRWithProof = async (loteId, transactionId) => {
         if (response.error && response.error.includes('Transaction not found in blockchain or mempool')) {
           extraMsg = `<br><br><span style='color:#b71c1c;'>[UTXO MEMPOOL] Double spend detected: txId=init-fund-1, outputIndex=0. Transaction rejected.</span>`;
         }
-        showModal(`❌ Error: ${response.error}${extraMsg}`, 'Error');
+        showModal(`❌ Error: ${escapeHtml(response.error)}${extraMsg}`, 'Error');
         return;
       }
 
@@ -48,7 +48,7 @@ export const generateQRWithProof = async (loteId, transactionId) => {
   } catch (error) {
     closeCurrentModal();
     console.error('Error generating QR with proof:', error);
-    showModal(`❌ Error generating QR: ${error.message}`, 'Error');
+    showModal(`❌ Error generating QR: ${escapeHtml(error.message)}`, 'Error');
   }
 };
 
@@ -58,6 +58,7 @@ export const showQRModal = (qrBase64, loteData) => {
   let src = cleanBase64;
   if (!src.startsWith('data:image/png;base64,')) src = 'data:image/png;base64,' + src;
   src = src.replace(/^(data:image\/png;base64,)+/, 'data:image/png;base64,');
+  const safeSrc = src.startsWith('data:image/png;base64,') ? src : '';
 
   import('../core/walletUtils.js').then(async ({ getCurrentPublicKey }) => {
     const propietario = await getCurrentPublicKey();
@@ -70,15 +71,15 @@ export const showQRModal = (qrBase64, loteData) => {
       <div style="text-align:center;">
         <h2>with transaction data</h2>
         ${advertencia}
-        <img id="qrImageModal" src="${src}" alt="QR Blockchain" style="max-width:250px; margin:20px 0;">
+        <img id="qrImageModal" src="${safeSrc}" alt="QR Blockchain" style="max-width:250px; margin:20px 0;">
         <div style="margin-top:15px; text-align:left;">
-          <strong>Batch ID:</strong> ${loteData.loteId || 'N/A'}<br>
-          <strong>Owner:</strong> ${propietario}<br>
-          <strong>Transaction:</strong> ${transaccion}<br>
-          <strong>Verified at:</strong> ${loteData.verificationData?.verifiedAt ? new Date(loteData.verificationData.verifiedAt).toLocaleString() : 'N/A'}<br>
+          <strong>Batch ID:</strong> ${escapeHtml(loteData.loteId || 'N/A')}<br>
+          <strong>Owner:</strong> ${escapeHtml(propietario)}<br>
+          <strong>Transaction:</strong> ${escapeHtml(transaccion)}<br>
+          <strong>Verified at:</strong> ${escapeHtml(loteData.verificationData?.verifiedAt ? new Date(loteData.verificationData.verifiedAt).toLocaleString() : 'N/A')}<br>
         </div>
         <div style="margin-top:20px;">
-          <a href="${src}" download="QR_${loteData.loteId || 'lote'}.png" style="background:#1976d2;color:#fff;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:1em;text-decoration:none;display:inline-block;">💾 Descargar QR</a>
+          <a href="${safeSrc}" download="QR_${escapeHtml(loteData.loteId || 'lote')}.png" style="background:#1976d2;color:#fff;padding:10px 24px;border:none;border-radius:6px;cursor:pointer;font-size:1em;text-decoration:none;display:inline-block;">💾 Descargar QR</a>
         </div>
       </div>
     `;
@@ -107,24 +108,24 @@ export const showTraceabilityModal = (transactionData) => {
     <div class="transaction-info" style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
       <h3 style="margin: 0 0 15px 0;">✅ Transaction Completed</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
-        <p><strong>ID:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${(transactionData.id||'').substring(0,20)}...</code></p>
-        <p><strong>Amount:</strong><br>${transactionData.amount}€</p>
-        <p><strong>Recipient:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${(transactionData.recipient||'').substring(0,15)}...</code></p>
-        <p><strong>Date:</strong><br>${(function(){ const ts = transactionData.timestamp || Date.now(); const d = new Date(ts); return isNaN(d.getTime())? new Date().toLocaleString() : d.toLocaleString(); })()}</p>
+        <p><strong>ID:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${escapeHtml((transactionData.id||'').substring(0,20))}...</code></p>
+        <p><strong>Amount:</strong><br>${escapeHtml(transactionData.amount)}€</p>
+        <p><strong>Recipient:</strong><br><code style="background: rgba(255,255,255,0.2); padding: 2px 5px; border-radius: 3px; font-size: 0.8em;">${escapeHtml((transactionData.recipient||'').substring(0,15))}...</code></p>
+        <p><strong>Date:</strong><br>${(function(){ const ts = transactionData.timestamp || Date.now(); const d = new Date(ts); return isNaN(d.getTime())? escapeHtml(new Date().toLocaleString()) : escapeHtml(d.toLocaleString()); })()}</p>
       </div>
     </div>
     <p style="background: #46A24A; border: 1px solid #19af26ff; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9em;">
       <strong>💡 Information:</strong> Transaction data will be automatically included in the blockchain proof QR.
     </p>
     <form id="traceabilityForm">
-      <input type="hidden" id="transactionId" value="${transactionData.id}">
-      <input type="hidden" id="ownerPublicKey" value="${transactionData.recipient}">
-      <input type="hidden" id="transactionAmount" value="${transactionData.amount}">
-      <input type="hidden" id="transactionTimestamp" value="${transactionData.timestamp || Date.now()}">
+      <input type="hidden" id="transactionId" value="${escapeHtml(transactionData.id || '')}">
+      <input type="hidden" id="ownerPublicKey" value="${escapeHtml(transactionData.recipient || '')}">
+      <input type="hidden" id="transactionAmount" value="${escapeHtml(transactionData.amount || '')}">
+      <input type="hidden" id="transactionTimestamp" value="${escapeHtml(transactionData.timestamp || Date.now())}">
       <div id="altaCampos">
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
           <div><label for="loteId">Lote ID:</label><input type="text" id="loteIdAlta" placeholder="Se genera automáticamente si está vacío"></div>
-          <div><label for="precio">Price:</label><input type="text" id="precio" value="${transactionData.amount}€" readonly style="background: #f8f9fa; color: #6c757d;"></div>
+          <div><label for="precio">Price:</label><input type="text" id="precio" value="${escapeHtml(transactionData.amount || '')}€" readonly style="background: #f8f9fa; color: #6c757d;"></div>
         </div>
         <label for="nombreProducto">Product Name:</label>
         <input type="text" id="nombreProducto" placeholder="Eg: Rioja Gran Reserva" required>
