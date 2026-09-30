@@ -43,7 +43,9 @@ export class AuthComponent {
   render(isOAuth = false) {
     if (!this.container) return;
     const isLoginPage = window.location.pathname.endsWith('login.html');
+    const navLoginBtn = document.getElementById('login-btn');
     if (this.user && (isOAuth || this.user.email || this.user.nombre || this.user.username)) {
+      if (navLoginBtn) navLoginBtn.style.display = 'none';
       // Usuario autenticado (local o OAuth)
       const name = this.user.displayName || this.user.nombre || this.user.username || this.user.email || (this.user.emails && this.user.emails[0]?.value) || 'Usuario';
       const photo = this.user.photos && this.user.photos[0]?.value;
@@ -60,6 +62,7 @@ export class AuthComponent {
       this.addListeners();
       return;
     }
+    if (navLoginBtn) navLoginBtn.style.display = '';
     // Solo mostrar el formulario en login.html
     if (isLoginPage) {
       this.container.innerHTML = `
@@ -148,6 +151,8 @@ export class AuthComponent {
           this.user = null;
           window.currentUser = null;
           window.dispatchEvent(new CustomEvent('auth-user-changed', { detail: null }));
+          const navLoginBtn = document.getElementById('login-btn');
+          if (navLoginBtn) navLoginBtn.style.display = '';
           this.render();
           window.location.href = 'login.html';
         }

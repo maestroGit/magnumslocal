@@ -70,6 +70,7 @@
 }
 .nav .btn .metric-value {
   font-size: 1rem !important;
+  min-width: 108px !important;
   line-height: 1 !important;
 }
 .site-header .container {
@@ -318,74 +319,75 @@
   background: #f7931a;
   color: #220F17;
   font-weight: 700;
+  min-width: 108px;
+  flex-shrink: 0;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-/* Fix global: asegurar visibilidad del logout en view + páginas wallet */
-.site-header .container {
-  position: relative !important;
-  overflow: visible !important;
-}
-
-.site-header .auth-header-container {
-  margin-left: auto !important;
-  flex: 0 0 auto !important;
-  z-index: 1200 !important;
-}
-
-.site-header .auth-logout {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  z-index: 1201 !important;
-}
-
-.site-header .auth-logout-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  white-space: nowrap !important;
-  min-width: 108px !important;
-  flex-shrink: 0 !important;
-  position: relative !important;
-  z-index: 1202 !important;
-}
-
-@media (min-width: 701px) {
-  .site-header .auth-header-container {
-    position: absolute !important;
-    right: 12px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-  }
-
-  .site-header .nav {
-    padding-right: 130px !important;
-  }
-
-  .site-header .auth-user-label,
-  .site-header #auth-user-label {
-    display: none !important;
-  }
-}
-
-@media (min-width: 1400px) {
-  .site-header .nav {
-    padding-right: 260px !important;
-  }
-
-  .site-header .auth-user-label,
-  .site-header #auth-user-label {
-    display: inline-block !important;
-    max-width: 170px !important;
-  }
 }
 
 .auth-logout-btn:hover {
   background: #6B0F0F;
   border-color: #6B0F0F;
   color: #fff;
+}
+
+/* Desktop header overflow fix for keystore pages:
+   avoid nav being pushed out of viewport when auth/user and logo are present. */
+@media (min-width: 701px) {
+  .site-header .container {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .site-header .logo,
+  .site-header h1.logo {
+    grid-column: 1;
+    min-width: 0 !important;
+  }
+
+  .site-header .logo-icon {
+    width: 120px !important;
+  }
+
+  .site-header .nav {
+    grid-column: 2;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    gap: 8px 10px !important;
+  }
+
+  .site-header .nav .btn,
+  .site-header .nav .btn .metric-value {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .site-header .nav .btn {
+    padding: 4px 8px !important;
+  }
+
+  .site-header .nav .btn .metric-value {
+    font-size: 0.92rem !important;
+  }
+
+  .site-header .auth-header-container {
+    grid-column: 3;
+    margin-left: 6px !important;
+    min-width: 0 !important;
+    max-width: min(240px, 22vw) !important;
+  }
 }
 
 .auth-avatar {
@@ -440,4 +442,72 @@
 .site-header .nav .btn .metric-value {
   font-size: 1rem;
   line-height: 1;
+}
+
+/* Tablet/laptop: switch to hamburger before desktop overflows */
+@media (min-width: 701px) and (max-width: 1200px) {
+  #hamburger-menu-btn {
+    display: flex !important;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 2100;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    background: #261117;
+    color: #220F17;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.2em;
+  }
+
+  #hamburger-menu-btn span {
+    color: #fff !important;
+  }
+
+  #hamburger-menu-btn.active {
+    background: #220F17 !important;
+    color: #ff7b00 !important;
+    outline: 2px solid #ff7b00 !important;
+  }
+
+  .site-header .container {
+    position: relative;
+    justify-content: flex-start !important;
+    padding-right: 54px !important;
+  }
+
+  .site-header .nav {
+    display: none !important;
+  }
+
+  .site-header .nav.open {
+    display: flex !important;
+    flex-direction: column !important;
+    position: absolute;
+    top: 54px;
+    right: 0;
+    width: 260px;
+    max-width: calc(100vw - 16px);
+    background: #181018 !important;
+    box-shadow: 0 4px 16px #0003;
+    border-radius: 0 0 12px 12px;
+    padding: 8px;
+    z-index: 2000;
+    gap: 6px !important;
+    align-items: stretch !important;
+  }
+
+  .site-header .nav.open .btn {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+}
+
+@media (min-width: 1201px) {
+  #hamburger-menu-btn {
+    display: none !important;
+  }
 }
