@@ -20,7 +20,11 @@ const hasMinimumPasswordStrength = (password) => {
 };
 
 const buildResetUrl = (token) => {
-  const appUrl = process.env.APP_URL || 'https://miapp.com';
+  let appUrl = String(process.env.APP_URL || process.env.APP_BASE_URL || 'https://app.blockswine.com').trim();
+  if (appUrl.includes(',')) {
+    appUrl = appUrl.split(',')[0].trim();
+  }
+  appUrl = appUrl.replace(/\/+$/, '');
   return `${appUrl}/reset-password?token=${encodeURIComponent(token)}`;
 };
 
