@@ -3,14 +3,20 @@ import Notification from '../models/Notification.js';
 
 const BURN_PREFIX_LENGTH = 42;
 
+const normalizeSource = (source) => {
+  const value = String(source || '').trim();
+  return value || 'unknown';
+};
+
 export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount, fecha, wineloverWallet, source = 'unknown' }) => {
+  const normalizedSource = normalizeSource(source);
   const payload = {
     txId,
     burnAddress,
     amount,
     fecha,
     wineloverWallet,
-    source,
+    source: normalizedSource,
   };
 
   return {
@@ -19,6 +25,8 @@ export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount,
     tx_id: txId,
     burn_address: burnAddress,
     amount,
+    first_seen_source: normalizedSource,
+    last_seen_source: normalizedSource,
     payload,
     read: false,
     fecha,
@@ -26,6 +34,7 @@ export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount,
 };
 
 export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amount, fecha, wineloverWallet, source = 'unknown' }) => {
+  const normalizedSource = normalizeSource(source);
   const existing = await Notification.findOne({
     where: {
       winery_id: bodegaId,
@@ -35,6 +44,25 @@ export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amo
   });
 
   if (existing) {
+    const updates = {};
+
+    if (!existing.first_seen_source || String(existing.first_seen_source).trim() === '') {
+      updates.first_seen_source = normalizedSource;
+    }
+
+    const currentLastSeen = String(existing.last_seen_source || '').trim();
+    if (normalizedSource && currentLastSeen !== normalizedSource) {
+      updates.last_seen_source = normalizedSource;
+      updates.payload = {
+        ...(existing.payload || {}),
+        source: normalizedSource,
+      };
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await existing.update(updates);
+    }
+
     return { created: false, notification: existing };
   }
 
@@ -45,7 +73,7 @@ export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amo
     amount,
     fecha,
     wineloverWallet,
-    source,
+    source: normalizedSource,
   }));
 
   return { created: true, notification };

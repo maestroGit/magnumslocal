@@ -29,6 +29,16 @@ const Notification = sequelize.define('Notification', {
     type: DataTypes.NUMERIC,
     allowNull: false,
   },
+  first_seen_source: {
+    type: DataTypes.STRING(40),
+    allowNull: false,
+    defaultValue: 'unknown',
+  },
+  last_seen_source: {
+    type: DataTypes.STRING(40),
+    allowNull: false,
+    defaultValue: 'unknown',
+  },
   payload: {
     type: DataTypes.JSONB,
     allowNull: false,

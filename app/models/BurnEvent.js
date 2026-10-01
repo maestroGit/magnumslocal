@@ -26,7 +26,13 @@ const BurnEvent = sequelize.define('BurnEvent', {
   }
 }, {
   tableName: 'burn_events',
-  timestamps: false
+  timestamps: false,
+  indexes: [
+    {
+      unique: true,
+      fields: ['tx_id']
+    }
+  ]
 });
 
 export default BurnEvent;

@@ -254,7 +254,7 @@ class Blockchain {
               console.log(`[REPLACECHAIN][BURN] Evento BURN detectado en bloque ${block.hash}`);
 
               // Extraer bodegaId del sufijo de la dirección BURN
-              const bodegaId = output.address.slice(42);
+              const bodegaId = output.address.slice(42).trim();
 
               // Extraer wallet del winelover del primer input
               const wineloverWallet = tx.inputs?.[0]?.address || null;
@@ -266,24 +266,24 @@ class Blockchain {
               try {
                 const BurnEvent = (await import("../models/BurnEvent.js")).default;
 
-                // Evitar duplicados
-                const exists = await BurnEvent.findOne({
-                  where: { tx_id: tx.id }
+                await BurnEvent.create({
+                  tx_id: tx.id,
+                  burn_address: output.address,
+                  amount: output.amount
                 });
 
-                if (!exists) {
-                  await BurnEvent.create({
-                    tx_id: tx.id,
-                    burn_address: output.address,
-                    amount: output.amount
-                  });
-
-                  console.log(`[REPLACECHAIN][BURN][DB] Evento BURN registrado en BD para tx ${tx.id}`);
-                } else {
-                  console.log(`[REPLACECHAIN][BURN][DB] Evento BURN ya existía en BD, no se duplica.`);
-                }
+                console.log(`[REPLACECHAIN][BURN][DB] Evento BURN registrado en BD para tx ${tx.id}`);
               } catch (err) {
-                console.error("[REPLACECHAIN][BURN][DB] Error registrando evento BURN:", err);
+                if (err?.name === 'SequelizeUniqueConstraintError') {
+                  console.log(`[REPLACECHAIN][BURN][DB] Evento BURN duplicado ignorado para tx ${tx.id}`);
+                } else {
+                  console.error("[REPLACECHAIN][BURN][DB] Error registrando evento BURN:", err);
+                }
+              }
+
+              if (!bodegaId) {
+                console.warn(`[REPLACECHAIN][BURN][SKIP] tx ${tx.id} sin sufijo de bodega en burn_address. Se registra BurnEvent pero se omiten WS/notification/email.`);
+                continue;
               }
 
               // === Emitir notificación WS ===

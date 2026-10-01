@@ -132,9 +132,24 @@ export const mineBlock = async (req, res) => {
                 amount: output.amount
               });
               console.log(`[BURN][DB] Evento registrado para tx ${tx.id}, address ${output.address}, amount ${output.amount}`);
+            } catch (err) {
+              if (err?.name === 'SequelizeUniqueConstraintError') {
+                console.log(`[BURN][DB] Evento BURN duplicado ignorado para tx ${tx.id}`);
+              } else {
+                console.error('[BURN][DB] Error registrando evento BURN:', err);
+              }
+            }
+
+            // Emitir notificación/ws/email solo cuando existe bodegaId
+            // Extraer bodegaId del sufijo de la dirección burn
+            const bodegaId = output.address.slice(42).trim(); // 42 = longitud del prefijo 0x000...0000
+            if (!bodegaId) {
+              console.warn(`[BURN][SKIP] tx ${tx.id} sin sufijo de bodega en burn_address. Se registra BurnEvent pero se omiten WS/notification/email.`);
+              continue;
+            }
+
+            try {
               // Emitir notificación ws a todos los peers
-              // Extraer bodegaId del sufijo de la dirección burn
-              const bodegaId = output.address.slice(42); // 42 = longitud del prefijo 0x000...0000
               // Extraer wallet del winelover del primer input
               const wineloverWallet = tx.inputs && tx.inputs[0] ? tx.inputs[0].address : null;
               const amount = output.amount;
@@ -183,7 +198,7 @@ export const mineBlock = async (req, res) => {
                 console.error(`[BURN][EMAIL] Error enviando email para tx ${tx.id}:`, emailErr);
               }
             } catch (err) {
-              console.error('[BURN][DB] Error registrando evento BURN:', err);
+              console.error('[BURN][FLOW] Error procesando side-effects BURN:', err);
             }
           }
         }

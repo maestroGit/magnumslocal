@@ -3,7 +3,7 @@ import { Wallet } from '../../wallet/wallet.js';
 // Controlador para POST /baja-token
 export const bajaToken = async (req, res) => {
   // Estructura esperada: { signedTransaction, origin, type }
-  let transactionId, ownerPublicKey, origin, type, utxoTxId, utxoOutputIndex, keystore, passphrase;
+  let transactionId, ownerPublicKey, origin, type, utxoTxId, utxoOutputIndex, keystore, passphrase, bodegaId;
   if (req.body.signedTransaction) {
     const tx = req.body.signedTransaction;
     transactionId = tx.id;
@@ -14,10 +14,11 @@ export const bajaToken = async (req, res) => {
     }
     origin = req.body.origin || "burn";
     type = req.body.type || "quemada";
+    bodegaId = req.body.bodegaId;
     keystore = undefined;
     passphrase = undefined;
   } else {
-    ({ transactionId, ownerPublicKey, origin, type, utxoTxId, utxoOutputIndex, keystore, passphrase } = req.body);
+    ({ transactionId, ownerPublicKey, origin, type, utxoTxId, utxoOutputIndex, keystore, passphrase, bodegaId } = req.body);
     if (!origin) origin = "burn";
     if (!type) type = "quemada";
   }
@@ -49,9 +50,17 @@ export const bajaToken = async (req, res) => {
   if (currentOwner !== ownerPublicKey) {
     return res.status(403).json({ success: false, error: "El propietario no coincide con el actual", currentOwner, ownerPublicKey });
   }
+
+  const normalizedBodegaId = String(bodegaId || '').trim();
   let destino = null;
   if (origin === "burn" || origin === "baja-definitiva") {
-    destino = "0x0000000000000000000000000000000000000000";
+    if (!normalizedBodegaId) {
+      return res.status(400).json({
+        success: false,
+        error: "bodegaId es requerido para bajas burn/baja-definitiva",
+      });
+    }
+    destino = `0x0000000000000000000000000000000000000000${normalizedBodegaId}`;
   } else if (origin === "bodega" || origin === "baja-temporal") {
     destino = process.env.BODEGA_ADDRESS || "BODEGA_DEFAULT_ADDRESS";
   } else {

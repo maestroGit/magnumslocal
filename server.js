@@ -77,6 +77,7 @@ import { registerSecurityMiddleware } from './app/middlewares/security.js';
 // Importaciones de modelos ORM
 import User from './app/models/User.js';
 import Notification from './app/models/Notification.js';
+import BurnEvent from './app/models/BurnEvent.js';
 
 // Importaciones de routers modulares
 import adminRoutes from './app/routes/adminRoutes.js';
@@ -388,13 +389,40 @@ bc.initialize().then((result) => {
   console.error('[INIT][Blockchain] Error en bc.initialize():', err);
 });
 
-// Sincronizar tabla notifications al arrancar para que el dashboard no dependa de burn_events
-Notification.sync()
-  .then(() => {
+// Sincronizar tablas de eventos/notificaciones al arrancar.
+Promise.all([
+  BurnEvent.sync(),
+  Notification.sync()
+])
+  .then(async () => {
+    await Notification.sequelize.query(`
+      ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS first_seen_source VARCHAR(40) NOT NULL DEFAULT 'unknown';
+    `);
+
+    await Notification.sequelize.query(`
+      ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS last_seen_source VARCHAR(40) NOT NULL DEFAULT 'unknown';
+    `);
+
+    await Notification.sequelize.query(`
+      UPDATE notifications
+      SET first_seen_source = COALESCE(NULLIF(payload->>'source', ''), first_seen_source, 'unknown')
+      WHERE first_seen_source IS NULL OR first_seen_source = '' OR first_seen_source = 'unknown';
+    `);
+
+    await Notification.sequelize.query(`
+      UPDATE notifications
+      SET last_seen_source = COALESCE(NULLIF(payload->>'source', ''), last_seen_source, 'unknown')
+      WHERE last_seen_source IS NULL OR last_seen_source = '' OR last_seen_source = 'unknown';
+    `);
+
+    console.log('[INIT][BurnEvent] Tabla burn_events sincronizada correctamente');
     console.log('[INIT][Notifications] Tabla notifications sincronizada correctamente');
+    console.log('[INIT][Notifications] Columnas first_seen_source/last_seen_source verificadas');
   })
   .catch((err) => {
-    console.warn('[INIT][Notifications] No se pudo sincronizar notifications:', err.message);
+    console.warn('[INIT][DB Sync] No se pudo sincronizar burn_events/notifications:', err.message);
   });
 
 // ============================================================================
