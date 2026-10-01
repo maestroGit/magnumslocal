@@ -367,8 +367,25 @@ console.log('¿Coinciden?:', derivedPubKey === keystore.publicKey);
         body: JSON.stringify({ signedTransaction: txObj })
       });
       if (!res.ok) {
-        statusEl.textContent = 'Error al enviar la transacción: ' + res.status;
-        console.error('[FRONTEND] Error HTTP al enviar transacción:', res.status, res.statusText);
+        const errData = await res.json().catch(() => ({}));
+        const errorMsg = String(errData.error || errData.message || '');
+        const isDoubleSpendOrMempool = errorMsg.toLowerCase().includes('doble gasto') ||
+                                       errorMsg.toLowerCase().includes('mempool') ||
+                                       errorMsg.toLowerCase().includes('pendiente');
+
+        if (isDoubleSpendOrMempool) {
+          statusEl.innerHTML = `
+            <div style="background: rgba(247, 147, 26, 0.15); border: 1px solid #f7931a; padding: 12px 14px; border-radius: 8px; margin-top: 12px; color: #f3b26f; text-align: left; font-size: 0.9em; line-height: 1.4;">
+              ⏳ <strong>Transferencia en proceso:</strong> Este UTXO ya tiene una transacción pendiente en la red (mempool).<br>
+              <span style="color: #ccc; font-size: 0.85em;">Por favor, espera a que se mine el próximo bloque para que se confirme.</span>
+            </div>`;
+          if (selectedUTXOIndex !== null) markUTXOAsSpent(selectedUTXOIndex);
+          await loadUTXOs(pubKey);
+        } else {
+          statusEl.innerHTML = `❌ <span style="color:#ff5252;">${errorMsg || 'Error al enviar la transacción (' + res.status + ')'}</span>`;
+        }
+        console.error('[FRONTEND] Error HTTP al enviar transacción:', res.status, errorMsg || res.statusText);
+        form.querySelector('button[type="submit"]').disabled = false;
         return;
       }
       const data = await res.json();

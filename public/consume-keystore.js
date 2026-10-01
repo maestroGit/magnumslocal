@@ -291,7 +291,37 @@ modalConfirm.addEventListener('click', async function () {
         body: JSON.stringify({ signedTransaction: txObj, origin: motivo, type: 'quemada' }) // Se envía type: 'quemada' y origin (nombre bodega) para categorizar en backend.
       });
       if (!res.ok) {
-        statusEl.textContent = 'Error al enviar la transacción: ' + res.status;
+        const errData = await res.json().catch(() => ({}));
+        const errorMsg = String(errData.error || errData.message || '');
+        const isDoubleSpendOrMempool = errorMsg.toLowerCase().includes('doble gasto') ||
+                                       errorMsg.toLowerCase().includes('mempool') ||
+                                       errorMsg.toLowerCase().includes('pendiente');
+
+        if (isDoubleSpendOrMempool) {
+          statusEl.innerHTML = `
+            <div style="background: rgba(247, 147, 26, 0.15); border: 1px solid #f7931a; padding: 12px 14px; border-radius: 8px; margin-top: 12px; color: #f3b26f; text-align: left; font-size: 0.9em; line-height: 1.4;">
+              ⏳ <strong>Baja en proceso:</strong> Esta botella ya tiene una orden de baja pendiente en la red (mempool).<br>
+              <span style="color: #ccc; font-size: 0.85em;">Por favor, espera a que se mine el próximo bloque para que se confirme definitivamente.</span>
+            </div>`;
+
+          // Marcar este UTXO como pendiente en sessionStorage para bloquear reenvíos
+          try {
+            if (selectedUTXO) {
+              const key = `${selectedUTXO.txId}:${Number(selectedUTXO.outputIndex)}`;
+              const pending = JSON.parse(sessionStorage.getItem('pendingBurnUtxos') || '[]');
+              if (!pending.includes(key)) {
+                pending.push(key);
+                sessionStorage.setItem('pendingBurnUtxos', JSON.stringify(pending));
+              }
+            }
+          } catch (_) {}
+
+          renderUTXOList();
+          setTimeout(() => loadUTXOs(pubKey), 500);
+        } else {
+          statusEl.innerHTML = `❌ <span style="color:#ff5252;">${errorMsg || 'Error al enviar la transacción (' + res.status + ')'}</span>`;
+        }
+
         form.querySelector('button[type="submit"]').disabled = false;
         return;
       }
