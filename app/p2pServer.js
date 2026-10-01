@@ -79,10 +79,10 @@ class P2PServer {
       console.log(`🚀 WebSocketServer escuchando en puerto: ${P2P_PORT}`);
     }
     wss.on("connection", (socket, req) => {
-      const remoteAddr = req?.socket?.remoteAddress || "(desconocida)";
+      const remoteAddr = req?.headers?.["x-forwarded-for"] || req?.socket?.remoteAddress || "(desconocida)";
       console.log("🔗 Nueva conexión entrante al relay desde:", remoteAddr);
       console.log("🔗 Headers de la conexión:", req?.headers);
-      this.connectSocket(socket);
+      this.connectSocket(socket, "inbound", remoteAddr);
     });
     wss.on("error", (err) => {
       console.error("❌ Error en WebSocketServer (relay):", err);
@@ -94,6 +94,8 @@ class P2PServer {
         console.warn("⚠️ UPnP: Error silencioso durante setup:", err.message);
       });
     }
+
+    this.startHeartbeat();
 
     console.log("[P2P][DEBUG] Llamando a connectToPeers() con peersEnv:", this.peersEnv);
     this.connectToPeers();
@@ -113,14 +115,24 @@ class P2PServer {
         console.warn(`[P2P][DEBUG] Peer vacío ignorado: "${peerUrl}"`);
         return;
       }
+
+      // Evita duplicar sockets si ya estamos conectados o en proceso de conexión
+      const alreadyConnected = this.sockets.some(
+        (s) => s.peerUrl === cleanPeer && (s.readyState === 0 || s.readyState === 1)
+      );
+      if (alreadyConnected) {
+        return;
+      }
+
       console.log(`[P2P][DEBUG] Intentando conectar a peer: ${cleanPeer}`);
 
       try {
         const socket = new WebSocket(cleanPeer);
+        socket.peerUrl = cleanPeer;
 
         socket.on("open", () => {
           console.log(`[P2P][DEBUG] ✅ Conectado exitosamente a peer: ${cleanPeer}`);
-          this.connectSocket(socket);
+          this.connectSocket(socket, "outbound", cleanPeer);
         });
 
         // Log detallado en caso de error en el socket cliente
@@ -157,26 +169,40 @@ class P2PServer {
   };
 
   // Conecta y registra un nuevo socket, anuncia handshake, y limpia al desconectar
-  connectSocket = (socket) => {
+  // Conecta y registra un nuevo socket, anuncia handshake, y limpia al desconectar
+  connectSocket = (socket, direction = "inbound", remoteAddress = null) => {
+    socket.direction = direction;
+    socket.remoteAddress = remoteAddress;
+    socket.isAlive = true;
+    socket.latencyMs = null;
+
+    socket.on("pong", () => {
+      socket.isAlive = true;
+      socket.latencyMs = socket.pingStartTime ? Date.now() - socket.pingStartTime : null;
+    });
+
     this.sockets.push(socket);
 
-    // Handshake: anuncia la URL HTTP propia a este peer
+    // Handshake: anuncia la URL HTTP propia y metadata de este nodo
     const HTTP_PORT = process.env.HTTP_PORT || 3001;
     const NODE_ID =
       process.env.NODE_ID || "node_" + Math.round(Math.random() * 10000);
+    const ROLE = process.env.ROLE || process.env.NODE_NAME || "secondary";
     const httpUrl = `http://${getLocalExternalIP()}:${HTTP_PORT}`;
 
     socket.send(
       JSON.stringify({
         type: MESSAGE_TYPES.handshake,
         nodeId: NODE_ID,
+        role: ROLE,
+        blockHeight: this.blockchain?.chain?.length || 0,
+        mempoolCount: this.transactionsPool?.transactions?.length || 0,
         httpUrl: httpUrl,
         timestamp: Date.now(),
       })
     );
 
-    console.log("[+] Socket connected (relay)");
-
+    console.log(`[+] Socket connected (${direction}) [total sockets: ${this.sockets.length}]`);
 
     // Log de cada mensaje recibido en el relay
     socket.on("message", (message) => {
@@ -189,10 +215,32 @@ class P2PServer {
       const pi = this.peers.findIndex((p) => p.socket === socket);
       if (pi >= 0) this.peers.splice(pi, 1);
       this.sockets = this.sockets.filter((s) => s !== socket);
-      console.log("[-] Socket desconectado en relay (ws://localhost:" + P2P_PORT + ") y eliminado de peers/sockets");
+      console.log(`[-] Socket desconectado (${direction}) y eliminado de peers/sockets [restantes: ${this.sockets.length}]`);
     });
 
     this.sendChain(socket); // Sincroniza la blockchain actual al nuevo peer
+  };
+
+  // Heartbeat periódico (RFC 6455 Ping/Pong) para detectar latencia y sockets zombis
+  startHeartbeat = () => {
+    if (this.heartbeatInterval) return;
+    this.heartbeatInterval = setInterval(() => {
+      this.sockets.forEach((socket) => {
+        if (socket.isAlive === false) {
+          console.warn("[P2P][HEARTBEAT] Nodo inactivo detectado. Terminando socket zombi.");
+          const pi = this.peers.findIndex((p) => p.socket === socket);
+          if (pi >= 0) this.peers.splice(pi, 1);
+          this.sockets = this.sockets.filter((s) => s !== socket);
+          try { socket.terminate(); } catch (_) {}
+          return;
+        }
+        socket.isAlive = false;
+        socket.pingStartTime = Date.now();
+        try {
+          socket.ping();
+        } catch (_) {}
+      });
+    }, 30000);
   };
 
   // Maneja los mensajes entrantes desde un socket WebSocket
@@ -227,15 +275,25 @@ class P2PServer {
             this.peers.push({
               socket,
               nodeId: data.nodeId,
+              role: data.role || "secondary",
+              blockHeight: typeof data.blockHeight === "number" ? data.blockHeight : null,
+              mempoolCount: typeof data.mempoolCount === "number" ? data.mempoolCount : null,
               httpUrl: data.httpUrl,
+              direction: socket.direction || "inbound",
+              remoteAddress: socket.remoteAddress || null,
               lastSeen: data.timestamp || Date.now(),
             });
             console.log(
-              `🤝 [HANDSHAKE] recibido de ${data.nodeId} - ${data.httpUrl}`
+              `🤝 [HANDSHAKE] recibido de ${data.nodeId} [${data.role || "secondary"}] - ${data.httpUrl}`
             );
           } else {
             already.nodeId = data.nodeId;
+            already.role = data.role || already.role || "secondary";
+            if (typeof data.blockHeight === "number") already.blockHeight = data.blockHeight;
+            if (typeof data.mempoolCount === "number") already.mempoolCount = data.mempoolCount;
             already.httpUrl = data.httpUrl;
+            already.direction = socket.direction || already.direction;
+            already.remoteAddress = socket.remoteAddress || already.remoteAddress;
             already.lastSeen = data.timestamp || Date.now();
           }
           break;
@@ -472,8 +530,12 @@ class P2PServer {
     }
   };
 
-  // Cierra el mapping UPnP al apagar el servidor
+  // Cierra el mapping UPnP y heartbeat al apagar el servidor
   closeUPnP = async () => {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
     try {
       if (this.upnpClient && this.upnpMapping) {
         await this.upnpClient.portUnmapping({

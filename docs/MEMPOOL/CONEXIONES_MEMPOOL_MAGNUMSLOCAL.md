@@ -59,3 +59,40 @@ Para simplificar la gestión de nodos en despliegues geográficos y evitar depen
 - Cuando se recibe y valida una nueva cadena (por ejemplo, en `replaceChain`), recorre los bloques nuevos y elimina de la mempool todas las transacciones que ya estén minadas.
 
 Esta estrategia puede convivir con el broadcast de `CLEAR_TRANSACTIONS` y aporta una capa extra de robustez a la red.
+
+
+**WebSocket Protocol**
+
+En el protocolo WebSocket, la conexión es simétrica y bidireccional (full-duplex). La diferencia entre quién es "servidor" y quién es "cliente" sólo existe durante el primer segundo (el apretón de manos inicial o handshake).
+
+Cómo funciona por dentro:
+[Tu Nodo Local]  ── 1. Abre conexión saliente (Client) ──>  [Seenode Relay (Server)]
+                 <── 2. Acepta y registra el socket ────
+═══════════════════════════════════════════════════════════════════════════════════
+        A partir de aquí, el "cable" está conectado para ambos sentidos:
+   - Tu Local emite un bloque/tx       ──(mismo socket)──>  Seenode lo recibe (on 'message')
+   - Seenode hace un broadcast general <──(mismo socket)──  Llega a tu local
+Cuando tu nodo local conectó a wss://app.blockswine.com:
+
+En el servidor de Seenode se disparó el evento wss.on('connection', (ws) => { ... }).
+
+En ese instante, el código de Seenode guardó ese objeto ws en su lista interna de sockets (habitualmente un array o Set tipo sockets.push(ws) o this.peers.add(ws)).
+
+Cuando tu nodo local crea una transacción o mina:
+
+Tu nodo ejecuta socket.send(JSON.stringify(transaccionOMensaje)). El mensaje viaja por ese socket abierto directamente al relay.
+
+Cuando el relay procesa y hace broadcast:
+
+El método broadcast() de Seenode simplemente recorre todos los sockets que tiene conectados en memoria en ese momento:
+
+JavaScript
+broadcast(message) {
+  this.sockets.forEach(socket => socket.send(JSON.stringify(message)));
+}
+Como el socket de tu máquina local ya está en esa lista, recibirá el broadcast sin importar que Seenode nunca supiera tu IP ni la tuviera en su .env.
+
+La única regla de oro
+Para que esto se mantenga vivo sin fallar:
+
+El nodo local debe tener reconexión automática: Si tu conexión a internet parpadea o reinicias Seenode, el socket se cerrará. Tu nodo local es el responsable de detectar el ws.on('close') y volver a llamar a connectToPeer('wss://app.blockswine.com') tras unos segundos.   

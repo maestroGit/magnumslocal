@@ -1,4 +1,7 @@
 # Flujo de Mempool: Magnumslocal y Relay
+**1. Cuando se envía una transacción**
+- En una red blockchain con nodos tipo relay y secundarios (por ejemplo, magnumslocal), es fundamental que la mempool (pool de transacciones pendientes) se mantenga sincronizada entre todos los nodos para evitar que se mine una transacción ya confirmada en otro nodo.
+- Cuando un usuario envía una transacción a magnumslocal, este la agrega a su mempool.
 
 **2. Sincronización de mempool al conectar como peer:**
 - Cuando magnumslocal se conecta y recibe una cadena más larga, actualiza la blockchain y limpia su mempool de transacciones ya minadas.
