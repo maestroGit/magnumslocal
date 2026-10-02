@@ -265,14 +265,17 @@ class Blockchain {
               // === Registrar en BD ===
               try {
                 const BurnEvent = (await import("../models/BurnEvent.js")).default;
+                const genesisHash = newChain?.[0]?.hash || null;
 
                 await BurnEvent.create({
                   tx_id: tx.id,
                   burn_address: output.address,
-                  amount: output.amount
+                  amount: output.amount,
+                  genesis_hash: genesisHash,
+                  is_active: true
                 });
 
-                console.log(`[REPLACECHAIN][BURN][DB] Evento BURN registrado en BD para tx ${tx.id}`);
+                console.log(`[REPLACECHAIN][BURN][DB] Evento BURN registrado en BD para tx ${tx.id} (genesis: ${genesisHash?.substring(0, 16)}...)`);
               } catch (err) {
                 if (err?.name === 'SequelizeUniqueConstraintError') {
                   console.log(`[REPLACECHAIN][BURN][DB] Evento BURN duplicado ignorado para tx ${tx.id}`);
@@ -306,6 +309,7 @@ class Blockchain {
               // === Persistir notificación para dashboard ===
               try {
                 const { persistBurnNotification } = await import('../app/services/notificationService.js');
+                const genesisHash = newChain?.[0]?.hash || null;
 
                 const persistedNotification = await persistBurnNotification({
                   txId: tx.id,
@@ -315,6 +319,8 @@ class Blockchain {
                   fecha,
                   wineloverWallet,
                   source: 'replaceChain',
+                  genesisHash,
+                  isActive: true,
                 });
 
                 console.log(`[REPLACECHAIN][NOTIFICATIONS][CREATE] ${persistedNotification.created ? 'Creada' : 'Ya existente'} notificación para winery ${bodegaId}, tx ${tx.id}`);

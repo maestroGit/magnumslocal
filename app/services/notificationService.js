@@ -8,7 +8,7 @@ const normalizeSource = (source) => {
   return value || 'unknown';
 };
 
-export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount, fecha, wineloverWallet, source = 'unknown' }) => {
+export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount, fecha, wineloverWallet, source = 'unknown', genesisHash = null, isActive = true }) => {
   const normalizedSource = normalizeSource(source);
   const payload = {
     txId,
@@ -17,6 +17,7 @@ export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount,
     fecha,
     wineloverWallet,
     source: normalizedSource,
+    genesisHash,
   };
 
   return {
@@ -25,6 +26,8 @@ export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount,
     tx_id: txId,
     burn_address: burnAddress,
     amount,
+    genesis_hash: genesisHash,
+    is_active: isActive,
     first_seen_source: normalizedSource,
     last_seen_source: normalizedSource,
     payload,
@@ -33,7 +36,7 @@ export const buildBurnNotificationData = ({ txId, bodegaId, burnAddress, amount,
   };
 };
 
-export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amount, fecha, wineloverWallet, source = 'unknown' }) => {
+export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amount, fecha, wineloverWallet, source = 'unknown', genesisHash = null, isActive = true }) => {
   const normalizedSource = normalizeSource(source);
   const existing = await Notification.findOne({
     where: {
@@ -50,12 +53,21 @@ export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amo
       updates.first_seen_source = normalizedSource;
     }
 
+    if (genesisHash && !existing.genesis_hash) {
+      updates.genesis_hash = genesisHash;
+    }
+
+    if (isActive !== undefined && existing.is_active !== isActive) {
+      updates.is_active = isActive;
+    }
+
     const currentLastSeen = String(existing.last_seen_source || '').trim();
     if (normalizedSource && currentLastSeen !== normalizedSource) {
       updates.last_seen_source = normalizedSource;
       updates.payload = {
         ...(existing.payload || {}),
         source: normalizedSource,
+        ...(genesisHash ? { genesisHash } : {})
       };
     }
 
@@ -74,6 +86,8 @@ export const persistBurnNotification = async ({ txId, bodegaId, burnAddress, amo
     fecha,
     wineloverWallet,
     source: normalizedSource,
+    genesisHash,
+    isActive,
   }));
 
   return { created: true, notification };

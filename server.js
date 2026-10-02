@@ -73,6 +73,7 @@ import { ensureWalletOnStartup } from './app/services/walletLoaderService.js';
 import { startServerWhenReady } from './app/services/serverStartupService.js';
 import { initLogCapture } from './app/services/logService.js';
 import { registerSecurityMiddleware } from './app/middlewares/security.js';
+import { syncDatabaseWithBlockchain } from './app/services/chainIndexerService.js';
 
 // Importaciones de modelos ORM
 import User from './app/models/User.js';
@@ -382,9 +383,14 @@ function syncUTXOManagerWithBlockchain() {
 }
 
 // Inicializar la blockchain y sincronizar UTXOManager solo después de que esté lista
-bc.initialize().then((result) => {
+bc.initialize().then(async (result) => {
   console.log('[INIT][Blockchain] Resultado de bc.initialize():', result);
   syncUTXOManagerWithBlockchain();
+  try {
+    await syncDatabaseWithBlockchain(bc);
+  } catch (syncErr) {
+    console.warn('[INIT][ChainSync] Error reconciliando BD con blockchain:', syncErr.message);
+  }
 }).catch((err) => {
   console.error('[INIT][Blockchain] Error en bc.initialize():', err);
 });
@@ -417,8 +423,44 @@ Promise.all([
       WHERE last_seen_source IS NULL OR last_seen_source = '' OR last_seen_source = 'unknown';
     `);
 
-    console.log('[INIT][BurnEvent] Tabla burn_events sincronizada correctamente');
-    console.log('[INIT][Notifications] Tabla notifications sincronizada correctamente');
+    await Notification.sequelize.query(`
+      ALTER TABLE burn_events
+      ADD COLUMN IF NOT EXISTS genesis_hash VARCHAR(64);
+    `);
+
+    await Notification.sequelize.query(`
+      ALTER TABLE burn_events
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+    `);
+
+    await Notification.sequelize.query(`
+      ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS genesis_hash VARCHAR(64);
+    `);
+
+    await Notification.sequelize.query(`
+      ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+    `);
+
+    await Notification.sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_burn_events_genesis_hash ON burn_events (genesis_hash);
+    `);
+
+    await Notification.sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_burn_events_is_active ON burn_events (is_active);
+    `);
+
+    await Notification.sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_notifications_genesis_hash ON notifications (genesis_hash);
+    `);
+
+    await Notification.sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_notifications_is_active ON notifications (is_active);
+    `);
+
+    console.log('[INIT][BurnEvent] Tabla burn_events sincronizada correctamente (genesis_hash/is_active)');
+    console.log('[INIT][Notifications] Tabla notifications sincronizada correctamente (genesis_hash/is_active)');
     console.log('[INIT][Notifications] Columnas first_seen_source/last_seen_source verificadas');
   })
   .catch((err) => {

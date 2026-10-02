@@ -20,6 +20,15 @@ const BurnEvent = sequelize.define('BurnEvent', {
     type: DataTypes.NUMERIC,
     allowNull: false
   },
+  genesis_hash: {
+    type: DataTypes.STRING(64),
+    allowNull: true
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
   fecha: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -31,6 +40,12 @@ const BurnEvent = sequelize.define('BurnEvent', {
     {
       unique: true,
       fields: ['tx_id']
+    },
+    {
+      fields: ['genesis_hash']
+    },
+    {
+      fields: ['is_active']
     }
   ]
 });

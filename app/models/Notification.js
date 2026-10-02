@@ -49,6 +49,15 @@ const Notification = sequelize.define('Notification', {
     allowNull: false,
     defaultValue: false,
   },
+  genesis_hash: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  },
   fecha: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -64,6 +73,12 @@ const Notification = sequelize.define('Notification', {
     },
     {
       fields: ['winery_id', 'read'],
+    },
+    {
+      fields: ['genesis_hash'],
+    },
+    {
+      fields: ['is_active'],
     },
   ],
 });

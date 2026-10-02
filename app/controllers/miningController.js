@@ -124,14 +124,18 @@ export const mineBlock = async (req, res) => {
             typeof output.address === 'string' &&
             output.address.startsWith('0x0000000000000000000000000000000000000000')
           ) {
+            const currentGenesisHash = global.bc?.chain?.[0]?.hash || null;
+
             try {
               await BurnEvent.create({
                 // Persiste el evento en la BD usando el método heradado .create() del ORM Sequelize
                 tx_id: tx.id,
                 burn_address: output.address,
-                amount: output.amount
+                amount: output.amount,
+                genesis_hash: currentGenesisHash,
+                is_active: true
               });
-              console.log(`[BURN][DB] Evento registrado para tx ${tx.id}, address ${output.address}, amount ${output.amount}`);
+              console.log(`[BURN][DB] Evento registrado para tx ${tx.id}, address ${output.address}, amount ${output.amount} (genesis: ${currentGenesisHash?.substring(0, 16)}...)`);
             } catch (err) {
               if (err?.name === 'SequelizeUniqueConstraintError') {
                 console.log(`[BURN][DB] Evento BURN duplicado ignorado para tx ${tx.id}`);
@@ -174,6 +178,8 @@ export const mineBlock = async (req, res) => {
                   fecha,
                   wineloverWallet,
                   source: 'mineBlock',
+                  genesisHash: currentGenesisHash,
+                  isActive: true,
                 });
 
                 console.log(`[NOTIFICATIONS][CREATE] ${persistedNotification.created ? 'Creada' : 'Ya existente'} notificación para winery ${bodegaId}, tx ${tx.id}`);

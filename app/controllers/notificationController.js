@@ -23,10 +23,24 @@ export const getNotifications = async (req, res) => {
       });
     }
 
+    const includeArchived = req.query.includeArchived === 'true';
+    const whereClause = {
+      winery_id: wineryId,
+    };
+
+    if (!includeArchived) {
+      whereClause.is_active = true;
+      const currentGenesisHash = global.bc?.chain?.[0]?.hash || null;
+      if (currentGenesisHash) {
+        whereClause[Op.or] = [
+          { genesis_hash: currentGenesisHash },
+          { genesis_hash: null }
+        ];
+      }
+    }
+
     const notifications = await Notification.findAll({
-      where: {
-        winery_id: wineryId,
-      },
+      where: whereClause,
       order: [['fecha', 'DESC']],
     });
 
@@ -43,6 +57,8 @@ export const getNotifications = async (req, res) => {
         id: notification.id,
         wineryId: notification.winery_id,
         type: notification.type,
+        genesisHash: notification.genesis_hash,
+        isActive: notification.is_active,
         payload: notification.payload,
         read: notification.read,
         createdAt: notification.fecha,
