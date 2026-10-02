@@ -73,11 +73,19 @@ const loadGlobalWallet = async (req, res) => {
       passphrase
     );
     let globalWallet = new global.Wallet(null, undefined, privateKeyBuf.toString("hex"));
-    global.globalWallet = globalWallet;
     if (globalWallet.keyPair && globalWallet.keyPair.getPublic) {
       globalWallet.publicKey = globalWallet.keyPair.getPublic().encode("hex");
-      global.globalWallet = globalWallet;
     }
+
+    // Sincronizar todas las referencias en memoria viva
+    global.globalWallet = globalWallet;
+    global.wallet = globalWallet;
+    global.serverKeystore = keystore;
+    if (global.miner) {
+      global.miner.wallet = globalWallet;
+      console.log("[LOAD-GLOBAL] Miner wallet sincronizada con la nueva wallet global");
+    }
+
     if (
       globalWallet &&
       globalWallet.keyPair &&
@@ -102,7 +110,7 @@ const loadGlobalWallet = async (req, res) => {
       "[LOAD-GLOBAL] wallet_default.json sobrescrito. Clave pública activa ahora:",
       globalWallet.publicKey
     );
-    console.log("[LOAD-GLOBAL] ✅ Wallet global actualizada.");
+    console.log("[LOAD-GLOBAL] ✅ Wallet global y referencias en memoria actualizadas.");
     console.log(
       "[LOAD-GLOBAL] Clave pública global DESPUÉS del cambio:",
       globalWallet.publicKey
@@ -194,6 +202,7 @@ const hardwareAddress = (req, res, next) => {
         return res.status(400).json({ success: false, error: "publicKey missing in uploaded file" });
       }
       global.wallet = new global.Wallet(publicKey, global.INITIAL_BALANCE, privateKey);
+      global.globalWallet = global.wallet;
       if (!(process.env.NODE_ENV === "test" || process.env.NO_P2P === "true")) {
         global.miner = new global.Miner(global.bc, global.tp, global.wallet, global.p2pServer);
         console.log("[POST /hardware-address] Miner actualizado con wallet global descifrada");
