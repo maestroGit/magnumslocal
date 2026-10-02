@@ -39,10 +39,24 @@ export const getNotifications = async (req, res) => {
       }
     }
 
-    const notifications = await Notification.findAll({
-      where: whereClause,
-      order: [['fecha', 'DESC']],
-    });
+    let notifications;
+    try {
+      notifications = await Notification.findAll({
+        where: whereClause,
+        order: [['fecha', 'DESC']],
+      });
+    } catch (queryErr) {
+      if (queryErr.name === 'SequelizeDatabaseError' && String(queryErr.message).includes('genesis_hash')) {
+        console.warn('[NOTIFICATIONS][FALLBACK] Columna genesis_hash ausente en BD, ejecutando consulta compatible.');
+        notifications = await Notification.findAll({
+          where: { winery_id: wineryId },
+          attributes: { exclude: ['genesis_hash', 'is_active'] },
+          order: [['fecha', 'DESC']],
+        });
+      } else {
+        throw queryErr;
+      }
+    }
 
     return res.json({
       success: true,

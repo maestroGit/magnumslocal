@@ -94,8 +94,10 @@ Servicio dedicado que gestiona el ciclo de vida y alineación entre la base de d
   - **Por defecto:** Retorna únicamente notificaciones de la cadena viva (`where: { is_active: true, genesis_hash: currentGenesisHash }`).
   - **Modo auditoría:** Permite el parámetro `?includeArchived=true` para recuperar todo el histórico acumulado de despliegues previos.
 
-### 4.6. Inicialización del Servidor (`server.js`)
-* **Migración DDL no bloqueante:** Al sincronizar Sequelize en el arranque, ejecuta sentencias `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` y `CREATE INDEX IF NOT EXISTS` para garantizar que la base de datos posea las columnas necesarias sin requerir migraciones manuales.
+### 4.6. Inicialización del Servidor y Migración DDL Anticipada (`server.js`)
+* **Migración DDL previa a `Model.sync()`:** Ejecuta sentencias directas `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` y `CREATE INDEX IF NOT EXISTS` antes de invocar `BurnEvent.sync()` y `Notification.sync()`. Esto previene errores de Sequelize (`column "genesis_hash" does not exist`) al intentar crear índices antes de que la columna exista físicamente.
+* **Compuerta de arranque (`dbReadyPromise`):** `startServerWhenReady` aguarda a que tanto la carga de wallet (`walletReadyPromise`) como la sincronización DDL de la base de datos (`dbReadyPromise`) concluyan antes de iniciar la escucha HTTP, evitando condiciones de carrera con peticiones tempranas.
+* **Tolerancia y fallback en consultas:** Si por alguna razón la columna aún estuviera en migración, `notificationController.js` implementa un fallback compatible que recupera las notificaciones excluyendo temporalmente las columnas en transición.
 * **Gancho de sincronización:** Ejecuta `await syncDatabaseWithBlockchain(bc)` inmediatamente después de `bc.initialize()` y `syncUTXOManagerWithBlockchain()`.
 
 ---

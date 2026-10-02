@@ -395,77 +395,106 @@ bc.initialize().then(async (result) => {
   console.error('[INIT][Blockchain] Error en bc.initialize():', err);
 });
 
-// Sincronizar tablas de eventos/notificaciones al arrancar.
-Promise.all([
-  BurnEvent.sync(),
-  Notification.sync()
-])
-  .then(async () => {
-    await Notification.sequelize.query(`
+// Sincronizar tablas de eventos/notificaciones y columnas de versionado antes de recibir tráfico
+const dbReadyPromise = (async () => {
+  try {
+    const sequelize = Notification.sequelize;
+    if (!sequelize) {
+      console.warn('[INIT][DB Sync] Sequelize no disponible en Notification model.');
+      return;
+    }
+
+    // 1. Asegurar que las columnas físicas existan en Postgres ANTES de que Sequelize cree índices
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS burn_events (
+        id SERIAL PRIMARY KEY,
+        tx_id VARCHAR(128) NOT NULL,
+        burn_address VARCHAR(64) NOT NULL,
+        amount NUMERIC NOT NULL,
+        fecha TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE burn_events
+      ADD COLUMN IF NOT EXISTS genesis_hash VARCHAR(64);
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE burn_events
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        winery_id VARCHAR(80) NOT NULL,
+        type VARCHAR(40) NOT NULL DEFAULT 'TOKEN_BURNED',
+        tx_id VARCHAR(128) NOT NULL,
+        burn_address VARCHAR(128) NOT NULL,
+        amount NUMERIC NOT NULL,
+        payload JSONB NOT NULL DEFAULT '{}',
+        read BOOLEAN NOT NULL DEFAULT false,
+        fecha TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    await sequelize.query(`
       ALTER TABLE notifications
       ADD COLUMN IF NOT EXISTS first_seen_source VARCHAR(40) NOT NULL DEFAULT 'unknown';
     `);
 
-    await Notification.sequelize.query(`
+    await sequelize.query(`
       ALTER TABLE notifications
       ADD COLUMN IF NOT EXISTS last_seen_source VARCHAR(40) NOT NULL DEFAULT 'unknown';
     `);
 
-    await Notification.sequelize.query(`
+    await sequelize.query(`
+      ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS genesis_hash VARCHAR(64);
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE notifications
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+    `);
+
+    // 2. Ahora que las columnas están creadas en Postgres, sincronizar modelos con Sequelize
+    await BurnEvent.sync();
+    await Notification.sync();
+
+    // 3. Crear índices de búsqueda rápida
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_burn_events_genesis_hash ON burn_events (genesis_hash);
+    `);
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_burn_events_is_active ON burn_events (is_active);
+    `);
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_notifications_genesis_hash ON notifications (genesis_hash);
+    `);
+    await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS idx_notifications_is_active ON notifications (is_active);
+    `);
+
+    // 4. Backfill de fuentes en notifications si fuera necesario
+    await sequelize.query(`
       UPDATE notifications
       SET first_seen_source = COALESCE(NULLIF(payload->>'source', ''), first_seen_source, 'unknown')
       WHERE first_seen_source IS NULL OR first_seen_source = '' OR first_seen_source = 'unknown';
     `);
 
-    await Notification.sequelize.query(`
+    await sequelize.query(`
       UPDATE notifications
       SET last_seen_source = COALESCE(NULLIF(payload->>'source', ''), last_seen_source, 'unknown')
       WHERE last_seen_source IS NULL OR last_seen_source = '' OR last_seen_source = 'unknown';
     `);
 
-    await Notification.sequelize.query(`
-      ALTER TABLE burn_events
-      ADD COLUMN IF NOT EXISTS genesis_hash VARCHAR(64);
-    `);
-
-    await Notification.sequelize.query(`
-      ALTER TABLE burn_events
-      ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
-    `);
-
-    await Notification.sequelize.query(`
-      ALTER TABLE notifications
-      ADD COLUMN IF NOT EXISTS genesis_hash VARCHAR(64);
-    `);
-
-    await Notification.sequelize.query(`
-      ALTER TABLE notifications
-      ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
-    `);
-
-    await Notification.sequelize.query(`
-      CREATE INDEX IF NOT EXISTS idx_burn_events_genesis_hash ON burn_events (genesis_hash);
-    `);
-
-    await Notification.sequelize.query(`
-      CREATE INDEX IF NOT EXISTS idx_burn_events_is_active ON burn_events (is_active);
-    `);
-
-    await Notification.sequelize.query(`
-      CREATE INDEX IF NOT EXISTS idx_notifications_genesis_hash ON notifications (genesis_hash);
-    `);
-
-    await Notification.sequelize.query(`
-      CREATE INDEX IF NOT EXISTS idx_notifications_is_active ON notifications (is_active);
-    `);
-
-    console.log('[INIT][BurnEvent] Tabla burn_events sincronizada correctamente (genesis_hash/is_active)');
-    console.log('[INIT][Notifications] Tabla notifications sincronizada correctamente (genesis_hash/is_active)');
-    console.log('[INIT][Notifications] Columnas first_seen_source/last_seen_source verificadas');
-  })
-  .catch((err) => {
-    console.warn('[INIT][DB Sync] No se pudo sincronizar burn_events/notifications:', err.message);
-  });
+    console.log('[INIT][DB Sync] Tablas burn_events y notifications migradas y sincronizadas correctamente');
+  } catch (err) {
+    console.warn('[INIT][DB Sync] Advertencia en sincronización de BD:', err.message);
+  }
+})();
 
 // ============================================================================
 // SECCIÓN 7: GESTIÓN DE WALLET GLOBAL Y CIFRADO
@@ -714,7 +743,7 @@ app.use('/', transactionRoutes);
 // - p2pServer.listen(server): inicia servidor WebSocket P2P
 // Ver app/services/serverStartupService.js
 (async () => {
-  await walletReadyPromise;
+  await Promise.all([walletReadyPromise, dbReadyPromise]);
   startServerWhenReady({
     server,
     HTTP_PORT,
