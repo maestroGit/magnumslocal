@@ -118,3 +118,88 @@ Se añadió la sincronización para paridad cuando se carga una wallet por archi
 2. **Sin Necesidad de Reiniciar el Servidor:** La actualización se aplica en caliente en la memoria del runtime Node.js.
 3. **Consistencia en Minado:** Los bloques que se minen a continuación asignarán las recompensas de minero (`miner.mine()`) a la wallet recién cargada.
 4. **Paridad Total:** Comportamiento idéntico y seguro garantizado tanto en desarrollo local (`magnumslocal`) como en producción (`magnumsmaster`).
+
+---
+
+## 6. Cronología de Cambios (2026-10-02)
+
+| Fecha | Componente | Repositorio(s) | Descripción del Ajuste |
+| :--- | :--- | :--- | :--- |
+| **2026-10-02** | [`walletController.js`](file:///c:/Users/maest/Documents/magnumslocal/app/controllers/walletController.js) | `magnumslocal`<br>`magnumsmaster` | **Sincronización Atómica en Memoria:** Actualización simultánea de `global.globalWallet`, `global.wallet`, `global.serverKeystore` y `global.miner.wallet` en `loadGlobalWallet` y `hardwareAddress` para resolver el split-brain al cambiar de wallet en runtime. |
+| **2026-10-02** | [`transactionController.js`](file:///c:/Users/maest/Documents/magnumsmaster/app/controllers/transactionController.js) | `magnumsmaster` | **Portabilidad de Coin Control y Validación Estricta de UTXOs (`buildSelectedUtxoSet`):** Implementada la verificación de pertenencia (`matchingUtxo.address === walletPublicKey`), prevención de doble gasto frente a mempool y respuesta estructurada `UTXO_SELECTION_STALE` (HTTP 400), alcanzando paridad total con `magnumslocal`. |
+
+### 6.1 Detalle del Ajuste de Coin Control (`transactionController.js`)
+Para blindar el backend ante cualquier intento de firma con UTXOs que no correspondan a la wallet cargada o que ya se encuentren en proceso de gasto, se incorporó en `magnumsmaster`:
+
+1. **Función `buildSelectedUtxoSet`:**
+   ```javascript
+   const buildSelectedUtxoSet = ({ requestedInputs, walletPublicKey, bc, tp }) => {
+     if (!Array.isArray(requestedInputs) || requestedInputs.length === 0) {
+       return null;
+     }
+
+     const mempoolInputs = Array.isArray(tp?.transactions)
+       ? tp.transactions.flatMap((tx) => tx?.inputs || [])
+       : [];
+
+     const selectedUtxos = requestedInputs.map((input) => {
+       const matchingUtxo = bc.utxoSet.find(
+         (utxo) =>
+           utxo.txId === input.txId &&
+           utxo.outputIndex === input.outputIndex &&
+           utxo.address === input.address &&
+           utxo.amount === input.amount
+       );
+
+       if (!matchingUtxo) {
+         throw new Error(`Selected UTXO not available: ${input.txId}:${input.outputIndex}`);
+       }
+
+       if (matchingUtxo.address !== walletPublicKey) {
+         throw new Error(`Selected UTXO does not belong to active wallet: ${input.txId}:${input.outputIndex}`);
+       }
+
+       const pendingSpend = mempoolInputs.some(
+         (mempoolInput) =>
+           mempoolInput.txId === input.txId &&
+           mempoolInput.outputIndex === input.outputIndex
+       );
+
+       if (pendingSpend) {
+         throw new Error(`Selected UTXO already pending in mempool: ${input.txId}:${input.outputIndex}`);
+       }
+
+       return matchingUtxo;
+     });
+
+     return selectedUtxos;
+   };
+   ```
+
+2. **Inyección en `createTransaction` (Flujo Bodega):**
+   ```javascript
+   const requestedUtxos = buildSelectedUtxoSet({
+     requestedInputs: inputs,
+     walletPublicKey: tempWallet.publicKey,
+     bc,
+     tp,
+   });
+
+   const utxos = requestedUtxos || bc.utxoSet.filter((utxo) => utxo.address === tempWallet.publicKey);
+   ```
+
+3. **Manejo Específico de Error:**
+   ```javascript
+   if (
+     err.message.includes("Selected UTXO not available") ||
+     err.message.includes("Selected UTXO already pending in mempool") ||
+     err.message.includes("Selected UTXO does not belong to active wallet")
+   ) {
+     return res.status(400).json({
+       success: false,
+       error: "El UTXO seleccionado ya no está disponible. Actualiza Coin Control y vuelve a intentar.",
+       details: err.message,
+       code: "UTXO_SELECTION_STALE",
+     });
+   }
+   ```
